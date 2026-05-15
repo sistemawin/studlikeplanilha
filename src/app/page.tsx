@@ -181,6 +181,9 @@ export default function Home() {
             setAuthMode("reset");
             setAuthPassword("");
             setAuthMessage("Digite sua nova senha para concluir a recuperação.");
+          } else if (urlMarksPasswordRecovery) {
+            setAuthMode("forgot");
+            setAuthError("Link de recuperação expirado ou inválido. Solicite um novo e-mail.");
           }
           setSession(data.session);
         })
@@ -191,10 +194,15 @@ export default function Home() {
 
       const { data: { subscription } } = supabase.auth.onAuthStateChange((event, next) => {
         if (event === "PASSWORD_RECOVERY") {
-          setAuthMode("reset");
-          setAuthPassword("");
-          setAuthError("");
-          setAuthMessage("Digite sua nova senha para concluir a recuperação.");
+          if (next) {
+            setAuthMode("reset");
+            setAuthPassword("");
+            setAuthError("");
+            setAuthMessage("Digite sua nova senha para concluir a recuperação.");
+          } else {
+            setAuthMode("forgot");
+            setAuthError("Link de recuperação expirado ou inválido. Solicite um novo e-mail.");
+          }
         }
         setSession(next);
         setAuthReady(true);
@@ -838,6 +846,15 @@ export default function Home() {
       setAuthLoading(true);
       try {
         const supabase = getSupabaseBrowserClient();
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) throw sessionError;
+        if (!sessionData.session) {
+          setAuthMode("forgot");
+          setAuthPassword("");
+          setAuthError("Sua sessão de recuperação expirou. Solicite um novo link por e-mail.");
+          return;
+        }
+
         const { error } = await supabase.auth.updateUser({ password: authPassword });
         if (error) throw error;
         await supabase.auth.signOut();
