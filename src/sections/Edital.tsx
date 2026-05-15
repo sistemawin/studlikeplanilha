@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronLeft, Pencil, Plus, Trash2 } from "lucide-react";
+import { ChevronLeft, Pencil, Plus, Search, Trash2, X } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
 import type { Difficulty, NavTarget, Subject, Topic, TopicStatus } from "@/types";
@@ -21,6 +21,8 @@ const DIFFICULTY_COLORS: Record<Difficulty, { bg: string; text: string }> = {
 
 const STATUS_CYCLE: TopicStatus[] = ["Não Estudado", "Teoria Lida", "Questões Feitas", "Revisado"];
 const DIFFICULTY_CYCLE: Difficulty[] = ["Fácil", "Médio", "Difícil"];
+type StatusFilter = TopicStatus | "todos";
+type DifficultyFilter = Difficulty | "todas";
 
 type Props = {
   subjects: Subject[];
@@ -126,6 +128,86 @@ function SubjectCard({
   );
 }
 
+function normalizeSearch(value: string) {
+  return value.trim().toLocaleLowerCase("pt-BR");
+}
+
+function EditalFilters({
+  search,
+  status,
+  difficulty,
+  resultLabel,
+  onSearchChange,
+  onStatusChange,
+  onDifficultyChange,
+  onClear,
+}: {
+  search: string;
+  status: StatusFilter;
+  difficulty: DifficultyFilter;
+  resultLabel: string;
+  onSearchChange: (value: string) => void;
+  onStatusChange: (value: StatusFilter) => void;
+  onDifficultyChange: (value: DifficultyFilter) => void;
+  onClear: () => void;
+}) {
+  const hasFilters = Boolean(search.trim()) || status !== "todos" || difficulty !== "todas";
+
+  return (
+    <div className="mb-4 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm shadow-slate-900/5 sm:p-4">
+      <div className="grid gap-2 md:grid-cols-[minmax(0,1fr)_180px_160px_auto]">
+        <label className="flex h-11 min-w-0 items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 focus-within:border-blue-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-blue-100">
+          <Search className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
+          <span className="sr-only">Buscar no edital</span>
+          <input
+            value={search}
+            onChange={(event) => onSearchChange(event.target.value)}
+            placeholder="Buscar matéria ou tópico"
+            className="h-full min-w-0 flex-1 bg-transparent text-sm text-slate-950 outline-none placeholder:text-slate-400"
+          />
+        </label>
+
+        <label className="sr-only" htmlFor="edital-status-filter">Filtrar por status</label>
+        <select
+          id="edital-status-filter"
+          value={status}
+          onChange={(event) => onStatusChange(event.target.value as StatusFilter)}
+          className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+        >
+          <option value="todos">Todos os status</option>
+          {STATUS_CYCLE.map((item) => (
+            <option key={item} value={item}>{item}</option>
+          ))}
+        </select>
+
+        <label className="sr-only" htmlFor="edital-difficulty-filter">Filtrar por dificuldade</label>
+        <select
+          id="edital-difficulty-filter"
+          value={difficulty}
+          onChange={(event) => onDifficultyChange(event.target.value as DifficultyFilter)}
+          className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+        >
+          <option value="todas">Todas dificuldades</option>
+          {DIFFICULTY_CYCLE.map((item) => (
+            <option key={item} value={item}>{item}</option>
+          ))}
+        </select>
+
+        <button
+          type="button"
+          onClick={onClear}
+          disabled={!hasFilters}
+          className="flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 px-3 text-sm font-semibold text-slate-600 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          <X className="h-4 w-4" aria-hidden="true" />
+          Limpar
+        </button>
+      </div>
+      <p className="mt-3 text-xs font-semibold text-slate-500">{resultLabel}</p>
+    </div>
+  );
+}
+
 export function Edital({
   subjects,
   topics,
@@ -142,18 +224,52 @@ export function Edital({
   onDeleteSubject,
 }: Props) {
   const [activeSubjectId, setActiveSubjectId] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("todos");
+  const [difficultyFilter, setDifficultyFilter] = useState<DifficultyFilter>("todas");
   const isVisible = activeSection === "edital";
+  const normalizedSearch = normalizeSearch(search);
 
   function openDetail(id: string) {
     setActiveSubjectId(id);
     onSubjectChange(id);
   }
 
+  function clearFilters() {
+    setSearch("");
+    setStatusFilter("todos");
+    setDifficultyFilter("todas");
+  }
+
+  function topicMatchesFilters(topic: Topic, subjectName: string) {
+    const matchesSearch =
+      !normalizedSearch ||
+      normalizeSearch(topic.titulo).includes(normalizedSearch) ||
+      normalizeSearch(subjectName).includes(normalizedSearch);
+    const matchesStatus = statusFilter === "todos" || topic.status === statusFilter;
+    const matchesDifficulty = difficultyFilter === "todas" || topic.dificuldade === difficultyFilter;
+    return matchesSearch && matchesStatus && matchesDifficulty;
+  }
+
+  function subjectMatchesFilters(subject: Subject) {
+    const subjectTopics = topics.filter((topic) => topic.materiaId === subject.id);
+    const matchesSubjectName = !normalizedSearch || normalizeSearch(subject.nome).includes(normalizedSearch);
+    const topicFiltersActive = statusFilter !== "todos" || difficultyFilter !== "todas";
+
+    if (topicFiltersActive) {
+      return subjectTopics.some((topic) => topicMatchesFilters(topic, subject.nome));
+    }
+
+    return matchesSubjectName || subjectTopics.some((topic) => topicMatchesFilters(topic, subject.nome));
+  }
+
   const detailSubject = subjects.find((s) => s.id === activeSubjectId);
+  const filteredSubjects = subjects.filter(subjectMatchesFilters);
 
   // ── Detail view ──────────────────────────────────────────────────────────
   if (activeSubjectId && detailSubject) {
     const subjectTopics = topics.filter((t) => t.materiaId === activeSubjectId);
+    const filteredSubjectTopics = subjectTopics.filter((topic) => topicMatchesFilters(topic, detailSubject.nome));
     const accent = corToAccent(detailSubject.cor);
     const lineCount = newTopicText.split("\n").filter((l) => l.trim()).length;
 
@@ -189,6 +305,17 @@ export function Edital({
           </p>
         </div>
 
+        <EditalFilters
+          search={search}
+          status={statusFilter}
+          difficulty={difficultyFilter}
+          resultLabel={`${filteredSubjectTopics.length} de ${subjectTopics.length} tópico${subjectTopics.length !== 1 ? "s" : ""} nesta matéria`}
+          onSearchChange={setSearch}
+          onStatusChange={setStatusFilter}
+          onDifficultyChange={setDifficultyFilter}
+          onClear={clearFilters}
+        />
+
         {/* Topics list */}
         <div className="space-y-2">
           <AnimatePresence initial={false}>
@@ -196,8 +323,12 @@ export function Edital({
               <div className="rounded-xl border border-dashed border-slate-300 bg-white px-4 py-6 text-center text-sm font-medium text-slate-500">
                 Nenhum tópico ainda. Adicione abaixo.
               </div>
+            ) : filteredSubjectTopics.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-slate-300 bg-white px-4 py-6 text-center text-sm font-medium text-slate-500">
+                Nenhum tópico encontrado com os filtros atuais.
+              </div>
             ) : (
-              subjectTopics.map((topic) => {
+              filteredSubjectTopics.map((topic) => {
                 const statusStyle = STATUS_COLORS[topic.status];
                 const diffStyle = DIFFICULTY_COLORS[topic.dificuldade];
 
@@ -306,6 +437,17 @@ export function Edital({
         </button>
       </div>
 
+      <EditalFilters
+        search={search}
+        status={statusFilter}
+        difficulty={difficultyFilter}
+        resultLabel={`${filteredSubjects.length} de ${subjects.length} matéria${subjects.length !== 1 ? "s" : ""} exibida${filteredSubjects.length !== 1 ? "s" : ""}`}
+        onSearchChange={setSearch}
+        onStatusChange={setStatusFilter}
+        onDifficultyChange={setDifficultyFilter}
+        onClear={clearFilters}
+      />
+
       {subjects.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center shadow-sm shadow-slate-900/5">
           <p className="text-sm font-semibold text-slate-600">Nenhuma matéria cadastrada.</p>
@@ -313,10 +455,17 @@ export function Edital({
             Clique em &quot;Nova matéria&quot; para começar.
           </p>
         </div>
+      ) : filteredSubjects.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center shadow-sm shadow-slate-900/5">
+          <p className="text-sm font-semibold text-slate-600">Nenhuma matéria encontrada.</p>
+          <p className="mt-1 text-xs text-slate-400">
+            Ajuste a busca ou limpe os filtros para ver todo o edital.
+          </p>
+        </div>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-3">
           <AnimatePresence initial={false}>
-            {subjects.map((subject) => {
+            {filteredSubjects.map((subject) => {
               const subjectTopics = topics.filter((t) => t.materiaId === subject.id);
               return (
                 <motion.div
