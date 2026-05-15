@@ -1689,7 +1689,7 @@ export default function Home() {
       {/* Mobile bottom nav */}
       <nav
         aria-label="Navegação mobile"
-        className={`${adminView ? "hidden" : "grid"} mobile-bottom-nav grid-cols-5 overflow-hidden border-t border-slate-800 bg-slate-950 px-2 pb-[calc(0.45rem+env(safe-area-inset-bottom))] pt-2 shadow-[0_-10px_30px_rgba(15,23,42,0.24)] xl:hidden`}
+        className={`${adminView || timerFocusOpen ? "hidden" : "grid"} mobile-bottom-nav grid-cols-5 overflow-hidden border-t border-slate-800 bg-slate-950 px-2 pb-[calc(0.45rem+env(safe-area-inset-bottom))] pt-2 shadow-[0_-10px_30px_rgba(15,23,42,0.24)] xl:hidden`}
       >
         {mobileNavItems.map((item) => {
           const Icon = item.icon;

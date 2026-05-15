@@ -63,7 +63,7 @@ export function FocusTimer({
   return (
     <section
       aria-label="Modo foco"
-      className="fixed inset-0 z-50 h-dvh w-full max-w-full overflow-hidden bg-[radial-gradient(circle_at_top,#1d4ed8_0,#0f172a_44%,#020617_100%)] text-white"
+      className="fixed inset-0 z-[2147483647] h-dvh w-full max-w-full overflow-hidden bg-[radial-gradient(circle_at_top,#1d4ed8_0,#0f172a_44%,#020617_100%)] text-white"
     >
       <div className="flex h-full min-h-0 touch-pan-y flex-col overflow-y-auto overscroll-contain px-5 py-5 [-webkit-overflow-scrolling:touch] md:px-10 md:py-8">
         <div className="flex shrink-0 items-center justify-between gap-3">
