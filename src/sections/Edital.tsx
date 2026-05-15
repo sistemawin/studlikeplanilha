@@ -165,7 +165,7 @@ export function Edital({
         {/* Breadcrumb */}
         <button
           onClick={() => setActiveSubjectId(null)}
-          className="mb-4 flex items-center gap-1.5 text-sm font-semibold text-white/40 transition hover:text-white"
+          className="mb-4 flex items-center gap-1.5 text-sm font-semibold text-slate-500 transition hover:text-slate-950"
         >
           <ChevronLeft className="h-4 w-4" aria-hidden="true" />
           Todas as matérias
@@ -193,7 +193,7 @@ export function Edital({
         <div className="space-y-2">
           <AnimatePresence initial={false}>
             {subjectTopics.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-white/10 px-4 py-6 text-center text-sm font-medium text-white/30">
+              <div className="rounded-xl border border-dashed border-slate-300 bg-white px-4 py-6 text-center text-sm font-medium text-slate-500">
                 Nenhum tópico ainda. Adicione abaixo.
               </div>
             ) : (
@@ -217,7 +217,7 @@ export function Edital({
                     initial={{ opacity: 0, y: 6 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, x: 30, transition: { duration: 0.18 } }}
-                    className="group flex items-center gap-3 rounded-xl border border-white/5 bg-white/[0.04] px-4 py-3 transition hover:bg-white/[0.07]"
+                    className="group flex items-center gap-3 rounded-xl border border-slate-800 bg-slate-950 px-4 py-3 shadow-sm shadow-slate-900/10 transition hover:bg-slate-900"
                   >
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-semibold leading-snug text-white">{topic.titulo}</p>
@@ -255,7 +255,7 @@ export function Edital({
         </div>
 
         {/* Add topics form */}
-        <div className="mt-5 rounded-2xl border border-white/8 bg-white/[0.03] p-4">
+        <div className="mt-5 rounded-2xl border border-slate-800 bg-slate-950 p-4 shadow-sm shadow-slate-900/10">
           <p className="mb-2 text-sm font-semibold text-white/50">Adicionar tópicos</p>
           <textarea
             value={newTopicText}
@@ -290,8 +290,8 @@ export function Edital({
     >
       <div className="mb-4 flex items-center justify-between gap-3">
         <div>
-          <h2 className="text-lg font-bold text-white">Edital verticalizado</h2>
-          <p className="text-sm text-white/40">
+          <h2 className="text-lg font-bold text-slate-950">Edital verticalizado</h2>
+          <p className="text-sm text-slate-500">
             {subjects.length === 0
               ? "Adicione matérias para começar."
               : "Clique em uma matéria para ver os tópicos."}
@@ -307,9 +307,9 @@ export function Edital({
       </div>
 
       {subjects.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-white/10 px-6 py-12 text-center">
-          <p className="text-sm font-semibold text-white/40">Nenhuma matéria cadastrada.</p>
-          <p className="mt-1 text-xs text-white/25">
+        <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center shadow-sm shadow-slate-900/5">
+          <p className="text-sm font-semibold text-slate-600">Nenhuma matéria cadastrada.</p>
+          <p className="mt-1 text-xs text-slate-400">
             Clique em &quot;Nova matéria&quot; para começar.
           </p>
         </div>
