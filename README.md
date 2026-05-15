@@ -1,36 +1,43 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# PlanilhaGPT
 
-## Getting Started
+Aplicação web responsiva para concurseiros de alta performance, construída com Next.js, Tailwind CSS e estrutura Supabase.
 
-First, run the development server:
+## O que já está implementado
+
+- Dashboard administrativo com menu lateral no desktop e bottom nav no mobile.
+- Edital verticalizado por matéria e tópico.
+- Status por tópico: `Não Estudado`, `Teoria Lida`, `Questões Feitas`, `Revisado`.
+- Progresso geral e por matéria.
+- Motor de revisão 1/7/21/30 ao marcar tópico como estudado.
+- Revisões adicionais por dificuldade.
+- Revisão manual com data definida pelo usuário.
+- Painel `Para revisar hoje` com pendências e atrasos.
+- Planejamento semanal ou por ciclos.
+- Metas de horas e questões.
+- Registro de simulados com cálculo `(Acertos / Total de Questões) * 100`.
+- Arquivamento total do edital.
+- Persistência local via `localStorage` para teste imediato.
+- Schema SQL Supabase com RLS em `supabase/schema.sql`.
+- Edge Function base em `supabase/functions/daily-review-alerts`.
+
+## Rodar localmente
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abra `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Conectar ao Supabase
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Crie `.env.local`:
 
-## Learn More
+```bash
+NEXT_PUBLIC_SUPABASE_URL=...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+```
 
-To learn more about Next.js, take a look at the following resources:
+Depois aplique `supabase/schema.sql` no SQL Editor do Supabase ou via Supabase CLI.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+O arquivo `src/lib/supabase.ts` já expõe `getSupabaseBrowserClient()` com inicialização preguiçosa para uso futuro em queries reais.
