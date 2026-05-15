@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #eef4ff;
-  --foreground: #102033;
+  --background: #f6f8fb;
+  --foreground: #111827;
 }
 
 @theme inline {
@@ -22,6 +22,7 @@ body {
     "ss01" 1;
   -webkit-font-smoothing: antialiased;
   text-rendering: geometricPrecision;
+  overflow-x: hidden;
 }
 
 ::selection {
@@ -34,4 +35,23 @@ select,
 input,
 textarea {
   font: inherit;
+}
+
+button,
+select {
+  -webkit-tap-highlight-color: transparent;
+}
+
+input,
+select,
+textarea {
+  font-size: 16px;
+}
+
+@media (min-width: 768px) {
+  input,
+  select,
+  textarea {
+    font-size: 14px;
+  }
 }

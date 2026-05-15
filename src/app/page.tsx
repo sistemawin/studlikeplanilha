@@ -291,8 +291,8 @@ function NavButton({
       onClick={onClick}
       className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition ${
         active
-          ? "bg-white text-blue-700 shadow-sm"
-          : "text-blue-100 hover:bg-white/10 hover:text-white"
+          ? "bg-white text-slate-950 shadow-sm"
+          : "text-slate-300 hover:bg-white/10 hover:text-white"
       }`}
     >
       <Icon className="h-4 w-4" />
@@ -353,10 +353,10 @@ function PieChart({
   const total = slices.reduce((sum, slice) => sum + slice.value, 0);
 
   return (
-    <div className="rounded-lg border border-blue-100 bg-white p-5 shadow-sm shadow-blue-950/5">
+    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5 sm:p-5">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-blue-500">
+          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400">
             Analytics
           </p>
           <h2 className="mt-1 text-xl font-semibold text-slate-950">{title}</h2>
@@ -440,29 +440,29 @@ function AuthScreen({
   const isSignup = mode === "signup";
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top_left,#bfdbfe_0,#eef4ff_38%,#ffffff_100%)] px-4 py-10 text-slate-950">
-      <section className="grid w-full max-w-5xl overflow-hidden rounded-2xl border border-white/70 bg-white/80 shadow-2xl shadow-blue-950/15 backdrop-blur-xl lg:grid-cols-[1.05fr_0.95fr]">
-        <div className="flex min-h-[560px] flex-col justify-between bg-[#1877f2] p-8 text-white md:p-10">
+    <main className="flex min-h-screen items-center justify-center bg-[#f6f8fb] px-4 py-6 text-slate-950 sm:py-10">
+      <section className="grid w-full max-w-5xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-900/8 lg:grid-cols-[0.92fr_1.08fr]">
+        <div className="flex min-h-0 flex-col justify-between bg-slate-950 p-5 text-white sm:p-8 lg:min-h-[560px] lg:p-10">
           <div>
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white text-blue-700 shadow-sm">
-              <BookOpenCheck className="h-6 w-6" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-slate-950 shadow-sm sm:h-11 sm:w-11">
+              <BookOpenCheck className="h-5 w-5 sm:h-6 sm:w-6" />
             </div>
-            <p className="mt-8 text-[11px] font-bold uppercase tracking-[0.24em] text-blue-100">
-              PlanilhaGPT Premium
+            <p className="mt-5 text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400 lg:mt-8">
+              Studlike
             </p>
-            <h1 className="mt-3 max-w-md text-4xl font-semibold tracking-normal md:text-5xl">
-              Entre para acompanhar sua performance.
+            <h1 className="mt-2 max-w-md text-2xl font-semibold tracking-normal sm:mt-3 sm:text-4xl lg:text-5xl">
+              Controle real do seu plano de estudos.
             </h1>
-            <p className="mt-4 max-w-md text-base leading-7 text-blue-50">
+            <p className="mt-3 max-w-md text-sm leading-6 text-slate-300 sm:mt-4 sm:text-base sm:leading-7">
               Login seguro com Supabase para salvar matérias, tópicos, revisões e simulados por usuário.
             </p>
           </div>
 
-          <div className="grid gap-3 text-sm text-blue-50">
+          <div className="mt-6 hidden gap-3 text-sm text-slate-300 sm:grid lg:mt-0">
             {["Dados protegidos por usuário", "Dashboard com gráficos", "Revisões e simulados salvos"].map(
               (item) => (
                 <div key={item} className="flex items-center gap-3">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/15">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/10">
                     <ShieldCheck className="h-4 w-4" />
                   </span>
                   <span className="font-medium">{item}</span>
@@ -472,12 +472,12 @@ function AuthScreen({
           </div>
         </div>
 
-        <div className="p-6 md:p-10">
+        <div className="p-5 sm:p-6 md:p-10">
           <div className="mx-auto max-w-md">
-            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-blue-500">
+            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-blue-600">
               Acesso
             </p>
-            <h2 className="mt-2 text-3xl font-semibold text-slate-950">
+            <h2 className="mt-2 text-2xl font-semibold text-slate-950 sm:text-3xl">
               {isSignup ? "Criar conta" : "Entrar na conta"}
             </h2>
             <p className="mt-2 text-sm leading-6 text-slate-500">
@@ -490,7 +490,7 @@ function AuthScreen({
               {isSignup && (
                 <label className="block">
                   <span className="text-sm font-semibold text-slate-700">Nome</span>
-                  <div className="mt-2 flex h-12 items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 focus-within:border-blue-500">
+                  <div className="mt-2 flex h-12 items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 focus-within:border-blue-500">
                     <UserPlus className="h-4 w-4 text-slate-400" />
                     <input
                       value={name}
@@ -504,7 +504,7 @@ function AuthScreen({
 
               <label className="block">
                 <span className="text-sm font-semibold text-slate-700">E-mail</span>
-                <div className="mt-2 flex h-12 items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 focus-within:border-blue-500">
+                <div className="mt-2 flex h-12 items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 focus-within:border-blue-500">
                   <Mail className="h-4 w-4 text-slate-400" />
                   <input
                     type="email"
@@ -518,7 +518,7 @@ function AuthScreen({
 
               <label className="block">
                 <span className="text-sm font-semibold text-slate-700">Senha</span>
-                <div className="mt-2 flex h-12 items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 focus-within:border-blue-500">
+                <div className="mt-2 flex h-12 items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 focus-within:border-blue-500">
                   <LockKeyhole className="h-4 w-4 text-slate-400" />
                   <input
                     type="password"
@@ -547,7 +547,7 @@ function AuthScreen({
               <button
                 onClick={onSubmit}
                 disabled={loading}
-                className="flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-[#1877f2] text-sm font-bold text-white shadow-lg shadow-blue-700/20 transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70"
+                className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-slate-950 text-sm font-bold text-white shadow-lg shadow-slate-900/15 transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-70"
               >
                 {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                 {isSignup ? "Criar conta" : "Entrar"}
@@ -556,7 +556,7 @@ function AuthScreen({
 
             <button
               onClick={() => onModeChange(isSignup ? "login" : "signup")}
-              className="mt-6 w-full rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-sm font-bold text-blue-700 hover:bg-blue-100"
+              className="mt-6 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-100"
             >
               {isSignup ? "Já tenho conta" : "Criar uma nova conta"}
             </button>
@@ -951,7 +951,7 @@ export default function Home() {
     { icon: ClipboardList, label: "Edital", target: "edital", action: () => scrollToSection("edital") },
     { icon: RotateCcw, label: "Revisar", target: "revisoes", action: () => scrollToSection("revisoes") },
     { icon: Timer, label: "Timer", action: openFocusTimer },
-    { icon: Archive, label: "Reset", action: archiveAll },
+    { icon: BarChart3, label: "Dados", target: "simulados", action: () => scrollToSection("simulados") },
   ];
 
   if (!authReady) {
@@ -986,7 +986,7 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,#dbeafe_0,#eef4ff_34%,#f8fbff_100%)] text-slate-950">
+    <main className="min-h-screen bg-[#f6f8fb] text-slate-950">
       {timerFocusOpen && (
         <section className="fixed inset-0 z-50 flex min-h-screen flex-col bg-[radial-gradient(circle_at_top,#1d4ed8_0,#0f172a_44%,#020617_100%)] px-5 py-5 text-white md:px-10 md:py-8">
           <div className="flex items-center justify-between gap-3">
@@ -1068,14 +1068,14 @@ export default function Home() {
         </section>
       )}
 
-      <aside className="fixed left-0 top-0 hidden h-screen w-20 border-r border-blue-900/20 bg-[#1877f2] p-3 text-white shadow-xl shadow-blue-900/10 lg:block xl:w-64">
+      <aside className="fixed left-0 top-0 hidden h-screen w-20 border-r border-slate-800 bg-slate-950 p-3 text-white shadow-xl shadow-slate-900/10 lg:block xl:w-64">
         <div className="mb-8 flex items-center gap-3 px-2 py-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white text-blue-700 shadow-sm">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white text-slate-950 shadow-sm">
             <BookOpenCheck className="h-5 w-5" />
           </div>
           <div className="hidden xl:block">
-            <p className="text-sm font-semibold">PlanilhaGPT</p>
-            <p className="text-xs text-blue-100">Alta performance</p>
+            <p className="text-sm font-semibold">Studlike</p>
+            <p className="text-xs text-slate-400">Plano de estudos</p>
           </div>
         </div>
         <nav className="space-y-1">
@@ -1120,40 +1120,47 @@ export default function Home() {
       </aside>
 
       <section className="pb-24 lg:ml-20 lg:pb-0 xl:ml-64">
-        <header className="sticky top-0 z-20 border-b border-blue-100 bg-white/80 px-4 py-4 shadow-sm shadow-blue-900/5 backdrop-blur-xl md:px-8">
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-blue-500">
-                Central de performance
-              </p>
-              <h1 className="mt-1 text-3xl font-semibold tracking-normal text-slate-950 md:text-4xl">
-                Dashboard de estudos
-              </h1>
-              <p className="mt-1 text-sm leading-6 text-slate-500">
+        <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 px-4 py-3 shadow-sm shadow-slate-900/5 backdrop-blur-xl md:px-8 md:py-4">
+          <div className="mx-auto flex max-w-7xl flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div className="min-w-0">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-950 text-white lg:hidden">
+                  <BookOpenCheck className="h-5 w-5" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-blue-600">
+                    Hoje
+                  </p>
+                  <h1 className="mt-0.5 truncate text-xl font-semibold tracking-normal text-slate-950 sm:text-2xl md:text-3xl">
+                    Dashboard de estudos
+                  </h1>
+                </div>
+              </div>
+              <p className="mt-2 hidden text-sm leading-6 text-slate-500 sm:block">
                 Alertas, edital verticalizado e metas do dia em uma tela.
               </p>
-              <p className="mt-2 text-xs font-medium text-slate-400">
+              <p className="mt-1 truncate text-xs font-medium text-slate-400 sm:mt-2">
                 {session.user.email}
               </p>
             </div>
-            <div className="grid grid-cols-2 gap-2 sm:flex">
+            <div className="grid grid-cols-2 gap-2 sm:flex sm:shrink-0">
               <button
                 onClick={openFocusTimer}
-                className="flex h-11 items-center justify-center gap-2 rounded-lg bg-[#1877f2] px-4 text-sm font-semibold text-white shadow-sm shadow-blue-600/20 hover:bg-blue-700"
+                className="flex h-11 items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 text-sm font-semibold text-white shadow-sm shadow-slate-900/15 hover:bg-slate-800"
               >
                 <Maximize2 className="h-4 w-4" />
-                {timerRunning ? `Foco ${formatTimer(timerSeconds)}` : `Iniciar foco`}
+                <span className="truncate">{timerRunning ? `Foco ${formatTimer(timerSeconds)}` : `Iniciar foco`}</span>
               </button>
               <button
                 onClick={registerQuestions}
-                className="flex h-11 items-center justify-center gap-2 rounded-lg border border-blue-200 bg-white px-4 text-sm font-semibold text-blue-700 hover:bg-blue-50"
+                className="flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50"
               >
                 <ListChecks className="h-4 w-4" />
-                Registrar questões
+                <span className="truncate">Questões</span>
               </button>
               <button
                 onClick={signOut}
-                className="col-span-2 flex h-11 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-600 hover:bg-slate-50 sm:col-span-1"
+                className="col-span-2 flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-600 hover:bg-slate-50 sm:col-span-1"
               >
                 <LogOut className="h-4 w-4" />
                 Sair
@@ -1162,52 +1169,52 @@ export default function Home() {
           </div>
         </header>
 
-        <div className="space-y-6 p-4 md:p-8">
-          <section id="dashboard" className="scroll-mt-24 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            <div className="rounded-lg border border-blue-200 bg-white p-5 shadow-sm shadow-blue-900/5">
+        <div className="mx-auto max-w-7xl space-y-5 p-4 md:space-y-6 md:p-8">
+          <section id="dashboard" className="scroll-mt-24 grid grid-cols-2 gap-3 md:gap-4 xl:grid-cols-4">
+            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5 sm:p-5">
               <div className="flex items-center justify-between">
                 <p className="text-sm font-medium text-slate-500">Progresso geral</p>
                 <Target className="h-5 w-5 text-blue-500" />
               </div>
-              <p className="mt-3 text-3xl font-semibold">{generalProgress}%</p>
+              <p className="mt-3 text-2xl font-semibold sm:text-3xl">{generalProgress}%</p>
               <ProgressBar value={generalProgress} tone="bg-blue-500" />
               <p className="mt-2 text-xs text-slate-500">
                 {completedTopics} revisados de {topics.length} tópicos
               </p>
             </div>
-            <div className="rounded-lg border border-amber-200 bg-amber-50 p-5 shadow-sm shadow-amber-900/5">
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 shadow-sm shadow-amber-900/5 sm:p-5">
               <div className="flex items-center justify-between">
                 <p className="text-sm font-medium text-amber-800">Para revisar hoje</p>
                 <RotateCcw className="h-5 w-5 text-amber-500" />
               </div>
-              <p className="mt-3 text-3xl font-semibold">{pendingToday.length}</p>
+              <p className="mt-3 text-2xl font-semibold sm:text-3xl">{pendingToday.length}</p>
               <p className="mt-2 text-xs text-amber-800/70">
                 {overdue} atrasadas exigem prioridade máxima
               </p>
             </div>
-            <div className="rounded-lg border border-rose-200 bg-rose-50 p-5 shadow-sm shadow-rose-900/5">
+            <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 shadow-sm shadow-rose-900/5 sm:p-5">
               <div className="flex items-center justify-between">
                 <p className="text-sm font-medium text-rose-800">Questões hoje</p>
                 <Flame className="h-5 w-5 text-red-500" />
               </div>
-              <p className="mt-3 text-3xl font-semibold">
+              <p className="mt-3 text-2xl font-semibold sm:text-3xl">
                 {questionGoal.valorAtual}/{questionGoal.valorObjetivo}
               </p>
               <ProgressBar value={pct(questionGoal.valorAtual, questionGoal.valorObjetivo)} tone="bg-rose-500" />
             </div>
-            <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-5 shadow-sm shadow-emerald-900/5">
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 shadow-sm shadow-emerald-900/5 sm:p-5">
               <div className="flex items-center justify-between">
                 <p className="text-sm font-medium text-emerald-800">Média simulados</p>
                 <BarChart3 className="h-5 w-5 text-sky-500" />
               </div>
-              <p className="mt-3 text-3xl font-semibold">{Number.isFinite(avgExam) ? avgExam : 0}%</p>
+              <p className="mt-3 text-2xl font-semibold sm:text-3xl">{Number.isFinite(avgExam) ? avgExam : 0}%</p>
               <p className="mt-2 text-xs text-emerald-800/70">
                 Fórmula: acertos / total obrigatório
               </p>
             </div>
           </section>
 
-          <p className="rounded-lg border border-blue-100 bg-white/90 px-4 py-3 text-sm font-medium text-blue-700 shadow-sm shadow-blue-900/5 backdrop-blur">
+          <p className="rounded-xl border border-blue-100 bg-white px-4 py-3 text-sm font-medium text-blue-700 shadow-sm shadow-slate-900/5">
             {notice}
           </p>
 
@@ -1227,8 +1234,8 @@ export default function Home() {
             />
           </section>
 
-          <section className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-            <div className="rounded-lg border border-blue-100 bg-white p-5 shadow-sm shadow-blue-950/5">
+          <section className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
+            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5 sm:p-5">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-blue-500">
@@ -1241,12 +1248,12 @@ export default function Home() {
                     Evolução dos percentuais de acerto registrados.
                   </p>
                 </div>
-                <span className="rounded-lg bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700">
+                <span className="w-fit rounded-lg bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700">
                   média {Number.isFinite(avgExam) ? avgExam : 0}%
                 </span>
               </div>
 
-              <div className="mt-6 flex h-52 items-end gap-3 rounded-lg border border-slate-100 bg-slate-50/70 px-4 py-5">
+              <div className="mt-6 flex h-48 items-end gap-2 rounded-xl border border-slate-100 bg-slate-50/70 px-3 py-5 sm:h-52 sm:gap-3 sm:px-4">
                 {examTrend.length === 0 ? (
                   <p className="self-center text-sm text-slate-500">Nenhum simulado registrado.</p>
                 ) : (
@@ -1268,8 +1275,8 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="rounded-lg border border-blue-100 bg-white p-5 shadow-sm shadow-blue-950/5">
-              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-blue-500">
+            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5 sm:p-5">
+              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400">
                 Ranking
               </p>
               <h2 className="mt-1 text-xl font-semibold text-slate-950">
@@ -1309,20 +1316,20 @@ export default function Home() {
             </div>
           </section>
 
-          <section className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-            <div id="edital" className="scroll-mt-24 rounded-lg border border-blue-100 bg-white shadow-sm shadow-blue-900/5">
-              <div className="flex flex-col gap-3 border-b border-blue-100 p-5 md:flex-row md:items-center md:justify-between">
+          <section className="grid gap-5 xl:grid-cols-[1.15fr_0.85fr]">
+            <div id="edital" className="scroll-mt-24 rounded-xl border border-slate-200 bg-white shadow-sm shadow-slate-900/5">
+              <div className="flex flex-col gap-3 border-b border-slate-200 p-4 md:flex-row md:items-center md:justify-between sm:p-5">
                 <div>
                   <h2 className="text-lg font-semibold">Edital verticalizado</h2>
                   <p className="text-sm text-slate-500">
                     Tópicos por matéria com status, dificuldade e revisões automáticas.
                   </p>
                 </div>
-                <span className="rounded-lg bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700">
+                <span className="w-fit rounded-lg bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700">
                   {studiedTopics}/{topics.length} iniciados
                 </span>
               </div>
-              <div className="grid gap-4 p-5">
+              <div className="grid gap-4 p-4 sm:p-5">
                 {subjects.map((subject) => {
                   const subjectTopics = topics.filter((topic) => topic.materiaId === subject.id);
                   const subjectProgress = pct(
@@ -1333,9 +1340,9 @@ export default function Home() {
                   return (
                     <div
                       key={subject.id}
-                      className={`rounded-lg border p-4 ${accent.border} ${accent.card}`}
+                      className={`rounded-xl border p-4 ${accent.border} ${accent.card}`}
                     >
-                      <div className="mb-4 flex items-center justify-between gap-3">
+                      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <div className="flex items-center gap-3">
                           <span className={`h-10 w-2 rounded-full ${accent.dot}`} />
                           <div>
@@ -1345,7 +1352,7 @@ export default function Home() {
                             </p>
                           </div>
                         </div>
-                        <div className="w-36">
+                        <div className="w-full sm:w-36">
                           <ProgressBar value={subjectProgress} tone={accent.progress} />
                         </div>
                       </div>
@@ -1353,7 +1360,7 @@ export default function Home() {
                         {subjectTopics.map((topic) => (
                           <div
                             key={topic.id}
-                            className="grid gap-3 rounded-lg border border-white/70 bg-white/90 p-3 shadow-sm shadow-slate-900/5 md:grid-cols-[1fr_150px_140px_120px]"
+                            className="grid gap-3 rounded-xl border border-white/70 bg-white/95 p-3 shadow-sm shadow-slate-900/5 md:grid-cols-[1fr_150px_140px_120px]"
                           >
                             <div>
                               <p className="font-medium">{topic.titulo}</p>
@@ -1366,7 +1373,7 @@ export default function Home() {
                               onChange={(event) =>
                                 updateTopicStatus(topic.id, event.target.value as TopicStatus)
                               }
-                              className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none focus:border-blue-500"
+                              className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-blue-500 md:h-10"
                             >
                               <option>Não Estudado</option>
                               <option>Teoria Lida</option>
@@ -1384,14 +1391,14 @@ export default function Home() {
                                   ),
                                 )
                               }
-                              className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none focus:border-blue-500"
+                              className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-blue-500 md:h-10"
                             >
                               <option>Fácil</option>
                               <option>Médio</option>
                               <option>Difícil</option>
                             </select>
                             <span
-                              className={`inline-flex h-10 items-center justify-center rounded-lg px-3 text-xs font-semibold ring-1 ${statusTone(
+                              className={`inline-flex h-10 items-center justify-center rounded-xl px-3 text-xs font-semibold ring-1 ${statusTone(
                                 topic.status,
                               )}`}
                             >
@@ -1406,12 +1413,12 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="space-y-6">
-              <div id="revisoes" className="scroll-mt-24 rounded-lg border border-blue-100 bg-white p-5 shadow-sm shadow-blue-900/5">
+            <div className="space-y-5">
+              <div id="revisoes" className="scroll-mt-24 rounded-xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5 sm:p-5">
                 <h2 className="text-lg font-semibold">Para revisar hoje</h2>
                 <div className="mt-4 space-y-3">
                   {pendingToday.length === 0 ? (
-                    <p className="rounded-lg bg-emerald-50 p-4 text-sm text-emerald-800">
+                    <p className="rounded-xl bg-emerald-50 p-4 text-sm text-emerald-800">
                       Nenhuma revisão pendente para hoje.
                     </p>
                   ) : (
@@ -1422,7 +1429,7 @@ export default function Home() {
                       return (
                         <div
                           key={review.id}
-                          className={`rounded-lg border p-4 ${
+                          className={`rounded-xl border p-4 ${
                             late ? "border-red-200 bg-red-50" : "border-amber-200 bg-amber-50"
                           }`}
                         >
@@ -1446,7 +1453,7 @@ export default function Home() {
                               );
                               setNotice("Revisão concluída.");
                             }}
-                            className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-[#1877f2] text-sm font-semibold text-white hover:bg-blue-700"
+                            className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-slate-950 text-sm font-semibold text-white hover:bg-slate-800"
                           >
                             <CheckCircle2 className="h-5 w-5" />
                             Concluir revisão
@@ -1458,7 +1465,7 @@ export default function Home() {
                 </div>
               </div>
 
-              <div className="rounded-lg border border-blue-100 bg-white p-5 shadow-sm shadow-blue-900/5">
+              <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5 sm:p-5">
                 <h2 className="text-lg font-semibold">Importar tópicos do edital</h2>
                 <p className="mt-1 text-sm text-slate-500">
                   Cole uma lista. Cada linha vira um tópico da matéria selecionada.
@@ -1466,7 +1473,7 @@ export default function Home() {
                 <select
                   value={selectedSubject}
                   onChange={(event) => setSelectedSubject(event.target.value)}
-                  className="mt-4 h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none focus:border-blue-500"
+                  className="mt-4 h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-blue-500 md:h-10"
                 >
                   {subjects.map((subject) => (
                     <option key={subject.id} value={subject.id}>
@@ -1479,11 +1486,11 @@ export default function Home() {
                   onChange={(event) => setNewTopicText(event.target.value)}
                   rows={5}
                   placeholder="Organização do Estado&#10;Administração Pública&#10;Poder Legislativo"
-                  className="mt-3 w-full rounded-lg border border-slate-200 p-3 text-sm outline-none focus:border-blue-500"
+                  className="mt-3 w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-blue-500"
                 />
                 <button
                   onClick={addTopicsFromText}
-                  className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#1877f2] text-sm font-semibold text-white hover:bg-blue-700"
+                  className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-slate-950 text-sm font-semibold text-white hover:bg-slate-800"
                 >
                   <Plus className="h-4 w-4" />
                   Adicionar tópicos
@@ -1492,20 +1499,20 @@ export default function Home() {
             </div>
           </section>
 
-          <section className="grid gap-6 xl:grid-cols-2">
-            <div id="cronograma" className="scroll-mt-24 rounded-lg border border-blue-100 bg-white p-5 shadow-sm shadow-blue-900/5">
-              <div className="flex items-center justify-between gap-3">
+          <section className="grid gap-5 xl:grid-cols-2">
+            <div id="cronograma" className="scroll-mt-24 rounded-xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5 sm:p-5">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <h2 className="text-lg font-semibold">Planejamento flexível</h2>
                   <p className="text-sm text-slate-500">Escolha grade semanal ou ciclo rotativo.</p>
                 </div>
-                <div className="flex rounded-lg bg-blue-50 p-1">
+                <div className="grid grid-cols-2 rounded-xl bg-slate-100 p-1 sm:flex">
                   {(["semanal", "ciclos"] as PlanningMode[]).map((mode) => (
                     <button
                       key={mode}
                       onClick={() => setSchedule((current) => ({ ...current, modo: mode }))}
                       className={`rounded-md px-3 py-2 text-sm font-semibold ${
-                        schedule.modo === mode ? "bg-[#1877f2] text-white shadow-sm" : "text-blue-700"
+                        schedule.modo === mode ? "bg-slate-950 text-white shadow-sm" : "text-slate-600"
                       }`}
                     >
                       {mode === "semanal" ? "Semanal" : "Ciclos"}
@@ -1521,7 +1528,7 @@ export default function Home() {
                 onChange={(event) =>
                   setSchedule((current) => ({ ...current, horasDia: Number(event.target.value) }))
                 }
-                className="mt-2 h-10 w-32 rounded-lg border border-slate-200 px-3 text-sm outline-none focus:border-blue-500"
+                className="mt-2 h-11 w-32 rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-blue-500 md:h-10"
               />
               <div className="mt-5 grid gap-3 md:grid-cols-2">
                 {calendarDays.map((day, index) => {
@@ -1530,7 +1537,7 @@ export default function Home() {
                       ? schedule.semanal[day]
                       : [schedule.ciclos[index % schedule.ciclos.length]];
                   return (
-                    <div key={day} className="rounded-lg border border-blue-100 bg-blue-50/60 p-4">
+                    <div key={day} className="rounded-xl border border-slate-200 bg-slate-50 p-4">
                       <div className="mb-3 flex items-center justify-between">
                         <p className="font-semibold">{day}</p>
                         <span className="flex items-center gap-1 text-xs text-blue-700">
@@ -1556,17 +1563,17 @@ export default function Home() {
               </div>
             </div>
 
-            <div id="simulados" className="scroll-mt-24 rounded-lg border border-blue-100 bg-white p-5 shadow-sm shadow-blue-900/5">
+            <div id="simulados" className="scroll-mt-24 rounded-xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5 sm:p-5">
               <h2 className="text-lg font-semibold">Metas, simulados e revisão manual</h2>
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+                <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
                   <p className="text-sm font-medium text-blue-800">Horas estudadas</p>
                   <p className="mt-2 text-2xl font-semibold">
                     {hourGoal.valorAtual}/{hourGoal.valorObjetivo}h
                   </p>
                   <ProgressBar value={pct(hourGoal.valorAtual, hourGoal.valorObjetivo)} tone="bg-blue-500" />
                 </div>
-                <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4">
+                <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
                   <p className="text-sm font-medium text-emerald-800">Questões diárias</p>
                   <p className="mt-2 text-2xl font-semibold">
                     {questionGoal.valorAtual}/{questionGoal.valorObjetivo}
@@ -1575,14 +1582,14 @@ export default function Home() {
                 </div>
               </div>
 
-              <div className="mt-5 rounded-lg border border-blue-100 bg-slate-50/70 p-4">
+              <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50/70 p-4">
                 <p className="font-semibold">Registrar simulado</p>
                 <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_90px_90px_auto]">
                   <input
                     value={examDraft.nome}
                     onChange={(event) => setExamDraft((draft) => ({ ...draft, nome: event.target.value }))}
                     placeholder="Nome do simulado"
-                    className="h-10 rounded-lg border border-slate-200 px-3 text-sm outline-none focus:border-blue-500"
+                    className="h-11 rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-blue-500 md:h-10"
                   />
                   <input
                     type="number"
@@ -1591,7 +1598,7 @@ export default function Home() {
                     onChange={(event) =>
                       setExamDraft((draft) => ({ ...draft, acertos: Number(event.target.value) }))
                     }
-                    className="h-10 rounded-lg border border-slate-200 px-3 text-sm outline-none focus:border-blue-500"
+                    className="h-11 rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-blue-500 md:h-10"
                   />
                   <input
                     type="number"
@@ -1600,11 +1607,11 @@ export default function Home() {
                     onChange={(event) =>
                       setExamDraft((draft) => ({ ...draft, total: Number(event.target.value) }))
                     }
-                    className="h-10 rounded-lg border border-slate-200 px-3 text-sm outline-none focus:border-blue-500"
+                    className="h-11 rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-blue-500 md:h-10"
                   />
                   <button
                     onClick={addExam}
-                    className="flex h-10 items-center justify-center gap-2 rounded-lg bg-[#1877f2] px-3 text-sm font-semibold text-white hover:bg-blue-700"
+                    className="flex h-11 items-center justify-center gap-2 rounded-xl bg-slate-950 px-3 text-sm font-semibold text-white hover:bg-slate-800 md:h-10"
                   >
                     <Save className="h-4 w-4" />
                     Salvar
@@ -1612,21 +1619,21 @@ export default function Home() {
                 </div>
                 <div className="mt-3 space-y-2">
                   {exams.map((exam) => (
-                    <div key={exam.id} className="flex items-center justify-between rounded-lg bg-white p-3 shadow-sm shadow-slate-900/5">
-                      <span className="text-sm font-medium">{exam.nome}</span>
+                    <div key={exam.id} className="flex items-center justify-between gap-3 rounded-xl bg-white p-3 shadow-sm shadow-slate-900/5">
+                      <span className="min-w-0 truncate text-sm font-medium">{exam.nome}</span>
                       <span className="text-sm font-semibold">{pct(exam.acertos, exam.total)}%</span>
                     </div>
                   ))}
                 </div>
               </div>
 
-              <div className="mt-5 rounded-lg border border-blue-100 bg-blue-50/50 p-4">
+              <div className="mt-5 rounded-xl border border-slate-200 bg-blue-50/50 p-4">
                 <p className="font-semibold">Revisão manual</p>
                 <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_150px_auto]">
                   <select
                     value={selectedManualTopic}
                     onChange={(event) => setSelectedManualTopic(event.target.value)}
-                    className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm outline-none focus:border-blue-500"
+                    className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-blue-500 md:h-10"
                   >
                     {topics.map((topic) => (
                       <option key={topic.id} value={topic.id}>
@@ -1638,11 +1645,11 @@ export default function Home() {
                     type="date"
                     value={manualDate}
                     onChange={(event) => setManualDate(event.target.value)}
-                    className="h-10 rounded-lg border border-slate-200 px-3 text-sm outline-none focus:border-blue-500"
+                    className="h-11 rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-blue-500 md:h-10"
                   />
                   <button
                     onClick={() => addManualReview(selectedManualTopic)}
-                    className="h-10 rounded-lg bg-[#1877f2] px-3 text-sm font-semibold text-white hover:bg-blue-700"
+                    className="h-11 rounded-xl bg-slate-950 px-3 text-sm font-semibold text-white hover:bg-slate-800 md:h-10"
                   >
                     Agendar
                   </button>
@@ -1653,7 +1660,7 @@ export default function Home() {
         </div>
       </section>
 
-      <nav className="fixed bottom-3 left-3 right-3 z-30 grid grid-cols-5 rounded-2xl border border-white/70 bg-white/85 p-1.5 shadow-2xl shadow-blue-950/20 backdrop-blur-xl lg:hidden">
+      <nav className="fixed bottom-3 left-3 right-3 z-30 grid grid-cols-5 rounded-2xl border border-slate-200 bg-white/95 p-1.5 shadow-2xl shadow-slate-900/18 backdrop-blur-xl lg:hidden">
         {mobileNavItems.map((item) => {
           const MobileIcon = item.icon;
           const active = item.target ? activeSection === item.target : item.label === "Timer" && timerRunning;
@@ -1661,10 +1668,10 @@ export default function Home() {
           <button
             key={item.label}
             onClick={item.action}
-            className={`flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl px-2 py-1 text-[11px] font-bold transition ${
+            className={`flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl px-1.5 py-1 text-[10px] font-bold transition sm:text-[11px] ${
               active
-                ? "bg-[#1877f2] text-white shadow-lg shadow-blue-700/25"
-                : "text-slate-500 hover:bg-blue-50 hover:text-blue-700"
+                ? "bg-slate-950 text-white shadow-lg shadow-slate-900/20"
+                : "text-slate-500 hover:bg-slate-100 hover:text-slate-950"
             }`}
           >
             <MobileIcon className="h-5 w-5" />

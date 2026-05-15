@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "PlanilhaGPT | Estudos de alta performance",
-  description: "Dashboard full-stack para edital verticalizado, cronograma e revisões inteligentes.",
+  title: "Studlike | Plano de estudos",
+  description: "Dashboard para edital verticalizado, cronograma, revisões e simulados.",
 };
 
 export default function RootLayout({
