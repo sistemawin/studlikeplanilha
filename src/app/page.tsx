@@ -1131,7 +1131,7 @@ export default function Home() {
         </button>
       </aside>
 
-      <section className="w-full max-w-full overflow-x-hidden pb-24 lg:ml-20 lg:w-auto lg:pb-0 xl:ml-64">
+      <section className="w-full max-w-full overflow-x-hidden pb-[calc(5.5rem+env(safe-area-inset-bottom))] lg:ml-20 lg:w-auto lg:pb-0 xl:ml-64">
         <header className="sticky top-0 z-20 w-full max-w-full overflow-x-hidden border-b border-slate-200 bg-white/92 px-4 py-3 shadow-sm shadow-slate-900/5 backdrop-blur-xl md:px-8 md:py-4">
           <div className="mx-auto flex max-w-7xl flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div className="min-w-0">
@@ -1765,7 +1765,7 @@ export default function Home() {
         </div>
       </section>
 
-      <nav className="fixed bottom-3 left-3 right-3 z-30 grid max-w-[calc(100vw-1.5rem)] grid-cols-5 overflow-hidden rounded-2xl border border-slate-200 bg-white/95 p-1.5 shadow-2xl shadow-slate-900/18 backdrop-blur-xl lg:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-30 grid w-full max-w-full grid-cols-5 overflow-hidden border-t border-slate-200 bg-white/96 px-2 pb-[calc(0.45rem+env(safe-area-inset-bottom))] pt-2 shadow-[0_-10px_30px_rgba(15,23,42,0.08)] backdrop-blur-xl lg:hidden">
         {mobileNavItems.map((item) => {
           const MobileIcon = item.icon;
           const active = item.target ? activeSection === item.target : item.label === "Timer" && timerRunning;
@@ -1773,9 +1773,9 @@ export default function Home() {
           <button
             key={item.label}
             onClick={item.action}
-            className={`flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl px-1.5 py-1 text-[10px] font-bold transition sm:text-[11px] ${
+            className={`flex min-h-14 flex-col items-center justify-center gap-1 rounded-2xl px-1.5 py-1 text-[10px] font-bold transition sm:text-[11px] ${
               active
-                ? "bg-slate-950 text-white shadow-lg shadow-slate-900/20"
+                ? "bg-slate-950 text-white shadow-sm shadow-slate-900/15"
                 : "text-slate-500 hover:bg-slate-100 hover:text-slate-950"
             }`}
           >
