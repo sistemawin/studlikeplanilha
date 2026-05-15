@@ -14,16 +14,20 @@ const COLOR_OPTIONS: { cor: string; label: string; dot: string }[] = [
   { cor: "bg-zinc-500",    label: "Cinza",    dot: "bg-zinc-500"    },
 ];
 
+type SaveData = { nome: string; peso: number; cor: string; topicos: string[] };
+
 type Props = {
   subject?: Subject;
-  onSave: (data: { nome: string; peso: number; cor: string }) => void;
+  onSave: (data: SaveData) => void;
   onClose: () => void;
 };
 
 export function SubjectModal({ subject, onSave, onClose }: Props) {
+  const isCreate = !subject;
   const [nome, setNome] = useState(subject?.nome ?? "");
   const [peso, setPeso] = useState(subject?.peso ?? 3);
   const [cor, setCor] = useState(subject?.cor ?? "bg-emerald-500");
+  const [topicosText, setTopicosText] = useState("");
   const [error, setError] = useState("");
 
   function handleSave() {
@@ -31,7 +35,10 @@ export function SubjectModal({ subject, onSave, onClose }: Props) {
       setError("O nome da matéria é obrigatório.");
       return;
     }
-    onSave({ nome: nome.trim(), peso, cor });
+    const topicos = isCreate
+      ? topicosText.split("\n").map((l) => l.trim()).filter(Boolean)
+      : [];
+    onSave({ nome: nome.trim(), peso, cor, topicos });
   }
 
   return (
@@ -56,6 +63,7 @@ export function SubjectModal({ subject, onSave, onClose }: Props) {
         </div>
 
         <div className="mt-5 space-y-5">
+          {/* Nome */}
           <div>
             <label htmlFor="subject-nome" className="block text-sm font-semibold text-slate-700">
               Nome
@@ -70,6 +78,7 @@ export function SubjectModal({ subject, onSave, onClose }: Props) {
             />
           </div>
 
+          {/* Peso */}
           <div>
             <p className="text-sm font-semibold text-slate-700">Peso no edital</p>
             <div className="mt-2 flex gap-2" role="group" aria-label="Peso da matéria">
@@ -90,6 +99,7 @@ export function SubjectModal({ subject, onSave, onClose }: Props) {
             </div>
           </div>
 
+          {/* Cor */}
           <div>
             <p className="text-sm font-semibold text-slate-700">Cor</p>
             <div className="mt-2 flex flex-wrap gap-3" role="group" aria-label="Cor da matéria">
@@ -106,6 +116,30 @@ export function SubjectModal({ subject, onSave, onClose }: Props) {
               ))}
             </div>
           </div>
+
+          {/* Tópicos — só exibe na criação */}
+          {isCreate && (
+            <div>
+              <label htmlFor="modal-topicos" className="block text-sm font-semibold text-slate-700">
+                Tópicos{" "}
+                <span className="font-normal text-slate-400">(opcional)</span>
+              </label>
+              <p className="mt-0.5 text-xs text-slate-500">Cole uma lista — cada linha vira um tópico.</p>
+              <textarea
+                id="modal-topicos"
+                value={topicosText}
+                onChange={(e) => setTopicosText(e.target.value)}
+                rows={4}
+                placeholder={"Organização do Estado\nAdministração Pública\nPoder Legislativo"}
+                className="mt-2 w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              />
+              {topicosText.trim() && (
+                <p className="mt-1 text-xs text-blue-600">
+                  {topicosText.split("\n").filter((l) => l.trim()).length} tópico(s) serão adicionados
+                </p>
+              )}
+            </div>
+          )}
 
           {error && (
             <p role="alert" className="text-sm font-medium text-rose-600">

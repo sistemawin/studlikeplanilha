@@ -881,16 +881,29 @@ export default function Home() {
     }
   }
 
-  function addSubject(data: { nome: string; peso: number; cor: string }) {
+  function addSubject(data: { nome: string; peso: number; cor: string; topicos: string[] }) {
     if (preventReadOnlyAction()) return;
-    const newSubject: Subject = { id: crypto.randomUUID(), ...data };
+    const newSubject: Subject = { id: crypto.randomUUID(), nome: data.nome, peso: data.peso, cor: data.cor };
     setSubjects((ss) => [...ss, newSubject]);
     setSelectedSubject(newSubject.id);
+    if (data.topicos.length > 0) {
+      setTopics((ts) => [
+        ...ts,
+        ...data.topicos.map((titulo) => ({
+          id: crypto.randomUUID(),
+          materiaId: newSubject.id,
+          titulo: titulo.replace(/^[-*0-9. ]+/, ""),
+          status: "Não Estudado" as TopicStatus,
+          dificuldade: "Médio" as Difficulty,
+        })),
+      ]);
+    }
     setSubjectModal({ open: false });
-    setNotice(`Matéria "${data.nome}" criada.`);
+    const topMsg = data.topicos.length > 0 ? ` com ${data.topicos.length} tópico${data.topicos.length !== 1 ? "s" : ""}` : "";
+    setNotice(`Matéria "${data.nome}" criada${topMsg}.`);
   }
 
-  function updateSubject(id: string, data: { nome: string; peso: number; cor: string }) {
+  function updateSubject(id: string, data: { nome: string; peso: number; cor: string; topicos: string[] }) {
     if (preventReadOnlyAction()) return;
     setSubjects((ss) => ss.map((s) => (s.id === id ? { ...s, ...data } : s)));
     setSubjectModal({ open: false });
