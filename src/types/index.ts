@@ -50,6 +50,7 @@ export type Goal = {
 };
 
 export type SyncStatus = "idle" | "pending" | "saving" | "saved" | "error";
+export type SuggestionStatus = "nova" | "lida" | "planejada" | "resolvida" | "arquivada";
 
 export type Exam = {
   id: string;
@@ -66,6 +67,16 @@ export type QuestionLog = {
   quantidade: number;
   acertos: number | null;
   data: string;
+};
+
+export type Suggestion = {
+  id: string;
+  userId: string;
+  email: string;
+  categoria: string;
+  mensagem: string;
+  status: SuggestionStatus;
+  createdAt: string;
 };
 
 export type SubjectAccent = {
@@ -147,4 +158,14 @@ export type QuestionLogRow = {
   quantidade: number;
   acertos: number | null;
   data_realizacao: string;
+};
+
+export type SuggestionRow = {
+  id: string;
+  user_id: string;
+  email: string;
+  categoria: string;
+  mensagem: string;
+  status: SuggestionStatus;
+  created_at: string;
 };

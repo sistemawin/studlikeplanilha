@@ -2,6 +2,7 @@
 
 import {
   Archive,
+  AppWindow,
   BarChart3,
   CalendarDays,
   Check,
@@ -10,7 +11,9 @@ import {
   Loader2,
   LogOut,
   Maximize2,
+  MessageSquarePlus,
   RotateCcw,
+  ShieldCheck,
 } from "lucide-react";
 import { StudlikeLogo } from "@/components/StudlikeLogo";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -32,6 +35,9 @@ import type {
   ReviewType,
   Subject,
   SyncStatus,
+  Suggestion,
+  SuggestionRow,
+  SuggestionStatus,
   Topic,
   TopicStatus,
 } from "@/types";
@@ -45,6 +51,8 @@ import { Reviews } from "@/sections/Reviews";
 import { Schedule } from "@/sections/Schedule";
 import { Exams } from "@/sections/Exams";
 import { FocusTimer } from "@/sections/FocusTimer";
+import { SuggestionModal } from "@/components/SuggestionModal";
+import { AdminPanel } from "@/sections/AdminPanel";
 
 const SYNC_DEBOUNCE_MS = 700;
 
@@ -68,6 +76,7 @@ export default function Home() {
   const [manualDate, setManualDate] = useState(() => addDays(new Date(), 5));
   const [examDraft, setExamDraft] = useState({ nome: "", acertos: 0, total: 0 });
   const [activeSection, setActiveSection] = useState<NavTarget>("dashboard");
+  const [adminView, setAdminView] = useState(false);
   const [notice, setNotice] = useState("Pronto para estudar.");
 
   // ── Timer state ───────────────────────────────────────────────────────────
@@ -88,6 +97,16 @@ export default function Home() {
 
   // ── Subject modal state ───────────────────────────────────────────────────
   const [subjectModal, setSubjectModal] = useState<{ open: boolean; subject?: Subject }>({ open: false });
+
+  // ── Suggestions/admin state ───────────────────────────────────────────────
+  const [suggestionOpen, setSuggestionOpen] = useState(false);
+  const [suggestionCategory, setSuggestionCategory] = useState("Melhoria de design");
+  const [suggestionMessage, setSuggestionMessage] = useState("");
+  const [suggestionLoading, setSuggestionLoading] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [adminLoading, setAdminLoading] = useState(false);
+  const [adminError, setAdminError] = useState("");
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
 
   // ── Sync status ───────────────────────────────────────────────────────────
   const [syncStatus, setSyncStatus] = useState<SyncStatus>("idle");
@@ -141,6 +160,9 @@ export default function Home() {
     if (!session) {
       setRemoteReady(false);
       setRemoteError("");
+      setIsAdmin(false);
+      setAdminView(false);
+      setSuggestions([]);
       lastSyncedStateRef.current = "";
       return;
     }
@@ -178,6 +200,34 @@ export default function Home() {
     }
 
     void load();
+    return () => { cancelled = true; };
+  }, [session]);
+
+  // ── Admin access check ────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!session) return;
+    let cancelled = false;
+    const supabase = getSupabaseBrowserClient();
+
+    async function checkAdmin() {
+      try {
+        const { data, error } = await supabase
+          .from("app_admins")
+          .select("user_id")
+          .eq("user_id", session!.user.id)
+          .maybeSingle();
+        if (cancelled) return;
+        if (error) {
+          setIsAdmin(false);
+          return;
+        }
+        setIsAdmin(Boolean(data));
+      } catch {
+        if (!cancelled) setIsAdmin(false);
+      }
+    }
+
+    void checkAdmin();
     return () => { cancelled = true; };
   }, [session]);
 
@@ -479,6 +529,81 @@ export default function Home() {
     setNotice("Registro de questões removido.");
   }
 
+  async function submitSuggestion() {
+    if (!session) return;
+    const message = suggestionMessage.trim();
+    if (message.length < 6) {
+      setNotice("Escreva uma sugestão com mais detalhes antes de enviar.");
+      return;
+    }
+
+    setSuggestionLoading(true);
+    try {
+      const supabase = getSupabaseBrowserClient();
+      const { error } = await supabase.from("sugestoes").insert({
+        user_id: session.user.id,
+        email: session.user.email ?? "",
+        categoria: suggestionCategory,
+        mensagem: message,
+      });
+      if (error) throw error;
+      setSuggestionOpen(false);
+      setSuggestionMessage("");
+      setSuggestionCategory("Melhoria de design");
+      setNotice("Sugestão enviada. Obrigado pelo feedback.");
+      if (isAdmin) void loadAdminSuggestions();
+    } catch (err) {
+      setNotice(err instanceof Error ? err.message : "Não foi possível enviar a sugestão.");
+    } finally {
+      setSuggestionLoading(false);
+    }
+  }
+
+  async function loadAdminSuggestions() {
+    if (!session || !isAdmin) return;
+    setAdminLoading(true);
+    setAdminError("");
+    try {
+      const supabase = getSupabaseBrowserClient();
+      const { data, error } = await supabase
+        .from("sugestoes")
+        .select("id,user_id,email,categoria,mensagem,status,created_at")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      setSuggestions(((data ?? []) as SuggestionRow[]).map((row) => ({
+        id: row.id,
+        userId: row.user_id,
+        email: row.email,
+        categoria: row.categoria,
+        mensagem: row.mensagem,
+        status: row.status,
+        createdAt: row.created_at,
+      })));
+    } catch (err) {
+      setAdminError(err instanceof Error ? err.message : "Não foi possível carregar sugestões.");
+    } finally {
+      setAdminLoading(false);
+    }
+  }
+
+  async function updateSuggestionStatus(id: string, status: SuggestionStatus) {
+    setSuggestions((items) => items.map((item) => (item.id === id ? { ...item, status } : item)));
+    try {
+      const supabase = getSupabaseBrowserClient();
+      const { error } = await supabase.from("sugestoes").update({ status }).eq("id", id);
+      if (error) throw error;
+    } catch (err) {
+      setAdminError(err instanceof Error ? err.message : "Não foi possível atualizar o status.");
+      void loadAdminSuggestions();
+    }
+  }
+
+  function openAdminView() {
+    setAdminView(true);
+    void loadAdminSuggestions();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
   function addSubject(data: { nome: string; peso: number; cor: string }) {
     const newSubject: Subject = { id: crypto.randomUUID(), ...data };
     setSubjects((ss) => [...ss, newSubject]);
@@ -614,11 +739,13 @@ export default function Home() {
   }
 
   function scrollToSection(target: NavTarget) {
+    setAdminView(false);
     setActiveSection(target);
     document.getElementById(target)?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   function openMobileSection(target: NavTarget) {
+    setAdminView(false);
     setActiveSection(target);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -702,6 +829,17 @@ export default function Home() {
         />
       )}
 
+      <SuggestionModal
+        open={suggestionOpen}
+        categoria={suggestionCategory}
+        mensagem={suggestionMessage}
+        loading={suggestionLoading}
+        onCategoryChange={setSuggestionCategory}
+        onMessageChange={setSuggestionMessage}
+        onSubmit={submitSuggestion}
+        onClose={() => setSuggestionOpen(false)}
+      />
+
       {/* Desktop sidebar */}
       <aside className="fixed left-0 top-0 hidden h-screen w-64 border-r border-slate-900 bg-[#050505] p-3 text-white shadow-xl shadow-slate-900/10 xl:block">
         <div className="mb-8 flex items-center gap-3 px-2 py-3">
@@ -737,10 +875,10 @@ export default function Home() {
                 <StudlikeLogo size={40} className="shrink-0 rounded-xl xl:hidden" />
                 <div className="min-w-0">
                   <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-pink-600">
-                    {sectionTitle[activeSection]}
+                    {adminView ? "Admin" : sectionTitle[activeSection]}
                   </p>
                   <h1 className="mt-0.5 truncate text-xl font-semibold tracking-normal text-slate-950 sm:text-2xl md:text-3xl">
-                    Studlike
+                    {adminView ? "Área admin" : "Studlike"}
                   </h1>
                 </div>
               </div>
@@ -773,6 +911,24 @@ export default function Home() {
               )}
 
               <button
+                onClick={() => setSuggestionOpen(true)}
+                className="flex h-11 items-center justify-center gap-2 rounded-xl bg-pink-600 px-4 text-sm font-semibold text-white shadow-sm shadow-pink-600/20 hover:bg-pink-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-pink-500"
+              >
+                <MessageSquarePlus className="h-4 w-4" aria-hidden="true" />
+                <span className="truncate">Sugerir melhoria</span>
+              </button>
+
+              {isAdmin && (
+                <button
+                  onClick={adminView ? () => setAdminView(false) : openAdminView}
+                  className="flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
+                >
+                  {adminView ? <AppWindow className="h-4 w-4" aria-hidden="true" /> : <ShieldCheck className="h-4 w-4" aria-hidden="true" />}
+                  <span className="truncate">{adminView ? "Voltar ao app" : "Admin"}</span>
+                </button>
+              )}
+
+              <button
                 onClick={openFocusTimer}
                 aria-label="Abrir modo foco"
                 className="hidden h-11 items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 text-sm font-semibold text-white shadow-sm shadow-slate-900/15 hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500 sm:flex"
@@ -795,102 +951,117 @@ export default function Home() {
         </header>
 
         <div className="mx-auto w-full max-w-[1600px] space-y-5 overflow-x-hidden p-4 md:space-y-6 md:p-6 xl:p-8">
-          <ErrorBoundary label="Dashboard">
-            <Dashboard
-              topics={topics}
-              subjects={subjects}
-              reviews={{ pendingCount: pendingToday.length, overdueCount }}
-              questionGoal={questionGoal}
-              avgExam={avgExam}
-              generalProgress={generalProgress}
-              timerRunning={timerRunning}
-              timerLabel={formatTimer(timerSeconds)}
-              notice={notice}
-              activeSection={activeSection}
-              onOpenFocusTimer={openFocusTimer}
-              onNavigate={openMobileSection}
-            />
-          </ErrorBoundary>
-
-          <ErrorBoundary label="Edital">
-            <Edital
-              subjects={subjects}
-              topics={topics}
-              newTopicText={newTopicText}
-              selectedSubject={selectedSubject}
-              activeSection={activeSection}
-              onTopicTextChange={setNewTopicText}
-              onSubjectChange={setSelectedSubject}
-              onStatusChange={updateTopicStatus}
-              onDifficultyChange={updateTopicDifficulty}
-              onAddTopics={addTopicsFromText}
-              onDeleteTopic={deleteTopic}
-              onAddSubject={() => setSubjectModal({ open: true })}
-              onEditSubject={(subject) => setSubjectModal({ open: true, subject })}
-              onDeleteSubject={deleteSubject}
-            />
-          </ErrorBoundary>
-
-          {(activeSection === "edital" || activeSection === "revisoes") && (
-            <ErrorBoundary label="Revisões">
-              <Reviews
-                reviews={reviews}
-                topics={topicById}
-                subjects={subjectById}
-                todayIso={todayIso}
-                activeSection={activeSection}
-                onComplete={completeReview}
+          {adminView ? (
+            <ErrorBoundary label="Admin">
+              <AdminPanel
+                suggestions={suggestions}
+                loading={adminLoading}
+                error={adminError}
+                onBack={() => setAdminView(false)}
+                onRefresh={loadAdminSuggestions}
+                onStatusChange={updateSuggestionStatus}
               />
             </ErrorBoundary>
+          ) : (
+            <>
+              <ErrorBoundary label="Dashboard">
+                <Dashboard
+                  topics={topics}
+                  subjects={subjects}
+                  reviews={{ pendingCount: pendingToday.length, overdueCount }}
+                  questionGoal={questionGoal}
+                  avgExam={avgExam}
+                  generalProgress={generalProgress}
+                  timerRunning={timerRunning}
+                  timerLabel={formatTimer(timerSeconds)}
+                  notice={notice}
+                  activeSection={activeSection}
+                  onOpenFocusTimer={openFocusTimer}
+                  onNavigate={openMobileSection}
+                />
+              </ErrorBoundary>
+
+              <ErrorBoundary label="Edital">
+                <Edital
+                  subjects={subjects}
+                  topics={topics}
+                  newTopicText={newTopicText}
+                  selectedSubject={selectedSubject}
+                  activeSection={activeSection}
+                  onTopicTextChange={setNewTopicText}
+                  onSubjectChange={setSelectedSubject}
+                  onStatusChange={updateTopicStatus}
+                  onDifficultyChange={updateTopicDifficulty}
+                  onAddTopics={addTopicsFromText}
+                  onDeleteTopic={deleteTopic}
+                  onAddSubject={() => setSubjectModal({ open: true })}
+                  onEditSubject={(subject) => setSubjectModal({ open: true, subject })}
+                  onDeleteSubject={deleteSubject}
+                />
+              </ErrorBoundary>
+
+              {(activeSection === "edital" || activeSection === "revisoes") && (
+                <ErrorBoundary label="Revisões">
+                  <Reviews
+                    reviews={reviews}
+                    topics={topicById}
+                    subjects={subjectById}
+                    todayIso={todayIso}
+                    activeSection={activeSection}
+                    onComplete={completeReview}
+                  />
+                </ErrorBoundary>
+              )}
+
+              <section
+                className={`${
+                  activeSection === "cronograma" || activeSection === "simulados" ? "grid" : "hidden"
+                } gap-5 xl:grid 2xl:grid-cols-2`}
+              >
+                <ErrorBoundary label="Cronograma">
+                  <Schedule
+                    schedule={schedule}
+                    subjects={subjects}
+                    subjectById={subjectById}
+                    activeSection={activeSection}
+                    onModeChange={(mode: PlanningMode) => setSchedule((s) => ({ ...s, modo: mode }))}
+                    onHorasChange={(h: number) => setSchedule((s) => ({ ...s, horasDia: h }))}
+                    onUpdateSemanal={updateSemanal}
+                  />
+                </ErrorBoundary>
+
+                <ErrorBoundary label="Simulados">
+                  <Exams
+                    subjects={subjects}
+                    topics={topics}
+                    exams={exams}
+                    questionLogs={questionLogs}
+                    goals={goals}
+                    examDraft={examDraft}
+                    selectedManualTopic={selectedManualTopic}
+                    manualDate={manualDate}
+                    activeSection={activeSection}
+                    onExamDraftChange={setExamDraft}
+                    onAddExam={addExam}
+                    onDeleteExam={deleteExam}
+                    onManualTopicChange={setSelectedManualTopic}
+                    onManualDateChange={setManualDate}
+                    onAddManualReview={addManualReview}
+                    onUpdateGoalObjective={updateGoalObjective}
+                    onAddQuestionLog={addQuestionLog}
+                    onDeleteQuestionLog={deleteQuestionLog}
+                  />
+                </ErrorBoundary>
+              </section>
+            </>
           )}
-
-          <section
-            className={`${
-              activeSection === "cronograma" || activeSection === "simulados" ? "grid" : "hidden"
-            } gap-5 xl:grid 2xl:grid-cols-2`}
-          >
-            <ErrorBoundary label="Cronograma">
-              <Schedule
-                schedule={schedule}
-                subjects={subjects}
-                subjectById={subjectById}
-                activeSection={activeSection}
-                onModeChange={(mode: PlanningMode) => setSchedule((s) => ({ ...s, modo: mode }))}
-                onHorasChange={(h: number) => setSchedule((s) => ({ ...s, horasDia: h }))}
-                onUpdateSemanal={updateSemanal}
-              />
-            </ErrorBoundary>
-
-            <ErrorBoundary label="Simulados">
-              <Exams
-                subjects={subjects}
-                topics={topics}
-                exams={exams}
-                questionLogs={questionLogs}
-                goals={goals}
-                examDraft={examDraft}
-                selectedManualTopic={selectedManualTopic}
-                manualDate={manualDate}
-                activeSection={activeSection}
-                onExamDraftChange={setExamDraft}
-                onAddExam={addExam}
-                onDeleteExam={deleteExam}
-                onManualTopicChange={setSelectedManualTopic}
-                onManualDateChange={setManualDate}
-                onAddManualReview={addManualReview}
-                onUpdateGoalObjective={updateGoalObjective}
-                onAddQuestionLog={addQuestionLog}
-                onDeleteQuestionLog={deleteQuestionLog}
-              />
-            </ErrorBoundary>
-          </section>
         </div>
       </section>
 
       {/* Mobile bottom nav */}
       <nav
         aria-label="Navegação mobile"
-        className="fixed inset-x-0 bottom-0 z-30 grid w-full grid-cols-5 overflow-hidden border-t border-slate-200 bg-white/96 px-2 pb-[calc(0.45rem+env(safe-area-inset-bottom))] pt-2 shadow-[0_-10px_30px_rgba(15,23,42,0.08)] backdrop-blur-xl xl:hidden"
+        className={`${adminView ? "hidden" : "grid"} fixed inset-x-0 bottom-0 z-30 w-full grid-cols-5 overflow-hidden border-t border-slate-200 bg-white/96 px-2 pb-[calc(0.45rem+env(safe-area-inset-bottom))] pt-2 shadow-[0_-10px_30px_rgba(15,23,42,0.08)] backdrop-blur-xl xl:hidden`}
       >
         {mobileNavItems.map((item) => {
           const Icon = item.icon;

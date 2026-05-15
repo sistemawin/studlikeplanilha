@@ -10,6 +10,7 @@ create type topic_status as enum (
 create type topic_difficulty as enum ('Fácil', 'Médio', 'Difícil');
 create type review_type as enum ('1', '7', '21', '30', 'manual', 'dificuldade');
 create type goal_type as enum ('horas', 'questões');
+create type suggestion_status as enum ('nova', 'lida', 'planejada', 'resolvida', 'arquivada');
 
 create table public.materias (
   id uuid primary key default gen_random_uuid(),
@@ -80,6 +81,21 @@ create table public.questoes (
   constraint questoes_acertos_validos check (acertos is null or acertos <= quantidade)
 );
 
+create table public.app_admins (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  created_at timestamptz not null default now()
+);
+
+create table public.sugestoes (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  email text not null,
+  categoria text not null,
+  mensagem text not null check (char_length(trim(mensagem)) >= 6),
+  status suggestion_status not null default 'nova',
+  created_at timestamptz not null default now()
+);
+
 alter table public.materias enable row level security;
 alter table public.topicos enable row level security;
 alter table public.revisoes enable row level security;
@@ -87,6 +103,8 @@ alter table public.cronograma enable row level security;
 alter table public.metas enable row level security;
 alter table public.simulados enable row level security;
 alter table public.questoes enable row level security;
+alter table public.app_admins enable row level security;
+alter table public.sugestoes enable row level security;
 
 grant usage on schema public to authenticated;
 grant select, insert, update, delete on public.materias to authenticated;
@@ -96,6 +114,8 @@ grant select, insert, update, delete on public.cronograma to authenticated;
 grant select, insert, update, delete on public.metas to authenticated;
 grant select, insert, update, delete on public.simulados to authenticated;
 grant select, insert, update, delete on public.questoes to authenticated;
+grant select on public.app_admins to authenticated;
+grant select, insert, update on public.sugestoes to authenticated;
 
 create policy "materias do usuario" on public.materias
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
@@ -155,6 +175,26 @@ create policy "questoes do usuario" on public.questoes
     )
   );
 
+create policy "admin ve proprio registro" on public.app_admins
+  for select using (auth.uid() = user_id);
+
+create policy "usuarios criam sugestoes" on public.sugestoes
+  for insert with check (auth.uid() = user_id);
+
+create policy "usuarios veem proprias sugestoes" on public.sugestoes
+  for select using (
+    auth.uid() = user_id
+    or exists (select 1 from public.app_admins where app_admins.user_id = auth.uid())
+  );
+
+create policy "admins atualizam sugestoes" on public.sugestoes
+  for update using (
+    exists (select 1 from public.app_admins where app_admins.user_id = auth.uid())
+  )
+  with check (
+    exists (select 1 from public.app_admins where app_admins.user_id = auth.uid())
+  );
+
 -- Performance indexes
 create index idx_topicos_materia_id   on public.topicos (materia_id);
 create index idx_topicos_status       on public.topicos (status);
@@ -164,6 +204,8 @@ create index idx_simulados_user_id    on public.simulados (user_id);
 create index idx_cronograma_user_id   on public.cronograma (user_id);
 create index idx_questoes_user_id     on public.questoes (user_id);
 create index idx_questoes_topico_id   on public.questoes (topico_id);
+create index idx_sugestoes_user_id    on public.sugestoes (user_id);
+create index idx_sugestoes_status     on public.sugestoes (status);
 
 create index revisoes_pendentes_idx
   on public.revisoes (data_agendada)
