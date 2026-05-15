@@ -1,6 +1,12 @@
 import { CheckCircle2, Pause, Play, RotateCcw, Timer, X } from "lucide-react";
-import type { Goal } from "@/types";
+import { useState } from "react";
+import type { Goal, Review, Subject, Topic } from "@/types";
 import { formatTimer } from "@/lib/utils";
+
+type SessionData = {
+  topicId?: string;
+  reviewId?: string;
+};
 
 type Props = {
   timerRunning: boolean;
@@ -8,9 +14,14 @@ type Props = {
   hourGoal: Goal;
   questionGoal: Goal;
   pendingTodayCount: number;
+  subjects: Subject[];
+  topics: Topic[];
+  pendingReviews: Review[];
+  topicById: Record<string, Topic>;
   onToggle: () => void;
   onReset: () => void;
   onClose: () => void;
+  onFinishSession: (data: SessionData) => void;
 };
 
 export function FocusTimer({
@@ -19,10 +30,36 @@ export function FocusTimer({
   hourGoal,
   questionGoal,
   pendingTodayCount,
+  subjects,
+  topics,
+  pendingReviews,
+  topicById,
   onToggle,
   onReset,
   onClose,
+  onFinishSession,
 }: Props) {
+  const [sessionType, setSessionType] = useState<"topico" | "revisao">("topico");
+  const [sessionSubjectId, setSessionSubjectId] = useState(subjects[0]?.id ?? "");
+  const [sessionTopicId, setSessionTopicId] = useState(
+    () => topics.filter((t) => t.materiaId === (subjects[0]?.id ?? ""))[0]?.id ?? "",
+  );
+  const [sessionReviewId, setSessionReviewId] = useState(pendingReviews[0]?.id ?? "");
+
+  const sessionTopics = topics.filter((t) => t.materiaId === sessionSubjectId);
+
+  function handleSubjectChange(subjectId: string) {
+    setSessionSubjectId(subjectId);
+    setSessionTopicId(topics.filter((t) => t.materiaId === subjectId)[0]?.id ?? "");
+  }
+
+  function handleFinish() {
+    onFinishSession({
+      topicId: sessionType === "topico" ? sessionTopicId : undefined,
+      reviewId: sessionType === "revisao" ? sessionReviewId : undefined,
+    });
+  }
+
   return (
     <section
       aria-label="Modo foco"
@@ -40,7 +77,7 @@ export function FocusTimer({
         </div>
         <button
           onClick={onClose}
-          aria-label="Fechar modo foco"
+          aria-label="Fechar sem registrar"
           className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/10 text-white ring-1 ring-white/15 transition hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
         >
           <X className="h-5 w-5" aria-hidden="true" />
@@ -81,15 +118,109 @@ export function FocusTimer({
             Reiniciar
           </button>
           <button
-            onClick={onClose}
+            onClick={handleFinish}
             className="flex h-14 items-center justify-center gap-2 rounded-xl bg-blue-500 text-sm font-bold text-white shadow-xl shadow-blue-950/20 transition hover:bg-blue-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
           >
             <CheckCircle2 className="h-5 w-5" aria-hidden="true" />
-            Voltar
+            Registrar
           </button>
         </div>
       </div>
 
+      {/* Session selector — same visual language as info cards below */}
+      <div className="mb-3 rounded-xl bg-white/10 p-4 ring-1 ring-white/10">
+        <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-blue-200">
+          O que está estudando?
+        </p>
+
+        {/* Type toggle */}
+        <div className="mb-3 flex gap-1 rounded-xl bg-white/5 p-1">
+          {(["topico", "revisao"] as const).map((type) => (
+            <button
+              key={type}
+              onClick={() => setSessionType(type)}
+              aria-pressed={sessionType === type}
+              disabled={type === "revisao" && pendingReviews.length === 0}
+              className={`flex-1 rounded-lg py-1.5 text-xs font-semibold transition disabled:opacity-40 ${
+                sessionType === type
+                  ? "bg-white text-blue-700 shadow-sm"
+                  : "text-blue-200 hover:text-white"
+              }`}
+            >
+              {type === "topico"
+                ? "Tópico"
+                : `Revisão${pendingReviews.length > 0 ? ` (${pendingReviews.length})` : ""}`}
+            </button>
+          ))}
+        </div>
+
+        {sessionType === "topico" ? (
+          subjects.length === 0 ? (
+            <p className="text-xs text-blue-300">Crie matérias no Edital para registrar o tópico estudado.</p>
+          ) : (
+            <div className="grid gap-2 sm:grid-cols-2">
+              <div>
+                <label className="sr-only">Matéria</label>
+                <select
+                  value={sessionSubjectId}
+                  onChange={(e) => handleSubjectChange(e.target.value)}
+                  className="h-9 w-full rounded-xl bg-white/10 px-3 text-sm text-white outline-none ring-1 ring-white/20 focus:ring-2 focus:ring-white/40"
+                >
+                  {subjects.map((s) => (
+                    <option key={s.id} value={s.id} className="text-slate-900">
+                      {s.nome}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="sr-only">Tópico</label>
+                <select
+                  value={sessionTopicId}
+                  onChange={(e) => setSessionTopicId(e.target.value)}
+                  disabled={sessionTopics.length === 0}
+                  className="h-9 w-full rounded-xl bg-white/10 px-3 text-sm text-white outline-none ring-1 ring-white/20 focus:ring-2 focus:ring-white/40 disabled:opacity-40"
+                >
+                  {sessionTopics.length === 0 ? (
+                    <option value="" className="text-slate-900">Sem tópicos</option>
+                  ) : (
+                    sessionTopics.map((t) => (
+                      <option key={t.id} value={t.id} className="text-slate-900">
+                        {t.titulo}
+                      </option>
+                    ))
+                  )}
+                </select>
+              </div>
+            </div>
+          )
+        ) : (
+          <div>
+            <label className="sr-only">Revisão</label>
+            <select
+              value={sessionReviewId}
+              onChange={(e) => setSessionReviewId(e.target.value)}
+              disabled={pendingReviews.length === 0}
+              className="h-9 w-full rounded-xl bg-white/10 px-3 text-sm text-white outline-none ring-1 ring-white/20 focus:ring-2 focus:ring-white/40 disabled:opacity-40"
+            >
+              {pendingReviews.length === 0 ? (
+                <option value="" className="text-slate-900">Nenhuma revisão pendente</option>
+              ) : (
+                pendingReviews.map((r) => {
+                  const topic = topicById[r.topicoId];
+                  return (
+                    <option key={r.id} value={r.id} className="text-slate-900">
+                      {topic?.titulo ?? r.topicoId} · tipo {r.tipo}
+                    </option>
+                  );
+                })
+              )}
+            </select>
+          </div>
+        )}
+      </div>
+
+      {/* Info strip */}
       <div className="grid gap-3 border-t border-white/10 pt-4 text-sm text-blue-100 md:grid-cols-3">
         <div className="rounded-xl bg-white/10 p-4 ring-1 ring-white/10">
           <p className="font-bold text-white">Meta do dia</p>

@@ -1019,6 +1019,44 @@ export default function Home() {
     setNotice(`Sessão em ${formatTimer(timerSeconds)}.`);
   }
 
+  function finishSession({ topicId, reviewId }: { topicId?: string; reviewId?: string }) {
+    if (preventReadOnlyAction()) return;
+    setTimerFocusOpen(false);
+    setTimerRunning(false);
+
+    const sessionHours = Math.round((timerSeconds / 3600) * 100) / 100;
+    const timeStr = formatTimer(timerSeconds);
+
+    if (timerSeconds > 0) {
+      setGoals((gs) =>
+        gs.map((g) =>
+          g.tipo === "horas"
+            ? { ...g, valorAtual: Math.round((g.valorAtual + sessionHours) * 100) / 100 }
+            : g,
+        ),
+      );
+    }
+
+    if (reviewId) {
+      completeReview(reviewId);
+    }
+
+    if (topicId) {
+      setTopics((ts) =>
+        ts.map((t) =>
+          t.id === topicId ? { ...t, estudadoEm: t.estudadoEm ?? todayIso } : t,
+        ),
+      );
+      const label = topics.find((t) => t.id === topicId)?.titulo ?? "tópico";
+      setNotice(`${timeStr} registrado — ${label}.`);
+    } else if (reviewId) {
+      const topic = topicById[reviews.find((r) => r.id === reviewId)?.topicoId ?? ""];
+      setNotice(`${timeStr} registrado · revisão "${topic?.titulo ?? ""}" concluída.`);
+    } else {
+      setNotice(`Sessão de ${timeStr} registrada.`);
+    }
+  }
+
   function changeAuthMode(next: AuthMode) {
     setAuthMode(next);
     setAuthError("");
@@ -1236,9 +1274,14 @@ export default function Home() {
           hourGoal={hourGoal}
           questionGoal={questionGoal}
           pendingTodayCount={pendingToday.length}
+          subjects={subjects}
+          topics={topics}
+          pendingReviews={pendingToday}
+          topicById={topicById}
           onToggle={toggleTimer}
           onReset={resetTimer}
           onClose={closeFocusTimer}
+          onFinishSession={finishSession}
         />
       )}
 
