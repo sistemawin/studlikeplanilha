@@ -1,4 +1,5 @@
-import { ArrowLeft, ChevronLeft, ChevronRight, RefreshCw, ShieldCheck, Users } from "lucide-react";
+import { ArrowLeft, Ban, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, RefreshCw, Search, ShieldCheck, Trash2, UserCog, Users } from "lucide-react";
+import { useState } from "react";
 import type { AdminUser, Suggestion, SuggestionStatus } from "@/types";
 
 type Props = {
@@ -7,6 +8,7 @@ type Props = {
   usersTotal: number;
   usersPage: number;
   usersPageSize: number;
+  usersSearch: string;
   loading: boolean;
   usersLoading: boolean;
   error: string;
@@ -14,6 +16,9 @@ type Props = {
   onRefresh: () => void;
   onStatusChange: (id: string, status: SuggestionStatus) => void;
   onUsersPageChange: (page: number) => void;
+  onUsersSearchChange: (value: string) => void;
+  onUserAction: (user: AdminUser, action: "block" | "unblock" | "delete" | "promote") => void;
+  currentUserId: string;
 };
 
 const STATUS_OPTIONS: SuggestionStatus[] = ["nova", "lida", "planejada", "resolvida", "arquivada"];
@@ -31,7 +36,14 @@ function statusLabel(status: SuggestionStatus) {
 
 function formatDate(value: string | null) {
   if (!value) return "Nunca";
+  if (value === "infinity") return "Bloqueado";
   return new Date(value).toLocaleString("pt-BR");
+}
+
+function isUserBlocked(user: AdminUser) {
+  if (!user.bannedUntil) return false;
+  if (user.bannedUntil === "infinity") return true;
+  return new Date(user.bannedUntil).getTime() > Date.now();
 }
 
 export function AdminPanel({
@@ -40,6 +52,7 @@ export function AdminPanel({
   usersTotal,
   usersPage,
   usersPageSize,
+  usersSearch,
   loading,
   usersLoading,
   error,
@@ -47,7 +60,12 @@ export function AdminPanel({
   onRefresh,
   onStatusChange,
   onUsersPageChange,
+  onUsersSearchChange,
+  onUserAction,
+  currentUserId,
 }: Props) {
+  const [usersCollapsed, setUsersCollapsed] = useState(false);
+  const [searchDraft, setSearchDraft] = useState(usersSearch);
   const openCount = suggestions.filter((item) => item.status === "nova").length;
   const totalPages = Math.max(1, Math.ceil(usersTotal / usersPageSize));
   const pageStart = usersTotal === 0 ? 0 : usersPage * usersPageSize + 1;
@@ -111,7 +129,15 @@ export function AdminPanel({
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setUsersCollapsed((collapsed) => !collapsed)}
+              className="flex h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 px-3 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+            >
+              {usersCollapsed ? <ChevronDown className="h-4 w-4" aria-hidden="true" /> : <ChevronUp className="h-4 w-4" aria-hidden="true" />}
+              {usersCollapsed ? "Expandir" : "Minimizar"}
+            </button>
             <button
               type="button"
               onClick={() => onUsersPageChange(usersPage - 1)}
@@ -136,6 +162,49 @@ export function AdminPanel({
           </div>
         </div>
 
+        {!usersCollapsed && (
+          <div className="border-b border-slate-100 p-4 sm:p-5">
+            <label className="block">
+              <span className="sr-only">Pesquisar usuário</span>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <div className="flex h-11 min-w-0 flex-1 items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100">
+                  <Search className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
+                  <input
+                    type="search"
+                    value={searchDraft}
+                    onChange={(event) => setSearchDraft(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") onUsersSearchChange(searchDraft);
+                    }}
+                    placeholder="Pesquisar por e-mail ou ID"
+                    className="h-full min-w-0 flex-1 bg-transparent text-sm outline-none"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => onUsersSearchChange(searchDraft)}
+                  className="flex h-11 items-center justify-center rounded-xl bg-slate-950 px-4 text-sm font-bold text-white hover:bg-slate-800"
+                >
+                  Pesquisar
+                </button>
+                {usersSearch && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearchDraft("");
+                      onUsersSearchChange("");
+                    }}
+                    className="flex h-11 items-center justify-center rounded-xl border border-slate-200 px-4 text-sm font-bold text-slate-600 hover:bg-slate-50"
+                  >
+                    Limpar
+                  </button>
+                )}
+              </div>
+            </label>
+          </div>
+        )}
+
+        {!usersCollapsed && (
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
             <thead className="bg-slate-50 text-xs font-bold uppercase tracking-[0.12em] text-slate-500">
@@ -143,36 +212,91 @@ export function AdminPanel({
                 <th scope="col" className="px-4 py-3 sm:px-5">E-mail</th>
                 <th scope="col" className="px-4 py-3 sm:px-5">Criado em</th>
                 <th scope="col" className="px-4 py-3 sm:px-5">Último acesso</th>
+                <th scope="col" className="px-4 py-3 sm:px-5">Status</th>
+                <th scope="col" className="px-4 py-3 sm:px-5">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {usersLoading ? (
                 <tr>
-                  <td colSpan={3} className="px-4 py-5 text-sm font-medium text-slate-500 sm:px-5">
+                  <td colSpan={5} className="px-4 py-5 text-sm font-medium text-slate-500 sm:px-5">
                     Carregando usuários...
                   </td>
                 </tr>
               ) : users.length === 0 ? (
                 <tr>
-                  <td colSpan={3} className="px-4 py-5 text-sm font-medium text-slate-500 sm:px-5">
+                  <td colSpan={5} className="px-4 py-5 text-sm font-medium text-slate-500 sm:px-5">
                     Nenhum usuário encontrado.
                   </td>
                 </tr>
               ) : (
-                users.map((user) => (
-                  <tr key={user.id} className="align-top">
-                    <td className="max-w-[260px] break-words px-4 py-3 font-semibold text-slate-900 sm:px-5">
-                      {user.email || "Sem e-mail"}
-                      <span className="mt-1 block font-mono text-xs font-medium text-slate-400">{user.id}</span>
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-slate-600 sm:px-5">{formatDate(user.createdAt)}</td>
-                    <td className="whitespace-nowrap px-4 py-3 text-slate-600 sm:px-5">{formatDate(user.lastSignInAt)}</td>
-                  </tr>
-                ))
+                users.map((user) => {
+                  const blocked = isUserBlocked(user);
+                  const isCurrentUser = user.id === currentUserId;
+
+                  return (
+                    <tr key={user.id} className="align-top">
+                      <td className="max-w-[260px] break-words px-4 py-3 font-semibold text-slate-900 sm:px-5">
+                        {user.email || "Sem e-mail"}
+                        <span className="mt-1 block font-mono text-xs font-medium text-slate-400">{user.id}</span>
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 text-slate-600 sm:px-5">{formatDate(user.createdAt)}</td>
+                      <td className="whitespace-nowrap px-4 py-3 text-slate-600 sm:px-5">{formatDate(user.lastSignInAt)}</td>
+                      <td className="px-4 py-3 sm:px-5">
+                        <div className="flex flex-wrap gap-2">
+                          <span className={`rounded-lg px-2 py-1 text-xs font-bold ${blocked ? "bg-rose-50 text-rose-700" : "bg-emerald-50 text-emerald-700"}`}>
+                            {blocked ? "Bloqueado" : "Ativo"}
+                          </span>
+                          {user.isAdmin && (
+                            <span className="rounded-lg bg-blue-50 px-2 py-1 text-xs font-bold text-blue-700">
+                              Admin
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 sm:px-5">
+                        <div className="flex min-w-[310px] flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() => onUserAction(user, blocked ? "unblock" : "block")}
+                            disabled={usersLoading || isCurrentUser}
+                            className={`flex h-9 items-center gap-1.5 rounded-lg px-2.5 text-xs font-bold disabled:cursor-not-allowed disabled:opacity-40 ${
+                              blocked
+                                ? "border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                                : "border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100"
+                            }`}
+                          >
+                            <Ban className="h-3.5 w-3.5" aria-hidden="true" />
+                            {blocked ? "Desbloquear" : "Bloquear"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => onUserAction(user, "delete")}
+                            disabled={usersLoading || isCurrentUser}
+                            className="flex h-9 items-center gap-1.5 rounded-lg border border-rose-200 bg-rose-50 px-2.5 text-xs font-bold text-rose-700 hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-40"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                            Excluir
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => onUserAction(user, "promote")}
+                            disabled={usersLoading || user.isAdmin}
+                            className="flex h-9 items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-2.5 text-xs font-bold text-blue-700 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-40"
+                          >
+                            <UserCog className="h-3.5 w-3.5" aria-hidden="true" />
+                            {user.isAdmin ? "Admin" : "Promover"}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
         </div>
+        )}
       </section>
 
       <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5 sm:p-5">

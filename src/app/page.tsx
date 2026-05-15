@@ -59,6 +59,7 @@ import { AdminPanel } from "@/sections/AdminPanel";
 
 const SYNC_DEBOUNCE_MS = 700;
 const ADMIN_USERS_PAGE_SIZE = 20;
+type AdminUserAction = "block" | "unblock" | "delete" | "promote";
 
 export default function Home() {
   // Computed fresh every render — never stale if tab stays open overnight
@@ -114,6 +115,7 @@ export default function Home() {
   const [adminUsers, setAdminUsers] = useState<AdminUser[]>([]);
   const [adminUsersTotal, setAdminUsersTotal] = useState(0);
   const [adminUsersPage, setAdminUsersPage] = useState(0);
+  const [adminUsersSearch, setAdminUsersSearch] = useState("");
   const [adminUsersLoading, setAdminUsersLoading] = useState(false);
   const [updateAvailable, setUpdateAvailable] = useState(false);
   const currentAppVersionRef = useRef("");
@@ -228,6 +230,7 @@ export default function Home() {
       setAdminUsers([]);
       setAdminUsersTotal(0);
       setAdminUsersPage(0);
+      setAdminUsersSearch("");
       lastSyncedStateRef.current = "";
       return;
     }
@@ -651,9 +654,10 @@ export default function Home() {
     }
   }
 
-  async function loadAdminUsers(page = adminUsersPage) {
+  async function loadAdminUsers(page = adminUsersPage, search = adminUsersSearch) {
     if (!session || !isAdmin) return;
     const safePage = Math.max(0, page);
+    const safeSearch = search.trim();
     setAdminUsersLoading(true);
     setAdminError("");
     try {
@@ -661,6 +665,7 @@ export default function Home() {
       const { data, error } = await supabase.rpc("admin_list_users", {
         p_limit: ADMIN_USERS_PAGE_SIZE,
         p_offset: safePage * ADMIN_USERS_PAGE_SIZE,
+        p_search: safeSearch,
       });
       if (error) throw error;
       const rows = (data ?? []) as AdminUserRow[];
@@ -669,6 +674,8 @@ export default function Home() {
         email: row.email,
         createdAt: row.created_at,
         lastSignInAt: row.last_sign_in_at,
+        bannedUntil: row.banned_until,
+        isAdmin: row.is_admin,
       })));
       if (rows.length > 0) {
         setAdminUsersTotal(Number(rows[0].total_count));
@@ -679,6 +686,42 @@ export default function Home() {
     } catch (err) {
       setAdminError(err instanceof Error ? err.message : "Não foi possível carregar usuários.");
     } finally {
+      setAdminUsersLoading(false);
+    }
+  }
+
+  function searchAdminUsers(value: string) {
+    setAdminUsersSearch(value);
+    void loadAdminUsers(0, value);
+  }
+
+  async function manageAdminUser(user: AdminUser, action: AdminUserAction) {
+    if (!session || !isAdmin) return;
+    const actionLabels: Record<AdminUserAction, string> = {
+      block: "bloquear",
+      unblock: "desbloquear",
+      delete: "excluir",
+      promote: "promover a admin",
+    };
+    const destructive = action === "block" || action === "delete";
+    if (destructive) {
+      const ok = window.confirm(`Deseja ${actionLabels[action]} a conta ${user.email || user.id}?`);
+      if (!ok) return;
+    }
+
+    setAdminUsersLoading(true);
+    setAdminError("");
+    try {
+      const supabase = getSupabaseBrowserClient();
+      const { error } = await supabase.rpc("admin_manage_user", {
+        p_target_user_id: user.id,
+        p_action: action,
+      });
+      if (error) throw error;
+      setNotice(`Usuário ${actionLabels[action]} com sucesso.`);
+      void loadAdminUsers(adminUsersPage, adminUsersSearch);
+    } catch (err) {
+      setAdminError(err instanceof Error ? err.message : "Não foi possível executar a ação.");
       setAdminUsersLoading(false);
     }
   }
@@ -698,13 +741,13 @@ export default function Home() {
   function openAdminView() {
     setAdminView(true);
     void loadAdminSuggestions();
-    void loadAdminUsers(0);
+    void loadAdminUsers(0, adminUsersSearch);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function refreshAdminData() {
     void loadAdminSuggestions();
-    void loadAdminUsers(adminUsersPage);
+    void loadAdminUsers(adminUsersPage, adminUsersSearch);
   }
 
   async function refreshAppVersion() {
@@ -1176,6 +1219,7 @@ export default function Home() {
                 usersTotal={adminUsersTotal}
                 usersPage={adminUsersPage}
                 usersPageSize={ADMIN_USERS_PAGE_SIZE}
+                usersSearch={adminUsersSearch}
                 loading={adminLoading}
                 usersLoading={adminUsersLoading}
                 error={adminError}
@@ -1183,6 +1227,9 @@ export default function Home() {
                 onRefresh={refreshAdminData}
                 onStatusChange={updateSuggestionStatus}
                 onUsersPageChange={loadAdminUsers}
+                onUsersSearchChange={searchAdminUsers}
+                onUserAction={manageAdminUser}
+                currentUserId={session.user.id}
               />
             </ErrorBoundary>
           ) : (

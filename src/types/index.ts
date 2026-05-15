@@ -84,6 +84,8 @@ export type AdminUser = {
   email: string;
   createdAt: string;
   lastSignInAt: string | null;
+  bannedUntil: string | null;
+  isAdmin: boolean;
 };
 
 export type SubjectAccent = {
@@ -182,5 +184,7 @@ export type AdminUserRow = {
   email: string;
   created_at: string;
   last_sign_in_at: string | null;
+  banned_until: string | null;
+  is_admin: boolean;
   total_count: number | string;
 };

@@ -23,7 +23,9 @@ html {
   max-width: 100%;
   min-height: 100%;
   overflow-x: hidden;
-  overscroll-behavior: none;
+  overflow-y: auto;
+  overscroll-behavior-x: none;
+  overscroll-behavior-y: auto;
   background: var(--background);
 }
 
@@ -46,7 +48,9 @@ body {
   -webkit-font-smoothing: antialiased;
   text-rendering: geometricPrecision;
   overflow-x: hidden;
-  overscroll-behavior: none;
+  overflow-y: auto;
+  overscroll-behavior-x: none;
+  overscroll-behavior-y: auto;
 }
 
 ::selection {
