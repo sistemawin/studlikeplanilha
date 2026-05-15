@@ -45,7 +45,7 @@ export function AuthScreen({
   const submitLabel = isSignup ? "Criar conta" : isForgot ? "Enviar link de recuperação" : isReset ? "Salvar nova senha" : "Entrar";
 
   return (
-    <main className="flex min-h-dvh w-full max-w-full items-center justify-center overflow-x-hidden bg-[#090e1a] px-4 py-6 text-slate-950 sm:py-10">
+    <main className="flex min-h-dvh w-full max-w-full items-center justify-center overflow-x-hidden bg-slate-50 px-4 py-6 text-slate-950 sm:py-10">
       <section className="grid w-full max-w-5xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-900/8 lg:grid-cols-[0.92fr_1.08fr]">
         <div className="flex min-h-0 flex-col justify-between bg-slate-950 p-5 text-white sm:p-8 lg:min-h-[560px] lg:p-10">
           <div>

@@ -43,12 +43,12 @@ export function SubjectModal({ subject, onSave, onClose }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-end justify-center overflow-hidden bg-black/40 p-0 backdrop-blur-sm sm:items-center sm:p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="subject-modal-title"
     >
-      <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
+      <div className="max-h-[92dvh] w-full max-w-md overflow-y-auto rounded-t-3xl border border-slate-200 bg-white p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-2xl sm:rounded-2xl sm:p-6">
         <div className="flex items-center justify-between">
           <h2 id="subject-modal-title" className="text-lg font-semibold text-slate-950">
             {subject ? "Editar matéria" : "Nova matéria"}
@@ -56,7 +56,7 @@ export function SubjectModal({ subject, onSave, onClose }: Props) {
           <button
             onClick={onClose}
             aria-label="Fechar"
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
+            className="flex h-11 w-11 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
           >
             <X className="h-4 w-4" aria-hidden="true" />
           </button>
@@ -81,13 +81,13 @@ export function SubjectModal({ subject, onSave, onClose }: Props) {
           {/* Peso */}
           <div>
             <p className="text-sm font-semibold text-slate-700">Peso no edital</p>
-            <div className="mt-2 flex gap-2" role="group" aria-label="Peso da matéria">
+            <div className="mt-2 grid grid-cols-5 gap-2" role="group" aria-label="Peso da matéria">
               {[1, 2, 3, 4, 5].map((p) => (
                 <button
                   key={p}
                   onClick={() => setPeso(p)}
                   aria-pressed={peso === p}
-                  className={`h-10 w-10 rounded-xl text-sm font-semibold transition ${
+                  className={`h-11 rounded-xl text-sm font-semibold transition ${
                     peso === p
                       ? "bg-slate-950 text-white shadow-sm"
                       : "border border-slate-200 text-slate-600 hover:bg-slate-50"
@@ -109,7 +109,7 @@ export function SubjectModal({ subject, onSave, onClose }: Props) {
                   onClick={() => setCor(option.cor)}
                   aria-label={option.label}
                   aria-pressed={cor === option.cor}
-                  className={`h-8 w-8 rounded-full transition hover:scale-110 ${option.dot} ${
+                  className={`h-10 w-10 rounded-full transition hover:scale-110 ${option.dot} ${
                     cor === option.cor ? "ring-2 ring-slate-950 ring-offset-2" : ""
                   }`}
                 />
@@ -148,7 +148,7 @@ export function SubjectModal({ subject, onSave, onClose }: Props) {
           )}
         </div>
 
-        <div className="mt-6 flex gap-3">
+        <div className="mt-6 grid grid-cols-2 gap-2">
           <button
             onClick={onClose}
             className="h-11 flex-1 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
