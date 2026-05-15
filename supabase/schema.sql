@@ -303,6 +303,149 @@ $$;
 revoke all on function public.admin_manage_user(uuid, text) from public;
 grant execute on function public.admin_manage_user(uuid, text) to authenticated;
 
+create or replace function public.admin_get_user_state(
+  p_target_user_id uuid
+)
+returns jsonb
+language sql
+security definer
+set search_path = public, auth, pg_temp
+as $$
+  select
+    case
+      when not exists (
+        select 1
+        from public.app_admins
+        where app_admins.user_id = auth.uid()
+      ) then
+        jsonb_build_object('error', 'Apenas administradores podem executar esta ação.')
+      else
+        jsonb_build_object(
+          'subjects',
+          coalesce(
+            (
+              select jsonb_agg(
+                jsonb_build_object('id', m.id, 'nome', m.nome, 'peso', m.peso, 'cor', m.cor)
+                order by m.created_at
+              )
+              from public.materias as m
+              where m.user_id = p_target_user_id
+            ),
+            '[]'::jsonb
+          ),
+          'topics',
+          coalesce(
+            (
+              select jsonb_agg(
+                jsonb_build_object(
+                  'id', t.id,
+                  'materiaId', t.materia_id,
+                  'titulo', t.titulo,
+                  'status', t.status,
+                  'dificuldade', t.dificuldade,
+                  'estudadoEm', t.estudado_em
+                )
+                order by t.created_at
+              )
+              from public.topicos as t
+              join public.materias as m on m.id = t.materia_id
+              where m.user_id = p_target_user_id
+            ),
+            '[]'::jsonb
+          ),
+          'reviews',
+          coalesce(
+            (
+              select jsonb_agg(
+                jsonb_build_object(
+                  'id', r.id,
+                  'topicoId', r.topico_id,
+                  'dataAgendada', r.data_agendada,
+                  'concluida', r.concluida,
+                  'tipo', r.tipo
+                )
+                order by r.data_agendada
+              )
+              from public.revisoes as r
+              join public.topicos as t on t.id = r.topico_id
+              join public.materias as m on m.id = t.materia_id
+              where m.user_id = p_target_user_id
+            ),
+            '[]'::jsonb
+          ),
+          'schedule',
+          coalesce(
+            (
+              select c.configuracao
+              from public.cronograma as c
+              where c.user_id = p_target_user_id
+              order by c.created_at
+              limit 1
+            ),
+            '{}'::jsonb
+          ),
+          'goals',
+          coalesce(
+            (
+              select jsonb_agg(
+                jsonb_build_object(
+                  'id', g.id,
+                  'tipo', g.tipo,
+                  'valorObjetivo', g.valor_objetivo,
+                  'valorAtual', g.valor_atual,
+                  'dataReferencia', g.data_referencia
+                )
+                order by g.created_at
+              )
+              from public.metas as g
+              where g.user_id = p_target_user_id
+            ),
+            '[]'::jsonb
+          ),
+          'exams',
+          coalesce(
+            (
+              select jsonb_agg(
+                jsonb_build_object(
+                  'id', s.id,
+                  'nome', s.nome,
+                  'acertos', s.acertos,
+                  'total', s.total_questoes,
+                  'data', s.data_realizacao
+                )
+                order by s.created_at desc
+              )
+              from public.simulados as s
+              where s.user_id = p_target_user_id
+            ),
+            '[]'::jsonb
+          ),
+          'questionLogs',
+          coalesce(
+            (
+              select jsonb_agg(
+                jsonb_build_object(
+                  'id', q.id,
+                  'materiaId', q.materia_id,
+                  'topicoId', q.topico_id,
+                  'quantidade', q.quantidade,
+                  'acertos', q.acertos,
+                  'data', q.data_realizacao
+                )
+                order by q.created_at desc
+              )
+              from public.questoes as q
+              where q.user_id = p_target_user_id
+            ),
+            '[]'::jsonb
+          )
+        )
+    end;
+$$;
+
+revoke all on function public.admin_get_user_state(uuid) from public;
+grant execute on function public.admin_get_user_state(uuid) to authenticated;
+
 -- Performance indexes
 create index idx_topicos_materia_id   on public.topicos (materia_id);
 create index idx_topicos_status       on public.topicos (status);

@@ -1,4 +1,4 @@
-import { ArrowLeft, Ban, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, RefreshCw, Search, ShieldCheck, Trash2, UserCog, Users } from "lucide-react";
+import { ArrowLeft, Ban, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Eye, RefreshCw, Search, ShieldCheck, Trash2, UserCog, Users } from "lucide-react";
 import { useState } from "react";
 import type { AdminUser, Suggestion, SuggestionStatus } from "@/types";
 
@@ -18,6 +18,7 @@ type Props = {
   onUsersPageChange: (page: number) => void;
   onUsersSearchChange: (value: string) => void;
   onUserAction: (user: AdminUser, action: "block" | "unblock" | "delete" | "promote") => void;
+  onViewUser: (user: AdminUser) => void;
   currentUserId: string;
 };
 
@@ -62,6 +63,7 @@ export function AdminPanel({
   onUsersPageChange,
   onUsersSearchChange,
   onUserAction,
+  onViewUser,
   currentUserId,
 }: Props) {
   const [usersCollapsed, setUsersCollapsed] = useState(false);
@@ -256,6 +258,15 @@ export function AdminPanel({
                       </td>
                       <td className="px-4 py-3 sm:px-5">
                         <div className="flex min-w-[310px] flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() => onViewUser(user)}
+                            disabled={usersLoading}
+                            className="flex h-9 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                          >
+                            <Eye className="h-3.5 w-3.5" aria-hidden="true" />
+                            Ver app
+                          </button>
                           <button
                             type="button"
                             onClick={() => onUserAction(user, blocked ? "unblock" : "block")}

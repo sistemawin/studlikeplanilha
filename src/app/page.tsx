@@ -20,7 +20,7 @@ import { StudlikeLogo } from "@/components/StudlikeLogo";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
-import { loadRemoteState, saveRemoteState, serializeAppState } from "@/lib/sync";
+import { loadRemoteState, saveRemoteState, serializeAppState, validateSchedule } from "@/lib/sync";
 import { addDays, formatTimer, isoDate, pct } from "@/lib/utils";
 import { defaultGoals, defaultSchedule } from "@/lib/seed";
 import type {
@@ -60,6 +60,41 @@ import { AdminPanel } from "@/sections/AdminPanel";
 const SYNC_DEBOUNCE_MS = 700;
 const ADMIN_USERS_PAGE_SIZE = 20;
 type AdminUserAction = "block" | "unblock" | "delete" | "promote";
+type ReadOnlyUser = { id: string; email: string };
+
+function normalizeAdminAppState(value: unknown): AppState {
+  if (!value || typeof value !== "object") {
+    throw new Error("Dados do usuário indisponíveis.");
+  }
+  const candidate = value as Partial<AppState> & { error?: string };
+  if (candidate.error) throw new Error(candidate.error);
+
+  return {
+    subjects: Array.isArray(candidate.subjects) ? candidate.subjects : [],
+    topics: Array.isArray(candidate.topics)
+      ? candidate.topics.map((topic) => ({ ...topic, estudadoEm: topic.estudadoEm ?? undefined }))
+      : [],
+    reviews: Array.isArray(candidate.reviews) ? candidate.reviews : [],
+    schedule: validateSchedule(candidate.schedule, defaultSchedule),
+    goals: Array.isArray(candidate.goals)
+      ? candidate.goals.map((goal) => ({
+          ...goal,
+          valorObjetivo: Number(goal.valorObjetivo),
+          valorAtual: Number(goal.valorAtual),
+        }))
+      : defaultGoals(),
+    exams: Array.isArray(candidate.exams)
+      ? candidate.exams.map((exam) => ({ ...exam, total: Number(exam.total), acertos: Number(exam.acertos) }))
+      : [],
+    questionLogs: Array.isArray(candidate.questionLogs)
+      ? candidate.questionLogs.map((log) => ({
+          ...log,
+          quantidade: Number(log.quantidade),
+          acertos: log.acertos === null ? null : Number(log.acertos),
+        }))
+      : [],
+  };
+}
 
 export default function Home() {
   // Computed fresh every render — never stale if tab stays open overnight
@@ -82,6 +117,7 @@ export default function Home() {
   const [examDraft, setExamDraft] = useState({ nome: "", acertos: 0, total: 0 });
   const [activeSection, setActiveSection] = useState<NavTarget>("dashboard");
   const [adminView, setAdminView] = useState(false);
+  const [readOnlyUser, setReadOnlyUser] = useState<ReadOnlyUser | null>(null);
   const [notice, setNotice] = useState("Pronto para estudar.");
 
   // ── Timer state ───────────────────────────────────────────────────────────
@@ -226,6 +262,7 @@ export default function Home() {
       setRemoteError("");
       setIsAdmin(false);
       setAdminView(false);
+      setReadOnlyUser(null);
       setSuggestions([]);
       setAdminUsers([]);
       setAdminUsersTotal(0);
@@ -302,6 +339,10 @@ export default function Home() {
   // ── Debounced sync ────────────────────────────────────────────────────────
   useEffect(() => {
     if (!session || !remoteReady) return;
+    if (readOnlyUser) {
+      setSyncStatus("idle");
+      return;
+    }
 
     const state: AppState = { subjects, topics, reviews, schedule, goals, exams, questionLogs };
     const serialized = serializeAppState(state);
@@ -348,7 +389,7 @@ export default function Home() {
 
     const id = window.setTimeout(() => void runSync(), SYNC_DEBOUNCE_MS);
     return () => window.clearTimeout(id);
-  }, [subjects, topics, reviews, schedule, goals, exams, questionLogs, session, remoteReady]);
+  }, [subjects, topics, reviews, schedule, goals, exams, questionLogs, session, remoteReady, readOnlyUser]);
 
   // ── Derived state ─────────────────────────────────────────────────────────
   const topicById = useMemo(
@@ -379,6 +420,65 @@ export default function Home() {
   };
 
   // ── Actions ───────────────────────────────────────────────────────────────
+  function applyAppState(state: AppState) {
+    setSubjects(state.subjects);
+    setTopics(state.topics);
+    setReviews(state.reviews);
+    setSchedule(state.schedule);
+    setGoals(state.goals);
+    setExams(state.exams);
+    setQuestionLogs(state.questionLogs);
+    setSelectedSubject(state.subjects[0]?.id ?? "");
+    setSelectedManualTopic(state.topics[0]?.id ?? "");
+  }
+
+  function preventReadOnlyAction() {
+    if (!readOnlyUser) return false;
+    setNotice("Modo leitura ativo. Saia da visualização do usuário para editar seus dados.");
+    return true;
+  }
+
+  async function viewUserApp(user: AdminUser) {
+    if (!session || !isAdmin) return;
+    setAdminLoading(true);
+    setAdminError("");
+    try {
+      const supabase = getSupabaseBrowserClient();
+      const { data, error } = await supabase.rpc("admin_get_user_state", {
+        p_target_user_id: user.id,
+      });
+      if (error) throw error;
+      const state = normalizeAdminAppState(data);
+      setReadOnlyUser({ id: user.id, email: user.email || user.id });
+      applyAppState(state);
+      setAdminView(false);
+      setActiveSection("dashboard");
+      setNotice(`Visualizando ${user.email || user.id} em modo leitura.`);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (err) {
+      setAdminError(err instanceof Error ? err.message : "Não foi possível abrir o app do usuário.");
+    } finally {
+      setAdminLoading(false);
+    }
+  }
+
+  async function exitReadOnlyMode() {
+    if (!session) return;
+    setRemoteLoading(true);
+    try {
+      const supabase = getSupabaseBrowserClient();
+      const state = await loadRemoteState(supabase, session.user.id);
+      setReadOnlyUser(null);
+      applyAppState(state);
+      lastSyncedStateRef.current = serializeAppState(state);
+      setNotice("Visualização encerrada. Seus dados foram restaurados.");
+    } catch (err) {
+      setNotice(err instanceof Error ? err.message : "Não foi possível restaurar seus dados.");
+    } finally {
+      setRemoteLoading(false);
+    }
+  }
+
   function scheduleReviews(topic: Topic) {
     const base = new Date(`${todayIso}T12:00:00`);
     const dayOffsets = [1, 7, 21, 30];
@@ -407,6 +507,7 @@ export default function Home() {
   }
 
   function updateTopicStatus(topicId: string, status: TopicStatus) {
+    if (preventReadOnlyAction()) return;
     const current = topics.find((t) => t.id === topicId);
     if (!current) return;
     const next = { ...current, status, estudadoEm: status === "Não Estudado" ? undefined : todayIso };
@@ -415,10 +516,12 @@ export default function Home() {
   }
 
   function updateTopicDifficulty(topicId: string, difficulty: Difficulty) {
+    if (preventReadOnlyAction()) return;
     setTopics((ts) => ts.map((t) => (t.id === topicId ? { ...t, dificuldade: difficulty } : t)));
   }
 
   function addTopicsFromText() {
+    if (preventReadOnlyAction()) return;
     const lines = newTopicText.split("\n").map((l) => l.trim()).filter(Boolean);
     if (lines.length === 0) {
       setNotice("Cole pelo menos um tópico antes de adicionar.");
@@ -443,6 +546,7 @@ export default function Home() {
   }
 
   function addManualReview() {
+    if (preventReadOnlyAction()) return;
     if (!selectedManualTopic) {
       setNotice("Escolha um tópico para agendar a revisão.");
       return;
@@ -459,11 +563,13 @@ export default function Home() {
   }
 
   function completeReview(reviewId: string) {
+    if (preventReadOnlyAction()) return;
     setReviews((rs) => rs.map((r) => (r.id === reviewId ? { ...r, concluida: true } : r)));
     setNotice("Revisão concluída.");
   }
 
   function addExam() {
+    if (preventReadOnlyAction()) return;
     if (!examDraft.nome.trim()) {
       setNotice("Preencha o nome do simulado.");
       return;
@@ -485,6 +591,7 @@ export default function Home() {
   }
 
   function deleteTopic(topicId: string) {
+    if (preventReadOnlyAction()) return;
     const topic = topics.find((t) => t.id === topicId);
     if (!topic) return;
     const remainingTopics = topics.filter((t) => t.id !== topicId);
@@ -496,11 +603,13 @@ export default function Home() {
   }
 
   function deleteExam(examId: string) {
+    if (preventReadOnlyAction()) return;
     setExams((es) => es.filter((e) => e.id !== examId));
     setNotice("Simulado removido.");
   }
 
   function updateGoalObjective(tipo: "questões" | "horas", value: number) {
+    if (preventReadOnlyAction()) return;
     if (value <= 0) return;
     setGoals((gs) => {
       const existing = gs.find((g) => g.tipo === tipo);
@@ -521,10 +630,12 @@ export default function Home() {
   }
 
   function updateSemanal(day: string, ids: string[]) {
+    if (preventReadOnlyAction()) return;
     setSchedule((sc) => ({ ...sc, semanal: { ...sc.semanal, [day]: ids } }));
   }
 
   function addQuestionLog(data: { materiaId: string; topicoId: string; quantidade: number; acertos: number | null; data: string }) {
+    if (preventReadOnlyAction()) return;
     const subject = subjects.find((s) => s.id === data.materiaId);
     const topic = topics.find((t) => t.id === data.topicoId && t.materiaId === data.materiaId);
     if (!subject || !topic) {
@@ -583,6 +694,7 @@ export default function Home() {
   }
 
   function deleteQuestionLog(logId: string) {
+    if (preventReadOnlyAction()) return;
     const log = questionLogs.find((q) => q.id === logId);
     setQuestionLogs((logs) => logs.filter((q) => q.id !== logId));
     if (log?.data === todayIso) {
@@ -598,6 +710,7 @@ export default function Home() {
   }
 
   async function submitSuggestion() {
+    if (preventReadOnlyAction()) return;
     if (!session) return;
     const message = suggestionMessage.trim();
     if (message.length < 6) {
@@ -762,6 +875,7 @@ export default function Home() {
   }
 
   function addSubject(data: { nome: string; peso: number; cor: string }) {
+    if (preventReadOnlyAction()) return;
     const newSubject: Subject = { id: crypto.randomUUID(), ...data };
     setSubjects((ss) => [...ss, newSubject]);
     setSelectedSubject(newSubject.id);
@@ -770,12 +884,14 @@ export default function Home() {
   }
 
   function updateSubject(id: string, data: { nome: string; peso: number; cor: string }) {
+    if (preventReadOnlyAction()) return;
     setSubjects((ss) => ss.map((s) => (s.id === id ? { ...s, ...data } : s)));
     setSubjectModal({ open: false });
     setNotice(`Matéria "${data.nome}" atualizada.`);
   }
 
   function deleteSubject(subjectId: string) {
+    if (preventReadOnlyAction()) return;
     const subject = subjects.find((s) => s.id === subjectId);
     const topicsInSubject = topics.filter((t) => t.materiaId === subjectId);
     const topicIds = new Set(topicsInSubject.map((t) => t.id));
@@ -812,6 +928,7 @@ export default function Home() {
   }
 
   function archiveAll() {
+    if (preventReadOnlyAction()) return;
     const ok = window.confirm("Arquivar o edital atual? Isso limpa tópicos, revisões, metas e simulados.");
     if (!ok) return;
     setTopics([]);
@@ -1119,11 +1236,13 @@ export default function Home() {
                 Nova versão disponível. Atualize para receber as melhorias.
               </p>
               <button
+                type="button"
+                aria-label="Recarregar aplicativo"
                 onClick={refreshAppVersion}
                 className="flex h-10 w-fit items-center justify-center gap-2 rounded-xl bg-emerald-700 px-4 text-sm font-semibold text-white hover:bg-emerald-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-500"
               >
                 <RefreshCw className="h-4 w-4" aria-hidden="true" />
-                Atualizar app
+                Recarregar app
               </button>
             </div>
           </div>
@@ -1135,10 +1254,10 @@ export default function Home() {
                 <StudlikeLogo size={40} className="shrink-0 rounded-xl xl:hidden" />
                 <div className="min-w-0">
                   <p className="bg-gradient-to-r from-blue-700 via-sky-500 to-cyan-400 bg-clip-text text-[11px] font-bold uppercase tracking-[0.14em] text-transparent">
-                    {adminView ? "Admin" : sectionTitle[activeSection]}
+                    {adminView ? "Admin" : readOnlyUser ? "Modo leitura" : sectionTitle[activeSection]}
                   </p>
                   <h1 className="mt-0.5 truncate text-xl font-semibold tracking-normal text-slate-950 sm:text-2xl md:text-3xl">
-                    {adminView ? "Área admin" : "Studlike"}
+                    {adminView ? "Área admin" : readOnlyUser ? readOnlyUser.email : "Studlike"}
                   </h1>
                 </div>
               </div>
@@ -1171,8 +1290,10 @@ export default function Home() {
               )}
 
               <button
+                type="button"
                 onClick={() => setSuggestionOpen(true)}
-                className="flex h-11 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-700 via-sky-600 to-cyan-500 px-4 text-sm font-semibold text-white shadow-sm shadow-blue-700/20 hover:from-blue-800 hover:via-sky-700 hover:to-cyan-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
+                disabled={Boolean(readOnlyUser)}
+                className="flex h-11 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-700 via-sky-600 to-cyan-500 px-4 text-sm font-semibold text-white shadow-sm shadow-blue-700/20 hover:from-blue-800 hover:via-sky-700 hover:to-cyan-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <MessageSquarePlus className="h-4 w-4" aria-hidden="true" />
                 <span className="truncate">Sugerir melhoria</span>
@@ -1180,6 +1301,7 @@ export default function Home() {
 
               {isAdmin && (
                 <button
+                  type="button"
                   onClick={adminView ? () => setAdminView(false) : openAdminView}
                   className="flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
                 >
@@ -1189,6 +1311,7 @@ export default function Home() {
               )}
 
               <button
+                type="button"
                 onClick={openFocusTimer}
                 aria-label="Abrir modo foco"
                 className="hidden h-11 items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 text-sm font-semibold text-white shadow-sm shadow-slate-900/15 hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500 sm:flex"
@@ -1200,6 +1323,7 @@ export default function Home() {
               </button>
 
               <button
+                type="button"
                 onClick={signOut}
                 className="flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-600 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
               >
@@ -1211,6 +1335,24 @@ export default function Home() {
         </header>
 
         <div className="mx-auto w-full max-w-[1600px] space-y-5 overflow-x-hidden p-4 md:space-y-6 md:p-6 xl:p-8">
+          {readOnlyUser && !adminView && (
+            <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-blue-900 shadow-sm shadow-blue-900/5 sm:flex sm:items-center sm:justify-between sm:gap-4">
+              <div>
+                <p className="text-sm font-bold">Visualização em modo leitura</p>
+                <p className="mt-1 text-sm text-blue-800/80">
+                  Você está vendo o app de {readOnlyUser.email}. Alterações e salvamento estão bloqueados.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={exitReadOnlyMode}
+                className="mt-3 flex h-10 items-center justify-center rounded-xl bg-blue-700 px-4 text-sm font-bold text-white hover:bg-blue-800 sm:mt-0"
+              >
+                Voltar para meus dados
+              </button>
+            </div>
+          )}
+
           {adminView ? (
             <ErrorBoundary label="Admin">
               <AdminPanel
@@ -1229,6 +1371,7 @@ export default function Home() {
                 onUsersPageChange={loadAdminUsers}
                 onUsersSearchChange={searchAdminUsers}
                 onUserAction={manageAdminUser}
+                onViewUser={viewUserApp}
                 currentUserId={session.user.id}
               />
             </ErrorBoundary>
@@ -1264,8 +1407,14 @@ export default function Home() {
                   onDifficultyChange={updateTopicDifficulty}
                   onAddTopics={addTopicsFromText}
                   onDeleteTopic={deleteTopic}
-                  onAddSubject={() => setSubjectModal({ open: true })}
-                  onEditSubject={(subject) => setSubjectModal({ open: true, subject })}
+                  onAddSubject={() => {
+                    if (preventReadOnlyAction()) return;
+                    setSubjectModal({ open: true });
+                  }}
+                  onEditSubject={(subject) => {
+                    if (preventReadOnlyAction()) return;
+                    setSubjectModal({ open: true, subject });
+                  }}
                   onDeleteSubject={deleteSubject}
                 />
               </ErrorBoundary>
@@ -1294,8 +1443,14 @@ export default function Home() {
                     subjects={subjects}
                     subjectById={subjectById}
                     activeSection={activeSection}
-                    onModeChange={(mode: PlanningMode) => setSchedule((s) => ({ ...s, modo: mode }))}
-                    onHorasChange={(h: number) => setSchedule((s) => ({ ...s, horasDia: h }))}
+                    onModeChange={(mode: PlanningMode) => {
+                      if (preventReadOnlyAction()) return;
+                      setSchedule((s) => ({ ...s, modo: mode }));
+                    }}
+                    onHorasChange={(h: number) => {
+                      if (preventReadOnlyAction()) return;
+                      setSchedule((s) => ({ ...s, horasDia: h }));
+                    }}
                     onUpdateSemanal={updateSemanal}
                   />
                 </ErrorBoundary>
