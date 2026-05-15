@@ -10,6 +10,11 @@ type Props = {
   onComplete: (reviewId: string) => void;
 };
 
+function daysOverdue(reviewDate: string, todayIso: string): number {
+  const diff = new Date(todayIso).getTime() - new Date(reviewDate).getTime();
+  return Math.floor(diff / (1000 * 60 * 60 * 24));
+}
+
 export function Reviews({ reviews, topics, subjects, todayIso, activeSection, onComplete }: Props) {
   const pendingToday = reviews.filter((r) => !r.concluida && r.dataAgendada <= todayIso);
   const isVisible = activeSection === "revisoes";
@@ -31,7 +36,8 @@ export function Reviews({ reviews, topics, subjects, todayIso, activeSection, on
           pendingToday.map((review) => {
             const topic = topics[review.topicoId];
             if (!topic) return null;
-            const late = review.dataAgendada < todayIso;
+            const overdueDays = daysOverdue(review.dataAgendada, todayIso);
+            const late = overdueDays > 0;
 
             return (
               <article
@@ -47,8 +53,16 @@ export function Reviews({ reviews, topics, subjects, todayIso, activeSection, on
                       {subjects[topic.materiaId]?.nome} · tipo {review.tipo}
                     </p>
                   </div>
-                  <span className="shrink-0 text-xs font-semibold">
-                    {late ? "Atrasado" : "Hoje"}
+                  <span
+                    className={`shrink-0 rounded-lg px-2 py-1 text-xs font-semibold ${
+                      late
+                        ? "bg-red-100 text-red-700"
+                        : "bg-amber-100 text-amber-700"
+                    }`}
+                  >
+                    {late
+                      ? `${overdueDays} dia${overdueDays !== 1 ? "s" : ""} de atraso`
+                      : "Hoje"}
                   </span>
                 </div>
                 <button

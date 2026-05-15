@@ -95,12 +95,18 @@ export async function loadRemoteState(supabase: SupabaseClient, userId: string):
 
   const scheduleConfig = ((scheduleRows ?? []) as ScheduleRow[])[0]?.configuracao;
 
-  const goals = ((goalRows ?? []) as GoalRow[]).map((row) => ({
-    id: row.id,
-    tipo: row.tipo,
-    valorObjetivo: Number(row.valor_objetivo),
-    valorAtual: Number(row.valor_atual),
-  }));
+  const today = isoDate(new Date());
+  const goals = ((goalRows ?? []) as GoalRow[]).map((row) => {
+    const dataRef = row.data_referencia ?? today;
+    const isNewDay = dataRef < today;
+    return {
+      id: row.id,
+      tipo: row.tipo,
+      valorObjetivo: Number(row.valor_objetivo),
+      valorAtual: isNewDay ? 0 : Number(row.valor_atual),
+      dataReferencia: isNewDay ? today : dataRef,
+    };
+  });
 
   const exams = ((examRows ?? []) as ExamRow[]).map((row) => ({
     id: row.id,
@@ -205,7 +211,7 @@ export async function saveRemoteState(supabase: SupabaseClient, userId: string, 
         tipo: g.tipo,
         valor_objetivo: g.valorObjetivo,
         valor_atual: g.valorAtual,
-        data_referencia: today,
+        data_referencia: g.dataReferencia,
       })),
       { onConflict: "id" },
     );

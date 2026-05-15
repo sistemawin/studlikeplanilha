@@ -1,4 +1,5 @@
-import { Clock3 } from "lucide-react";
+import { Clock3, Plus, X } from "lucide-react";
+import { useState } from "react";
 import type { NavTarget, PlanningMode, ScheduleConfig, Subject } from "@/types";
 import { corToAccent } from "@/lib/utils";
 
@@ -11,6 +12,7 @@ type Props = {
   activeSection: NavTarget;
   onModeChange: (mode: PlanningMode) => void;
   onHorasChange: (horas: number) => void;
+  onUpdateSemanal: (day: string, ids: string[]) => void;
 };
 
 export function Schedule({
@@ -20,8 +22,22 @@ export function Schedule({
   activeSection,
   onModeChange,
   onHorasChange,
+  onUpdateSemanal,
 }: Props) {
-  const isVisible = activeSection === "cronograma" || activeSection === "simulados";
+  const [pickerDay, setPickerDay] = useState<string | null>(null);
+
+  function removeFromDay(day: string, subjectId: string) {
+    const current = schedule.semanal[day] ?? [];
+    onUpdateSemanal(day, current.filter((id) => id !== subjectId));
+  }
+
+  function addToDay(day: string, subjectId: string) {
+    const current = schedule.semanal[day] ?? [];
+    if (!current.includes(subjectId)) {
+      onUpdateSemanal(day, [...current, subjectId]);
+    }
+    setPickerDay(null);
+  }
 
   return (
     <div
@@ -68,12 +84,41 @@ export function Schedule({
         className="mt-2 h-11 w-32 rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 md:h-10"
       />
 
+      {schedule.modo === "semanal" && subjects.length === 0 && (
+        <p className="mt-4 rounded-xl bg-amber-50 px-3 py-2 text-sm font-medium text-amber-700">
+          Crie matérias na aba Edital para montar a grade semanal.
+        </p>
+      )}
+
       <div className="mt-5 grid gap-3 md:grid-cols-2">
         {CALENDAR_DAYS.map((day, index) => {
-          const ids =
-            schedule.modo === "semanal"
-              ? schedule.semanal[day]
-              : [schedule.ciclos[index % schedule.ciclos.length]];
+          if (schedule.modo === "ciclos") {
+            const id = schedule.ciclos[index % Math.max(schedule.ciclos.length, 1)];
+            const subject = subjectById[id];
+            const accent = subject ? corToAccent(subject.cor) : corToAccent("");
+            return (
+              <div key={day} className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <div className="mb-3 flex items-center justify-between">
+                  <p className="font-semibold">{day}</p>
+                  <span className="flex items-center gap-1 text-xs text-blue-700">
+                    <Clock3 className="h-3 w-3" aria-hidden="true" />
+                    {schedule.horasDia}h
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {id && (
+                    <span className={`rounded-lg px-2 py-1 text-xs font-medium ${accent.chip}`}>
+                      {subject?.nome ?? id}
+                    </span>
+                  )}
+                </div>
+              </div>
+            );
+          }
+
+          // Semanal mode — editable
+          const ids = schedule.semanal[day] ?? [];
+          const available = subjects.filter((s) => !ids.includes(s.id));
 
           return (
             <div key={day} className="rounded-xl border border-slate-200 bg-slate-50 p-4">
@@ -84,6 +129,7 @@ export function Schedule({
                   {schedule.horasDia}h
                 </span>
               </div>
+
               <div className="flex flex-wrap gap-2">
                 {ids.map((id) => {
                   const subject = subjectById[id];
@@ -91,17 +137,63 @@ export function Schedule({
                   return (
                     <span
                       key={`${day}-${id}`}
-                      className={`rounded-lg px-2 py-1 text-xs font-medium ${accent.chip}`}
+                      className={`flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium ${accent.chip}`}
                     >
                       {subject?.nome ?? id}
+                      <button
+                        onClick={() => removeFromDay(day, id)}
+                        aria-label={`Remover ${subject?.nome ?? id} de ${day}`}
+                        className="ml-0.5 rounded-full hover:bg-black/10"
+                      >
+                        <X className="h-3 w-3" aria-hidden="true" />
+                      </button>
                     </span>
                   );
                 })}
+
+                {/* Add subject picker */}
+                {available.length > 0 && (
+                  <div className="relative">
+                    <button
+                      onClick={() => setPickerDay(pickerDay === day ? null : day)}
+                      aria-label={`Adicionar matéria em ${day}`}
+                      className="flex h-6 w-6 items-center justify-center rounded-full border border-dashed border-slate-300 text-slate-400 hover:border-slate-500 hover:text-slate-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
+                    >
+                      <Plus className="h-3 w-3" aria-hidden="true" />
+                    </button>
+                    {pickerDay === day && (
+                      <div className="absolute left-0 top-8 z-20 min-w-[180px] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg shadow-slate-900/10">
+                        {available.map((s) => {
+                          const accent = corToAccent(s.cor);
+                          return (
+                            <button
+                              key={s.id}
+                              onClick={() => addToDay(day, s.id)}
+                              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-slate-50"
+                            >
+                              <span className={`h-2 w-2 rounded-full ${accent.dot}`} aria-hidden="true" />
+                              {s.nome}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           );
         })}
       </div>
+
+      {/* Click outside to close picker */}
+      {pickerDay && (
+        <div
+          className="fixed inset-0 z-10"
+          onClick={() => setPickerDay(null)}
+          aria-hidden="true"
+        />
+      )}
     </div>
   );
 }

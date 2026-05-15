@@ -1,4 +1,5 @@
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Pencil, Plus, Search, Trash2, X } from "lucide-react";
+import { useState } from "react";
 import type { Difficulty, NavTarget, Subject, Topic, TopicStatus } from "@/types";
 import { ProgressBar } from "@/components/ProgressBar";
 import { corToAccent, pct, statusTone } from "@/lib/utils";
@@ -14,6 +15,7 @@ type Props = {
   onStatusChange: (topicId: string, status: TopicStatus) => void;
   onDifficultyChange: (topicId: string, difficulty: Difficulty) => void;
   onAddTopics: () => void;
+  onDeleteTopic: (topicId: string) => void;
   onAddSubject: () => void;
   onEditSubject: (subject: Subject) => void;
   onDeleteSubject: (subjectId: string) => void;
@@ -30,12 +32,17 @@ export function Edital({
   onStatusChange,
   onDifficultyChange,
   onAddTopics,
+  onDeleteTopic,
   onAddSubject,
   onEditSubject,
   onDeleteSubject,
 }: Props) {
+  const [search, setSearch] = useState("");
+
   const studiedTopics = topics.filter((t) => t.status !== "Não Estudado").length;
   const isVisible = activeSection === "edital" || activeSection === "revisoes";
+
+  const lowerSearch = search.toLowerCase();
 
   return (
     <section
@@ -47,25 +54,55 @@ export function Edital({
           activeSection === "edital" ? "block" : "hidden"
         } scroll-mt-24 rounded-xl border border-slate-200 bg-white shadow-sm shadow-slate-900/5 lg:block`}
       >
-        <div className="flex flex-col gap-3 border-b border-slate-200 p-4 md:flex-row md:items-center md:justify-between sm:p-5">
-          <div>
-            <h2 className="text-lg font-semibold">Edital verticalizado</h2>
-            <p className="text-sm text-slate-500">
-              Tópicos por matéria com status, dificuldade e revisões automáticas.
+        {/* Header */}
+        <div className="flex flex-col gap-3 border-b border-slate-200 p-4 sm:p-5">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h2 className="text-lg font-semibold">Edital verticalizado</h2>
+              <p className="text-sm text-slate-500">
+                Tópicos por matéria com status, dificuldade e revisões automáticas.
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="rounded-lg bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700">
+                {studiedTopics}/{topics.length} iniciados
+              </span>
+              <button
+                onClick={onAddSubject}
+                className="flex h-9 items-center gap-1.5 rounded-lg bg-slate-950 px-3 text-sm font-semibold text-white hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
+              >
+                <Plus className="h-4 w-4" aria-hidden="true" />
+                Nova matéria
+              </button>
+            </div>
+          </div>
+
+          {/* Search */}
+          {topics.length > 0 && (
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Buscar tópico..."
+                className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-9 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              />
+              {search && (
+                <button
+                  onClick={() => setSearch("")}
+                  aria-label="Limpar busca"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                >
+                  <X className="h-4 w-4" aria-hidden="true" />
+                </button>
+              )}
+            </div>
+          )}
+          {search && (
+            <p className="text-xs text-slate-500">
+              {topics.filter((t) => t.titulo.toLowerCase().includes(lowerSearch)).length} resultado{topics.filter((t) => t.titulo.toLowerCase().includes(lowerSearch)).length !== 1 ? "s" : ""} para "{search}"
             </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="rounded-lg bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700">
-              {studiedTopics}/{topics.length} iniciados
-            </span>
-            <button
-              onClick={onAddSubject}
-              className="flex h-9 items-center gap-1.5 rounded-lg bg-slate-950 px-3 text-sm font-semibold text-white hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
-            >
-              <Plus className="h-4 w-4" aria-hidden="true" />
-              Nova matéria
-            </button>
-          </div>
+          )}
         </div>
 
         <div className="grid gap-4 p-4 sm:p-5">
@@ -84,6 +121,12 @@ export function Edital({
 
           {subjects.map((subject) => {
             const subjectTopics = topics.filter((t) => t.materiaId === subject.id);
+            const filteredTopics = search
+              ? subjectTopics.filter((t) => t.titulo.toLowerCase().includes(lowerSearch))
+              : subjectTopics;
+
+            if (search && filteredTopics.length === 0) return null;
+
             const subjectProgress = pct(
               subjectTopics.filter((t) => t.status === "Revisado").length,
               subjectTopics.length,
@@ -99,16 +142,15 @@ export function Edital({
                       <h3 className={`font-semibold ${accent.text}`}>{subject.nome}</h3>
                       <p className="text-xs text-slate-500">
                         Peso {subject.peso} · {subjectTopics.length} tópico{subjectTopics.length !== 1 ? "s" : ""}
+                        {search && filteredTopics.length !== subjectTopics.length && (
+                          <span className="ml-1 text-blue-600">({filteredTopics.length} encontrado{filteredTopics.length !== 1 ? "s" : ""})</span>
+                        )}
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-24 sm:w-36">
-                      <ProgressBar
-                        value={subjectProgress}
-                        tone={accent.progress}
-                        label={`Progresso em ${subject.nome}`}
-                      />
+                      <ProgressBar value={subjectProgress} tone={accent.progress} label={`Progresso em ${subject.nome}`} />
                     </div>
                     <button
                       onClick={() => onEditSubject(subject)}
@@ -128,15 +170,15 @@ export function Edital({
                 </div>
 
                 <div className="space-y-3">
-                  {subjectTopics.length === 0 && (
+                  {filteredTopics.length === 0 && !search && (
                     <p className="rounded-lg bg-white/60 px-3 py-2 text-xs text-slate-400">
                       Nenhum tópico. Importe pelo painel ao lado.
                     </p>
                   )}
-                  {subjectTopics.map((topic) => (
+                  {filteredTopics.map((topic) => (
                     <div
                       key={topic.id}
-                      className="grid gap-3 rounded-xl border border-white/70 bg-white/95 p-3 shadow-sm shadow-slate-900/5 md:grid-cols-[1fr_150px_140px_120px]"
+                      className="grid gap-3 rounded-xl border border-white/70 bg-white/95 p-3 shadow-sm shadow-slate-900/5 md:grid-cols-[1fr_150px_140px_120px_auto]"
                     >
                       <div>
                         <p className="font-medium">{topic.titulo}</p>
@@ -179,6 +221,14 @@ export function Edital({
                       >
                         {topic.status}
                       </span>
+
+                      <button
+                        onClick={() => onDeleteTopic(topic.id)}
+                        aria-label={`Excluir tópico ${topic.titulo}`}
+                        className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-300 hover:bg-red-50 hover:text-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-red-500"
+                      >
+                        <Trash2 className="h-4 w-4" aria-hidden="true" />
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -188,7 +238,7 @@ export function Edital({
         </div>
       </div>
 
-      {/* Right column: import topics + reviews panel */}
+      {/* Right column */}
       <div
         className={`${
           activeSection === "edital" || activeSection === "revisoes" ? "space-y-5" : "hidden"

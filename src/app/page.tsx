@@ -4,6 +4,7 @@ import {
   Archive,
   BarChart3,
   CalendarDays,
+  Check,
   ClipboardList,
   HomeIcon,
   ListChecks,
@@ -30,6 +31,7 @@ import type {
   Review,
   ReviewType,
   Subject,
+  SyncStatus,
   Topic,
   TopicStatus,
 } from "@/types";
@@ -85,6 +87,14 @@ export default function Home() {
 
   // ── Subject modal state ───────────────────────────────────────────────────
   const [subjectModal, setSubjectModal] = useState<{ open: boolean; subject?: Subject }>({ open: false });
+
+  // ── Questões input state ──────────────────────────────────────────────────
+  const [questoesOpen, setQuestoesOpen] = useState(false);
+  const [questoesQty, setQuestoesQty] = useState("10");
+
+  // ── Sync status ───────────────────────────────────────────────────────────
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>("idle");
+  const savedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── Remote sync state ─────────────────────────────────────────────────────
   const [remoteReady, setRemoteReady] = useState(false);
@@ -182,7 +192,12 @@ export default function Home() {
     latestStateRef.current = state;
     latestSerializedStateRef.current = serialized;
 
-    if (serialized === lastSyncedStateRef.current) return;
+    if (serialized === lastSyncedStateRef.current) {
+      setSyncStatus("idle");
+      return;
+    }
+
+    setSyncStatus("pending");
 
     async function runSync() {
       if (!session || !latestStateRef.current) return;
@@ -192,15 +207,20 @@ export default function Home() {
       const serializedToSave = latestSerializedStateRef.current;
       const supabase = getSupabaseBrowserClient();
       syncInFlightRef.current = true;
+      setSyncStatus("saving");
 
       try {
         await saveRemoteState(supabase, session.user.id, stateToSave);
         lastSyncedStateRef.current = serializedToSave;
         setRemoteError("");
+        setSyncStatus("saved");
+        if (savedTimeoutRef.current) window.clearTimeout(savedTimeoutRef.current);
+        savedTimeoutRef.current = setTimeout(() => setSyncStatus("idle"), 2000);
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Não foi possível salvar no Supabase.";
         setRemoteError(msg);
         setNotice(msg);
+        setSyncStatus("error");
       } finally {
         syncInFlightRef.current = false;
         if (pendingSyncRef.current || latestSerializedStateRef.current !== lastSyncedStateRef.current) {
@@ -228,8 +248,8 @@ export default function Home() {
   const generalProgress = pct(completedTopics, topics.length);
   const pendingToday = reviews.filter((r) => !r.concluida && r.dataAgendada <= todayIso);
   const overdueCount = pendingToday.filter((r) => r.dataAgendada < todayIso).length;
-  const questionGoal = goals.find((g) => g.tipo === "questões") ?? { id: "", tipo: "questões" as const, valorObjetivo: 50, valorAtual: 0 };
-  const hourGoal = goals.find((g) => g.tipo === "horas") ?? { id: "", tipo: "horas" as const, valorObjetivo: 4, valorAtual: 0 };
+  const questionGoal = goals.find((g) => g.tipo === "questões") ?? { id: "", tipo: "questões" as const, valorObjetivo: 50, valorAtual: 0, dataReferencia: todayIso };
+  const hourGoal = goals.find((g) => g.tipo === "horas") ?? { id: "", tipo: "horas" as const, valorObjetivo: 4, valorAtual: 0, dataReferencia: todayIso };
   const avgExam = Math.round(
     exams.reduce((sum, e) => sum + (e.acertos / e.total) * 100, 0) / exams.length,
   );
@@ -348,11 +368,38 @@ export default function Home() {
     setNotice("Simulado salvo.");
   }
 
-  function registerQuestions() {
+  function confirmQuestions() {
+    const qty = Math.max(1, parseInt(questoesQty, 10) || 1);
     setGoals((gs) =>
-      gs.map((g) => (g.tipo === "questões" ? { ...g, valorAtual: g.valorAtual + 10 } : g)),
+      gs.map((g) => (g.tipo === "questões" ? { ...g, valorAtual: g.valorAtual + qty } : g)),
     );
-    setNotice("10 questões registradas.");
+    setNotice(`${qty} questão${qty !== 1 ? "ões" : ""} registrada${qty !== 1 ? "s" : ""}.`);
+    setQuestoesOpen(false);
+    setQuestoesQty("10");
+  }
+
+  function deleteTopic(topicId: string) {
+    const topic = topics.find((t) => t.id === topicId);
+    if (!topic) return;
+    const remainingTopics = topics.filter((t) => t.id !== topicId);
+    setTopics(remainingTopics);
+    setReviews((rs) => rs.filter((r) => r.topicoId !== topicId));
+    if (selectedManualTopic === topicId) setSelectedManualTopic(remainingTopics[0]?.id ?? "");
+    setNotice(`Tópico "${topic.titulo}" removido.`);
+  }
+
+  function deleteExam(examId: string) {
+    setExams((es) => es.filter((e) => e.id !== examId));
+    setNotice("Simulado removido.");
+  }
+
+  function updateGoalObjective(tipo: "questões" | "horas", value: number) {
+    if (value <= 0) return;
+    setGoals((gs) => gs.map((g) => (g.tipo === tipo ? { ...g, valorObjetivo: value } : g)));
+  }
+
+  function updateSemanal(day: string, ids: string[]) {
+    setSchedule((sc) => ({ ...sc, semanal: { ...sc.semanal, [day]: ids } }));
   }
 
   function addSubject(data: { nome: string; peso: number; cor: string }) {
@@ -410,8 +457,8 @@ export default function Home() {
     setTopics([]);
     setReviews([]);
     setGoals([
-      { id: crypto.randomUUID(), tipo: "questões", valorObjetivo: 50, valorAtual: 0 },
-      { id: crypto.randomUUID(), tipo: "horas", valorObjetivo: 4, valorAtual: 0 },
+      { id: crypto.randomUUID(), tipo: "questões", valorObjetivo: 50, valorAtual: 0, dataReferencia: todayIso },
+      { id: crypto.randomUUID(), tipo: "horas", valorObjetivo: 4, valorAtual: 0, dataReferencia: todayIso },
     ]);
     setExams([]);
     // Reset selectors — topics no longer exist
@@ -627,7 +674,27 @@ export default function Home() {
                 {session.user.email}
               </p>
             </div>
-            <div className="grid grid-cols-2 gap-2 sm:flex sm:shrink-0">
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Sync status indicator */}
+              {syncStatus !== "idle" && (
+                <span
+                  aria-live="polite"
+                  className={`flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-semibold transition ${
+                    syncStatus === "saving" || syncStatus === "pending"
+                      ? "bg-amber-50 text-amber-600"
+                      : syncStatus === "saved"
+                      ? "bg-emerald-50 text-emerald-600"
+                      : "bg-rose-50 text-rose-600"
+                  }`}
+                >
+                  {(syncStatus === "saving" || syncStatus === "pending") && (
+                    <Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" />
+                  )}
+                  {syncStatus === "saved" && <Check className="h-3 w-3" aria-hidden="true" />}
+                  {syncStatus === "saving" ? "Salvando…" : syncStatus === "pending" ? "Aguardando…" : syncStatus === "saved" ? "Salvo" : "Erro ao salvar"}
+                </span>
+              )}
+
               <button
                 onClick={openFocusTimer}
                 aria-label="Abrir modo foco"
@@ -638,13 +705,49 @@ export default function Home() {
                   {timerRunning ? `Foco ${formatTimer(timerSeconds)}` : "Iniciar foco"}
                 </span>
               </button>
-              <button
-                onClick={registerQuestions}
-                className="flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
-              >
-                <ListChecks className="h-4 w-4" aria-hidden="true" />
-                <span className="truncate">Questões</span>
-              </button>
+
+              {/* Questões button with custom quantity input */}
+              {questoesOpen ? (
+                <form
+                  onSubmit={(e) => { e.preventDefault(); confirmQuestions(); }}
+                  className="flex items-center gap-1.5"
+                >
+                  <label className="sr-only" htmlFor="questoes-qty">Quantidade de questões</label>
+                  <input
+                    id="questoes-qty"
+                    type="number"
+                    min={1}
+                    max={999}
+                    value={questoesQty}
+                    onChange={(e) => setQuestoesQty(e.target.value)}
+                    autoFocus
+                    onKeyDown={(e) => { if (e.key === "Escape") setQuestoesOpen(false); }}
+                    className="h-11 w-20 rounded-xl border border-slate-200 px-3 text-center text-sm font-semibold outline-none focus:border-blue-500"
+                  />
+                  <button
+                    type="submit"
+                    className="h-11 rounded-xl bg-slate-950 px-3 text-sm font-semibold text-white hover:bg-slate-800"
+                  >
+                    OK
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setQuestoesOpen(false)}
+                    className="h-11 rounded-xl border border-slate-200 px-3 text-sm text-slate-500 hover:bg-slate-50"
+                  >
+                    Cancelar
+                  </button>
+                </form>
+              ) : (
+                <button
+                  onClick={() => setQuestoesOpen(true)}
+                  className="flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
+                >
+                  <ListChecks className="h-4 w-4" aria-hidden="true" />
+                  <span className="truncate">Questões</span>
+                </button>
+              )}
+
               <button
                 onClick={signOut}
                 className="flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-600 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
@@ -686,6 +789,7 @@ export default function Home() {
               onStatusChange={updateTopicStatus}
               onDifficultyChange={updateTopicDifficulty}
               onAddTopics={addTopicsFromText}
+              onDeleteTopic={deleteTopic}
               onAddSubject={() => setSubjectModal({ open: true })}
               onEditSubject={(subject) => setSubjectModal({ open: true, subject })}
               onDeleteSubject={deleteSubject}
@@ -718,6 +822,7 @@ export default function Home() {
                 activeSection={activeSection}
                 onModeChange={(mode: PlanningMode) => setSchedule((s) => ({ ...s, modo: mode }))}
                 onHorasChange={(h: number) => setSchedule((s) => ({ ...s, horasDia: h }))}
+                onUpdateSemanal={updateSemanal}
               />
             </ErrorBoundary>
 
@@ -733,9 +838,11 @@ export default function Home() {
                 activeSection={activeSection}
                 onExamDraftChange={setExamDraft}
                 onAddExam={addExam}
+                onDeleteExam={deleteExam}
                 onManualTopicChange={setSelectedManualTopic}
                 onManualDateChange={setManualDate}
                 onAddManualReview={addManualReview}
+                onUpdateGoalObjective={updateGoalObjective}
               />
             </ErrorBoundary>
           </section>

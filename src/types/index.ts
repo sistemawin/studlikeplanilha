@@ -46,7 +46,10 @@ export type Goal = {
   tipo: "horas" | "questões";
   valorObjetivo: number;
   valorAtual: number;
+  dataReferencia: string;
 };
+
+export type SyncStatus = "idle" | "pending" | "saving" | "saved" | "error";
 
 export type MockExam = {
   id: string;
@@ -116,6 +119,7 @@ export type GoalRow = {
   tipo: "horas" | "questões";
   valor_objetivo: number | string;
   valor_atual: number | string;
+  data_referencia: string;
 };
 
 export type ExamRow = {
