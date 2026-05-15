@@ -1267,7 +1267,7 @@ export default function Home() {
   ];
 
   return (
-    <main className="min-h-dvh w-full max-w-full overflow-x-hidden bg-[#f7f7f8] text-slate-950">
+    <main className="min-h-dvh w-full max-w-full bg-[#f7f7f8] text-slate-950">
       {subjectModal.open && (
         <SubjectModal
           subject={subjectModal.subject}
