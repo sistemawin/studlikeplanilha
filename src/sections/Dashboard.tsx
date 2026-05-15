@@ -1,6 +1,6 @@
 import { BarChart3, Flame, RotateCcw, Target, Timer } from "lucide-react";
+import { motion } from "framer-motion";
 import type { Goal, NavTarget, Subject, Topic } from "@/types";
-import { ProgressBar } from "@/components/ProgressBar";
 import { corToAccent, pct } from "@/lib/utils";
 
 type Props = {
@@ -41,7 +41,15 @@ export function Dashboard({
         ? 0
         : Math.round(
             subjectTopics.reduce(
-              (sum, t) => sum + (t.status === "Revisado" ? 100 : t.status === "Questões Feitas" ? 76 : t.status === "Teoria Lida" ? 42 : 8),
+              (sum, t) =>
+                sum +
+                (t.status === "Revisado"
+                  ? 100
+                  : t.status === "Questões Feitas"
+                  ? 76
+                  : t.status === "Teoria Lida"
+                  ? 42
+                  : 8),
               0,
             ) / subjectTopics.length,
           );
@@ -49,81 +57,116 @@ export function Dashboard({
   });
 
   const bestSubjects = [...subjectPerformance].sort((a, b) => b.score - a.score);
-
   const isVisible = activeSection === "dashboard";
+
+  const questionsProgress = pct(questionGoal.valorAtual, questionGoal.valorObjetivo);
+  const safeAvg = Number.isFinite(avgExam) ? avgExam : 0;
+
+  const kpiCards = [
+    {
+      label: "Progresso geral",
+      value: `${generalProgress}%`,
+      icon: Target,
+      accent: "#3b82f6",
+      progress: generalProgress,
+      subtitle:
+        completedTopics > 0
+          ? `${completedTopics} revisados de ${topics.length} tópicos`
+          : `${topics.length} tópico${topics.length !== 1 ? "s" : ""} no edital`,
+      onClick: () => onNavigate("edital"),
+      ariaLabel: "Abrir edital verticalizado",
+    },
+    {
+      label: "Para revisar hoje",
+      value: String(reviews.pendingCount),
+      icon: RotateCcw,
+      accent: "#f59e0b",
+      progress: reviews.pendingCount > 0 ? Math.min((reviews.overdueCount / Math.max(reviews.pendingCount, 1)) * 100, 100) : 0,
+      subtitle:
+        reviews.pendingCount === 0
+          ? "Nenhuma revisão pendente"
+          : reviews.overdueCount > 0
+          ? `${reviews.overdueCount} atrasada${reviews.overdueCount !== 1 ? "s" : ""} — prioridade máxima`
+          : "Todas agendadas para hoje",
+      onClick: () => onNavigate("revisoes"),
+      ariaLabel: "Abrir revisões de hoje",
+    },
+    {
+      label: "Questões hoje",
+      value: `${questionGoal.valorAtual}/${questionGoal.valorObjetivo}`,
+      icon: Flame,
+      accent: "#f43f5e",
+      progress: questionsProgress,
+      subtitle:
+        questionsProgress >= 100
+          ? "Meta do dia atingida!"
+          : `${Math.max(questionGoal.valorObjetivo - questionGoal.valorAtual, 0)} restantes para a meta`,
+      onClick: () => onNavigate("simulados"),
+      ariaLabel: "Abrir registro de questões",
+    },
+    {
+      label: "Média simulados",
+      value: `${safeAvg}%`,
+      icon: BarChart3,
+      accent: "#10b981",
+      progress: safeAvg,
+      subtitle: safeAvg === 0 ? "Nenhum simulado registrado" : "acertos sobre total de questões",
+      onClick: () => onNavigate("simulados"),
+      ariaLabel: "Abrir desempenho em simulados",
+    },
+  ] as const;
 
   return (
     <>
+      {/* KPI cards */}
       <section
         id="dashboard"
         className={`${isVisible ? "grid" : "hidden"} scroll-mt-24 grid-cols-2 gap-3 md:gap-4 xl:grid xl:grid-cols-2 2xl:grid-cols-4`}
       >
-        <button
-          type="button"
-          onClick={() => onNavigate("edital")}
-          aria-label="Abrir edital verticalizado"
-          className="rounded-xl border border-slate-200 bg-white p-4 text-left shadow-sm shadow-slate-900/5 transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500 sm:p-5"
-        >
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-medium text-slate-500">Progresso geral</p>
-            <Target className="h-5 w-5 text-blue-500" aria-hidden="true" />
-          </div>
-          <p className="mt-3 text-2xl font-semibold sm:text-3xl">{generalProgress}%</p>
-          <ProgressBar value={generalProgress} tone="bg-blue-500" label="Progresso geral" />
-          <p className="mt-2 text-xs text-slate-500">
-            {completedTopics} revisados de {topics.length} tópicos
-          </p>
-        </button>
+        {kpiCards.map((card) => {
+          const Icon = card.icon;
+          return (
+            <motion.button
+              key={card.label}
+              type="button"
+              onClick={card.onClick}
+              aria-label={card.ariaLabel}
+              whileHover={{ y: -3, transition: { duration: 0.15 } }}
+              whileTap={{ scale: 0.96 }}
+              className="relative overflow-hidden rounded-2xl p-4 text-left shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-white/50 sm:p-5"
+              style={{
+                background: `linear-gradient(135deg, #0f172a 0%, #172032 55%, ${card.accent}22 100%)`,
+              }}
+            >
+              {/* Label + icon */}
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-white/40">
+                  {card.label}
+                </span>
+                <div
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl"
+                  style={{ backgroundColor: `${card.accent}22` }}
+                >
+                  <Icon className="h-4 w-4" style={{ color: card.accent }} aria-hidden="true" />
+                </div>
+              </div>
 
-        <button
-          type="button"
-          onClick={() => onNavigate("revisoes")}
-          aria-label="Abrir revisões de hoje"
-          className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-left shadow-sm shadow-amber-900/5 transition hover:-translate-y-0.5 hover:border-amber-300 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500 sm:p-5"
-        >
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-medium text-amber-800">Para revisar hoje</p>
-            <RotateCcw className="h-5 w-5 text-amber-500" aria-hidden="true" />
-          </div>
-          <p className="mt-3 text-2xl font-semibold sm:text-3xl">{reviews.pendingCount}</p>
-          <p className="mt-2 text-xs text-amber-800/70">
-            {reviews.overdueCount} atrasadas exigem prioridade máxima
-          </p>
-        </button>
+              {/* Value */}
+              <p className="mt-3 text-3xl font-black text-white sm:text-4xl">{card.value}</p>
 
-        <button
-          type="button"
-          onClick={() => onNavigate("simulados")}
-          aria-label="Abrir registro de questões"
-          className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-left shadow-sm shadow-rose-900/5 transition hover:-translate-y-0.5 hover:border-rose-300 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500 sm:p-5"
-        >
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-medium text-rose-800">Questões hoje</p>
-            <Flame className="h-5 w-5 text-red-500" aria-hidden="true" />
-          </div>
-          <p className="mt-3 text-2xl font-semibold sm:text-3xl">
-            {questionGoal.valorAtual}/{questionGoal.valorObjetivo}
-          </p>
-          <ProgressBar
-            value={pct(questionGoal.valorAtual, questionGoal.valorObjetivo)}
-            tone="bg-rose-500"
-            label="Questões hoje"
-          />
-        </button>
+              {/* Progress bar */}
+              <div className="mt-3 h-1 w-full overflow-hidden rounded-full bg-white/10">
+                <div
+                  className="h-1 rounded-full transition-[width] duration-700 ease-out"
+                  style={{ width: `${card.progress}%`, backgroundColor: card.accent }}
+                />
+              </div>
 
-        <button
-          type="button"
-          onClick={() => onNavigate("simulados")}
-          aria-label="Abrir desempenho em simulados"
-          className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-left shadow-sm shadow-emerald-900/5 transition hover:-translate-y-0.5 hover:border-emerald-300 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500 sm:p-5"
-        >
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-medium text-emerald-800">Média simulados</p>
-            <BarChart3 className="h-5 w-5 text-sky-500" aria-hidden="true" />
-          </div>
-          <p className="mt-3 text-2xl font-semibold sm:text-3xl">{Number.isFinite(avgExam) ? avgExam : 0}%</p>
-          <p className="mt-2 text-xs text-emerald-800/70">Fórmula: acertos / total obrigatório</p>
-        </button>
+              {/* Subtitle */}
+              <p className="mt-2 text-xs leading-5 text-white/40">{card.subtitle}</p>
+            </motion.button>
+          );
+        })}
       </section>
 
       {/* Mobile subject quick-access strip */}
@@ -133,37 +176,49 @@ export function Dashboard({
             <button
               onClick={onOpenFocusTimer}
               aria-label="Abrir modo foco"
-              className="flex w-[150px] shrink-0 items-center gap-3 rounded-2xl bg-[#050505] p-3 text-left text-white shadow-lg shadow-slate-900/15"
+              className="flex w-[150px] shrink-0 items-center gap-3 rounded-2xl bg-[#050505] p-3 text-left shadow-lg shadow-slate-900/20"
             >
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/12">
-                <Timer className="h-5 w-5" aria-hidden="true" />
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10">
+                <Timer className="h-5 w-5 text-white" aria-hidden="true" />
               </span>
               <span>
-                <span className="block text-xs font-semibold text-white/60">Foco</span>
-                <span className="block text-sm font-semibold">{timerRunning ? timerLabel : "Iniciar"}</span>
+                <span className="block text-xs font-semibold text-white/50">Foco</span>
+                <span className="block text-sm font-bold text-white">
+                  {timerRunning ? timerLabel : "Iniciar"}
+                </span>
               </span>
             </button>
+
             {bestSubjects.slice(0, 3).map((item) => (
               <button
                 key={item.subject.id}
                 onClick={() => onNavigate("edital")}
-                className="w-[126px] shrink-0 rounded-2xl border border-slate-200 bg-white p-3 text-left shadow-sm shadow-slate-900/5"
+                className="w-[126px] shrink-0 overflow-hidden rounded-2xl p-3 text-left shadow-lg"
+                style={{
+                  background: `linear-gradient(135deg, #0f172a 0%, ${item.accent.chart}25 100%)`,
+                }}
               >
-                <span className={`mb-3 block h-2 w-10 rounded-full ${item.accent.progress}`} />
-                <span className="block truncate text-sm font-semibold text-slate-950">
+                <span
+                  className="mb-3 block h-1.5 w-8 rounded-full"
+                  style={{ backgroundColor: item.accent.chart }}
+                />
+                <span className="block truncate text-sm font-bold text-white">
                   {item.subject.nome.replace("Direito ", "")}
                 </span>
-                <span className="mt-1 block text-xs font-medium text-slate-500">{item.score}% pronto</span>
+                <span className="mt-1 block text-xs font-medium text-white/40">
+                  {item.score}% pronto
+                </span>
               </button>
             ))}
           </div>
         </div>
       </section>
 
+      {/* Notice bar */}
       <p
         role="status"
         aria-live="polite"
-        className={`${isVisible ? "block" : "hidden"} rounded-xl border border-blue-100 bg-white px-4 py-3 text-sm font-medium text-blue-700 shadow-sm shadow-slate-900/5 xl:block`}
+        className={`${isVisible ? "block" : "hidden"} rounded-2xl bg-slate-900 px-5 py-3.5 text-sm font-medium text-white/55 shadow-sm xl:block`}
       >
         {notice}
       </p>

@@ -226,16 +226,17 @@ export function Exams({
 
       {/* Performance bar chart + ranking */}
       <section className={`${isVisible ? "grid" : "hidden"} gap-5 xl:grid 2xl:grid-cols-[minmax(0,1.1fr)_minmax(360px,0.9fr)]`}>
-        <div className="w-full max-w-full overflow-hidden rounded-xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5 sm:p-5">
+        {/* Bar chart — dark */}
+        <div className="w-full max-w-full overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 p-4 shadow-lg sm:p-5">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0">
-              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-blue-500">Acertos</p>
-              <h2 className="mt-1 break-words text-xl font-semibold text-slate-950">Desempenho em simulados</h2>
-              <p className="mt-1 break-words text-sm leading-6 text-slate-500">
+              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-blue-400">Acertos</p>
+              <h2 className="mt-1 break-words text-xl font-bold text-white">Desempenho em simulados</h2>
+              <p className="mt-1 break-words text-sm leading-6 text-white/40">
                 Evolução dos percentuais de acerto registrados.
               </p>
             </div>
-            <span className="w-fit shrink-0 rounded-lg bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700">
+            <span className="w-fit shrink-0 rounded-xl bg-blue-500/15 px-3 py-2 text-sm font-bold text-blue-300 ring-1 ring-blue-500/20">
               média {Number.isFinite(avgExam) ? avgExam : 0}%
             </span>
           </div>
@@ -243,51 +244,61 @@ export function Exams({
           <div
             role="img"
             aria-label="Gráfico de barras de desempenho em simulados"
-            className="mt-6 flex h-48 max-w-full items-end gap-2 overflow-hidden rounded-xl border border-slate-100 bg-slate-50/70 px-3 py-5 sm:h-52 sm:gap-3 sm:px-4"
+            className="mt-6 flex h-48 max-w-full items-end gap-2 overflow-hidden rounded-xl bg-slate-900 px-3 py-5 sm:h-52 sm:gap-3 sm:px-4"
           >
             {examTrend.length === 0 ? (
-              <p className="self-center text-sm text-slate-500">Nenhum simulado registrado.</p>
+              <p className="self-center text-sm text-white/30">Nenhum simulado registrado.</p>
             ) : (
               examTrend.map((exam) => (
                 <div key={exam.id} className="flex min-w-0 flex-1 flex-col items-center gap-2">
-                  <div className="flex h-36 w-full items-end rounded-md bg-white shadow-inner shadow-slate-900/5">
+                  <div className="flex h-36 w-full items-end rounded-lg bg-slate-800">
                     <div
-                      className="w-full rounded-md bg-gradient-to-t from-blue-700 to-sky-400"
+                      className="w-full rounded-lg bg-gradient-to-t from-blue-600 to-cyan-400 transition-[height] duration-500"
                       style={{ height: `${Math.max(exam.percent, 4)}%` }}
                     />
                   </div>
-                  <span className="text-sm font-semibold text-slate-950">{exam.percent}%</span>
-                  <span className="max-w-full truncate text-xs font-medium text-slate-500">{exam.nome}</span>
+                  <span className="text-sm font-bold text-white">{exam.percent}%</span>
+                  <span className="max-w-full truncate text-xs font-medium text-white/40">{exam.nome}</span>
                 </div>
               ))
             )}
           </div>
         </div>
 
-        <div className="w-full max-w-full overflow-hidden rounded-xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5 sm:p-5">
-          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400">Ranking</p>
-          <h2 className="mt-1 text-xl font-semibold text-slate-950">Top matérias e tópicos</h2>
+        {/* Ranking — dark */}
+        <div className="w-full max-w-full overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 p-4 shadow-lg sm:p-5">
+          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-white/30">Ranking</p>
+          <h2 className="mt-1 text-xl font-bold text-white">Top matérias e tópicos</h2>
           <div className="mt-5 space-y-4">
             {bestSubjects.slice(0, 3).map((item, index) => (
               <div key={item.subject.id} className="min-w-0">
-                <div className="mb-1 flex items-center justify-between gap-3">
-                  <span className="min-w-0 break-words text-sm font-semibold leading-5 text-slate-800">
+                <div className="mb-2 flex items-center justify-between gap-3">
+                  <span className="min-w-0 break-words text-sm font-semibold leading-5 text-white/70">
                     {index + 1}. {item.subject.nome}
                   </span>
-                  <span className="shrink-0 text-sm font-semibold text-slate-950">{item.score}%</span>
+                  <span className="shrink-0 text-sm font-bold text-white">{item.score}%</span>
                 </div>
-                <ProgressBar value={item.score} tone={item.accent.progress} label={item.subject.nome} />
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+                  <div
+                    className="h-1.5 rounded-full transition-[width] duration-500"
+                    style={{ width: `${item.score}%`, backgroundColor: item.accent.chart }}
+                  />
+                </div>
               </div>
             ))}
           </div>
           <div className="mt-6 space-y-3">
             {bestTopics.slice(0, 3).map((item) => (
-              <div key={item.topic.id} className="min-w-0 rounded-lg border border-slate-100 bg-slate-50 p-3">
+              <div
+                key={item.topic.id}
+                className="min-w-0 overflow-hidden rounded-xl p-3"
+                style={{ background: `linear-gradient(135deg, #131b27 0%, ${item.accent.chart}15 100%)` }}
+              >
                 <div className="flex items-center justify-between gap-3">
-                  <p className="min-w-0 break-words text-sm font-semibold leading-5 text-slate-900">{item.topic.titulo}</p>
-                  <span className="shrink-0 text-sm font-semibold text-blue-700">{item.score}%</span>
+                  <p className="min-w-0 break-words text-sm font-bold leading-5 text-white">{item.topic.titulo}</p>
+                  <span className="shrink-0 text-sm font-bold" style={{ color: item.accent.chart }}>{item.score}%</span>
                 </div>
-                <p className="mt-1 break-words text-xs font-medium leading-5 text-slate-500">
+                <p className="mt-1 break-words text-xs font-medium leading-5 text-white/40">
                   {item.subject?.nome ?? "Sem matéria"} · {item.topic.status}
                 </p>
               </div>
