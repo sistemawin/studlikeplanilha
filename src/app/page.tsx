@@ -12,6 +12,7 @@ import {
   LogOut,
   Maximize2,
   MessageSquarePlus,
+  RefreshCw,
   RotateCcw,
   ShieldCheck,
 } from "lucide-react";
@@ -107,6 +108,8 @@ export default function Home() {
   const [adminLoading, setAdminLoading] = useState(false);
   const [adminError, setAdminError] = useState("");
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [updateAvailable, setUpdateAvailable] = useState(false);
+  const currentAppVersionRef = useRef("");
 
   // ── Sync status ───────────────────────────────────────────────────────────
   const [syncStatus, setSyncStatus] = useState<SyncStatus>("idle");
@@ -128,6 +131,34 @@ export default function Home() {
     const id = window.setInterval(() => setTimerSeconds((s) => s + 1), 1000);
     return () => window.clearInterval(id);
   }, [timerRunning]);
+
+  // ── App update detection ─────────────────────────────────────────────────
+  useEffect(() => {
+    let cancelled = false;
+
+    async function checkVersion() {
+      try {
+        const response = await fetch("/api/app-version", { cache: "no-store" });
+        if (!response.ok) return;
+        const data = (await response.json()) as { version?: string };
+        if (!data.version || cancelled) return;
+        if (currentAppVersionRef.current && currentAppVersionRef.current !== data.version) {
+          setUpdateAvailable(true);
+          return;
+        }
+        currentAppVersionRef.current ||= data.version;
+      } catch {
+        // Silent by design: update checks should never interrupt study flow.
+      }
+    }
+
+    void checkVersion();
+    const id = window.setInterval(checkVersion, 60_000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+    };
+  }, []);
 
   // ── Auth init ─────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -187,7 +218,7 @@ export default function Home() {
         setSelectedSubject(remote.subjects[0]?.id ?? "");
         setSelectedManualTopic(remote.topics[0]?.id ?? "");
         lastSyncedStateRef.current = serializeAppState(remote);
-        setNotice("Dados carregados do Supabase.");
+        setNotice("Dados carregados com segurança.");
         setRemoteReady(true);
       } catch (err) {
         if (cancelled) return;
@@ -265,7 +296,7 @@ export default function Home() {
         if (savedTimeoutRef.current) window.clearTimeout(savedTimeoutRef.current);
         savedTimeoutRef.current = setTimeout(() => setSyncStatus("idle"), 2000);
       } catch (err) {
-        const msg = err instanceof Error ? err.message : "Não foi possível salvar no Supabase.";
+        const msg = err instanceof Error ? err.message : "Não foi possível salvar seus dados.";
         setRemoteError(msg);
         setNotice(msg);
         setSyncStatus("error");
@@ -604,6 +635,17 @@ export default function Home() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
+  async function refreshAppVersion() {
+    try {
+      if ("serviceWorker" in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(registrations.map((registration) => registration.update()));
+      }
+    } finally {
+      window.location.reload();
+    }
+  }
+
   function addSubject(data: { nome: string; peso: number; cor: string }) {
     const newSubject: Subject = { id: crypto.randomUUID(), ...data };
     setSubjects((ss) => [...ss, newSubject]);
@@ -783,7 +825,7 @@ export default function Home() {
       <main className="flex min-h-dvh w-full items-center justify-center bg-[#f7f7f8] text-slate-950">
         <div className="flex flex-col items-center gap-3">
           <Loader2 className="h-7 w-7 animate-spin" aria-label="Carregando dados" />
-          <p className="text-sm font-semibold text-slate-600">Carregando dados do Supabase</p>
+          <p className="text-sm font-semibold text-slate-600">Carregando seus dados</p>
           {remoteError && (
             <p role="alert" className="max-w-xs text-center text-xs font-medium text-rose-600">
               {remoteError}
@@ -868,6 +910,22 @@ export default function Home() {
 
       {/* Main content */}
       <section className="w-full max-w-full overflow-x-hidden pb-[calc(5.5rem+env(safe-area-inset-bottom))] xl:ml-64 xl:w-auto xl:pb-0">
+        {updateAvailable && (
+          <div className="sticky top-0 z-30 border-b border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-900 shadow-sm shadow-emerald-900/5 md:px-6 xl:px-8">
+            <div className="mx-auto flex max-w-[1600px] flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm font-semibold">
+                Nova versão disponível. Atualize para receber as melhorias.
+              </p>
+              <button
+                onClick={refreshAppVersion}
+                className="flex h-10 w-fit items-center justify-center gap-2 rounded-xl bg-emerald-700 px-4 text-sm font-semibold text-white hover:bg-emerald-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-500"
+              >
+                <RefreshCw className="h-4 w-4" aria-hidden="true" />
+                Atualizar app
+              </button>
+            </div>
+          </div>
+        )}
         <header className="sticky top-0 z-20 w-full border-b border-slate-200 bg-white/92 px-4 py-3 shadow-sm shadow-slate-900/5 backdrop-blur-xl md:px-6 md:py-4 xl:px-8">
           <div className="mx-auto flex max-w-[1600px] flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
             <div className="min-w-0">

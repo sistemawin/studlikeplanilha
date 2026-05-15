@@ -10,7 +10,7 @@ export function getSupabaseBrowserClient() {
 
   if (!url || !anonKey) {
     throw new Error(
-      "Configure NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY para conectar ao Supabase.",
+      "Configuração de conexão indisponível. Verifique as variáveis de ambiente do app.",
     );
   }
 

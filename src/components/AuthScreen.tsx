@@ -46,7 +46,7 @@ export function AuthScreen({
               Controle real do seu plano de estudos.
             </h1>
             <p className="mt-3 max-w-md text-sm leading-6 text-slate-300 sm:mt-4 sm:text-base sm:leading-7">
-              Login seguro com Supabase para salvar matérias, tópicos, revisões e simulados por usuário.
+              Login seguro para salvar matérias, tópicos, revisões e simulados por usuário.
             </p>
           </div>
 
