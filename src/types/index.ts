@@ -79,6 +79,13 @@ export type Suggestion = {
   createdAt: string;
 };
 
+export type AdminUser = {
+  id: string;
+  email: string;
+  createdAt: string;
+  lastSignInAt: string | null;
+};
+
 export type SubjectAccent = {
   dot: string;
   card: string;
@@ -168,4 +175,12 @@ export type SuggestionRow = {
   mensagem: string;
   status: SuggestionStatus;
   created_at: string;
+};
+
+export type AdminUserRow = {
+  id: string;
+  email: string;
+  created_at: string;
+  last_sign_in_at: string | null;
+  total_count: number | string;
 };

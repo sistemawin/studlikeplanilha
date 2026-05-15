@@ -37,6 +37,8 @@ import type {
   Subject,
   SyncStatus,
   Suggestion,
+  AdminUser,
+  AdminUserRow,
   SuggestionRow,
   SuggestionStatus,
   Topic,
@@ -56,6 +58,7 @@ import { SuggestionModal } from "@/components/SuggestionModal";
 import { AdminPanel } from "@/sections/AdminPanel";
 
 const SYNC_DEBOUNCE_MS = 700;
+const ADMIN_USERS_PAGE_SIZE = 20;
 
 export default function Home() {
   // Computed fresh every render — never stale if tab stays open overnight
@@ -108,6 +111,10 @@ export default function Home() {
   const [adminLoading, setAdminLoading] = useState(false);
   const [adminError, setAdminError] = useState("");
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [adminUsers, setAdminUsers] = useState<AdminUser[]>([]);
+  const [adminUsersTotal, setAdminUsersTotal] = useState(0);
+  const [adminUsersPage, setAdminUsersPage] = useState(0);
+  const [adminUsersLoading, setAdminUsersLoading] = useState(false);
   const [updateAvailable, setUpdateAvailable] = useState(false);
   const currentAppVersionRef = useRef("");
 
@@ -194,6 +201,9 @@ export default function Home() {
       setIsAdmin(false);
       setAdminView(false);
       setSuggestions([]);
+      setAdminUsers([]);
+      setAdminUsersTotal(0);
+      setAdminUsersPage(0);
       lastSyncedStateRef.current = "";
       return;
     }
@@ -617,6 +627,38 @@ export default function Home() {
     }
   }
 
+  async function loadAdminUsers(page = adminUsersPage) {
+    if (!session || !isAdmin) return;
+    const safePage = Math.max(0, page);
+    setAdminUsersLoading(true);
+    setAdminError("");
+    try {
+      const supabase = getSupabaseBrowserClient();
+      const { data, error } = await supabase.rpc("admin_list_users", {
+        p_limit: ADMIN_USERS_PAGE_SIZE,
+        p_offset: safePage * ADMIN_USERS_PAGE_SIZE,
+      });
+      if (error) throw error;
+      const rows = (data ?? []) as AdminUserRow[];
+      setAdminUsers(rows.map((row) => ({
+        id: row.id,
+        email: row.email,
+        createdAt: row.created_at,
+        lastSignInAt: row.last_sign_in_at,
+      })));
+      if (rows.length > 0) {
+        setAdminUsersTotal(Number(rows[0].total_count));
+      } else if (safePage === 0) {
+        setAdminUsersTotal(0);
+      }
+      setAdminUsersPage(safePage);
+    } catch (err) {
+      setAdminError(err instanceof Error ? err.message : "Não foi possível carregar usuários.");
+    } finally {
+      setAdminUsersLoading(false);
+    }
+  }
+
   async function updateSuggestionStatus(id: string, status: SuggestionStatus) {
     setSuggestions((items) => items.map((item) => (item.id === id ? { ...item, status } : item)));
     try {
@@ -632,7 +674,13 @@ export default function Home() {
   function openAdminView() {
     setAdminView(true);
     void loadAdminSuggestions();
+    void loadAdminUsers(0);
     window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function refreshAdminData() {
+    void loadAdminSuggestions();
+    void loadAdminUsers(adminUsersPage);
   }
 
   async function refreshAppVersion() {
@@ -1021,11 +1069,17 @@ export default function Home() {
             <ErrorBoundary label="Admin">
               <AdminPanel
                 suggestions={suggestions}
+                users={adminUsers}
+                usersTotal={adminUsersTotal}
+                usersPage={adminUsersPage}
+                usersPageSize={ADMIN_USERS_PAGE_SIZE}
                 loading={adminLoading}
+                usersLoading={adminUsersLoading}
                 error={adminError}
                 onBack={() => setAdminView(false)}
-                onRefresh={loadAdminSuggestions}
+                onRefresh={refreshAdminData}
                 onStatusChange={updateSuggestionStatus}
+                onUsersPageChange={loadAdminUsers}
               />
             </ErrorBoundary>
           ) : (
