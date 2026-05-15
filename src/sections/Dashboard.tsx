@@ -1,7 +1,7 @@
 import { BarChart3, Flame, RotateCcw, Target, Timer } from "lucide-react";
 import { motion } from "framer-motion";
-import type { Goal, NavTarget, Subject, Topic } from "@/types";
-import { corToAccent, pct } from "@/lib/utils";
+import type { Goal, NavTarget, StudySession, Subject, Topic } from "@/types";
+import { addDays, corToAccent, formatTimer, isoDate, pct } from "@/lib/utils";
 
 type Props = {
   topics: Topic[];
@@ -12,6 +12,7 @@ type Props = {
   generalProgress: number;
   timerRunning: boolean;
   timerLabel: string;
+  studySessions: StudySession[];
   notice: string;
   activeSection: NavTarget;
   onOpenFocusTimer: () => void;
@@ -27,6 +28,7 @@ export function Dashboard({
   generalProgress,
   timerRunning,
   timerLabel,
+  studySessions,
   notice,
   activeSection,
   onOpenFocusTimer,
@@ -61,6 +63,13 @@ export function Dashboard({
 
   const questionsProgress = pct(questionGoal.valorAtual, questionGoal.valorObjetivo);
   const safeAvg = Number.isFinite(avgExam) ? avgExam : 0;
+  const todayIso = isoDate(new Date());
+  const weekStartIso = addDays(new Date(), -6);
+  const todaySessions = studySessions.filter((session) => session.data === todayIso);
+  const weekSessions = studySessions.filter((session) => session.data >= weekStartIso);
+  const todaySeconds = todaySessions.reduce((sum, session) => sum + session.durationSeconds, 0);
+  const weekSeconds = weekSessions.reduce((sum, session) => sum + session.durationSeconds, 0);
+  const recentSessions = studySessions.slice(0, 5);
 
   const kpiCards = [
     {
@@ -222,6 +231,54 @@ export function Dashboard({
       >
         {notice}
       </p>
+
+      <section className={`${isVisible ? "block" : "hidden"} rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5 sm:p-5 xl:block`}>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400">
+              Histórico
+            </p>
+            <h2 className="mt-1 text-lg font-bold text-slate-950">Sessões de estudo</h2>
+          </div>
+          <div className="grid grid-cols-2 gap-2 sm:w-auto">
+            <div className="rounded-xl bg-slate-950 px-4 py-3 text-white">
+              <p className="text-xs font-semibold text-white/45">Hoje</p>
+              <p className="mt-1 font-mono text-lg font-bold">{formatTimer(todaySeconds)}</p>
+            </div>
+            <div className="rounded-xl bg-blue-50 px-4 py-3 text-blue-900 ring-1 ring-blue-100">
+              <p className="text-xs font-semibold text-blue-600/70">7 dias</p>
+              <p className="mt-1 font-mono text-lg font-bold">{formatTimer(weekSeconds)}</p>
+            </div>
+          </div>
+        </div>
+
+        {recentSessions.length === 0 ? (
+          <p className="mt-4 rounded-xl border border-dashed border-slate-300 px-4 py-6 text-center text-sm font-medium text-slate-500">
+            Nenhuma sessão registrada ainda. Use o modo foco e toque em Registrar.
+          </p>
+        ) : (
+          <div className="mt-4 space-y-2">
+            {recentSessions.map((session) => (
+              <div
+                key={session.id}
+                className="flex min-w-0 items-center justify-between gap-3 rounded-xl bg-slate-50 p-3 ring-1 ring-slate-100"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-slate-950">
+                    {session.topicoTitulo ?? (session.tipo === "revisao" ? "Revisão registrada" : "Sessão livre")}
+                  </p>
+                  <p className="mt-0.5 truncate text-xs font-medium text-slate-500">
+                    {session.materiaNome ?? "Sem matéria"} · {session.data} · {session.tipo === "revisao" ? "revisão" : session.tipo === "topico" ? "tópico" : "livre"}
+                  </p>
+                </div>
+                <span className="shrink-0 rounded-lg bg-white px-2.5 py-1 font-mono text-xs font-bold text-slate-700 ring-1 ring-slate-200">
+                  {formatTimer(session.durationSeconds)}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
     </>
   );
 }

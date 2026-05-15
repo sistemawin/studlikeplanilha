@@ -69,6 +69,21 @@ export type QuestionLog = {
   data: string;
 };
 
+export type StudySessionType = "topico" | "revisao" | "livre";
+
+export type StudySession = {
+  id: string;
+  tipo: StudySessionType;
+  data: string;
+  endedAt: string;
+  durationSeconds: number;
+  materiaId?: string;
+  materiaNome?: string;
+  topicoId?: string;
+  topicoTitulo?: string;
+  reviewId?: string;
+};
+
 export type Suggestion = {
   id: string;
   userId: string;
@@ -112,6 +127,7 @@ export type AppState = {
   goals: Goal[];
   exams: Exam[];
   questionLogs: QuestionLog[];
+  studySessions: StudySession[];
 };
 
 // Database row types
@@ -167,6 +183,20 @@ export type QuestionLogRow = {
   quantidade: number;
   acertos: number | null;
   data_realizacao: string;
+};
+
+export type StudySessionRow = {
+  id: string;
+  user_id: string;
+  tipo: StudySessionType;
+  data_realizacao: string;
+  ended_at: string;
+  duration_seconds: number;
+  materia_id: string | null;
+  materia_nome: string | null;
+  topico_id: string | null;
+  topico_titulo: string | null;
+  review_id: string | null;
 };
 
 export type SuggestionRow = {

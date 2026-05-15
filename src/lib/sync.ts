@@ -7,6 +7,7 @@ import type {
   ReviewRow,
   ScheduleConfig,
   ScheduleRow,
+  StudySessionRow,
   SubjectRow,
   TopicRow,
 } from "@/types";
@@ -51,19 +52,6 @@ export async function loadRemoteState(supabase: SupabaseClient, userId: string):
 
   if (subjectsError) throw subjectsError;
 
-  // New user — start with a clean slate; default goals sync on first state change
-  if (!subjectRows || subjectRows.length === 0) {
-    return {
-      subjects: [],
-      topics: [],
-      reviews: [],
-      schedule: defaultSchedule,
-      goals: defaultGoals(),
-      exams: [],
-      questionLogs: [],
-    };
-  }
-
   const [
     { data: topicRows, error: topicsError },
     { data: reviewRows, error: reviewsError },
@@ -71,6 +59,7 @@ export async function loadRemoteState(supabase: SupabaseClient, userId: string):
     { data: goalRows, error: goalsError },
     { data: examRows, error: examsError },
     { data: questionLogRows, error: questionLogsError },
+    { data: studySessionRows, error: studySessionsError },
   ] = await Promise.all([
     supabase.from("topicos").select("id,materia_id,titulo,status,dificuldade,estudado_em").order("created_at"),
     supabase.from("revisoes").select("id,topico_id,data_agendada,concluida,tipo").order("data_agendada"),
@@ -78,6 +67,7 @@ export async function loadRemoteState(supabase: SupabaseClient, userId: string):
     supabase.from("metas").select("id,tipo,valor_objetivo,valor_atual").eq("user_id", userId).order("created_at"),
     supabase.from("simulados").select("id,nome,acertos,total_questoes,data_realizacao").eq("user_id", userId).order("created_at", { ascending: false }),
     supabase.from("questoes").select("id,materia_id,topico_id,quantidade,acertos,data_realizacao").eq("user_id", userId).order("created_at", { ascending: false }),
+    supabase.from("sessoes_estudo").select("id,user_id,tipo,data_realizacao,ended_at,duration_seconds,materia_id,materia_nome,topico_id,topico_titulo,review_id").eq("user_id", userId).order("ended_at", { ascending: false }),
   ]);
 
   if (topicsError) throw topicsError;
@@ -88,8 +78,11 @@ export async function loadRemoteState(supabase: SupabaseClient, userId: string):
   if (questionLogsError && !isMissingTableError(questionLogsError, "questoes")) {
     throw questionLogsError;
   }
+  if (studySessionsError && !isMissingTableError(studySessionsError, "sessoes_estudo")) {
+    throw studySessionsError;
+  }
 
-  const subjects = (subjectRows as SubjectRow[]).map((row) => ({
+  const subjects = ((subjectRows ?? []) as SubjectRow[]).map((row) => ({
     id: row.id,
     nome: row.nome,
     peso: row.peso,
@@ -147,6 +140,21 @@ export async function loadRemoteState(supabase: SupabaseClient, userId: string):
         data: row.data_realizacao,
       }));
 
+  const studySessions = studySessionsError
+    ? []
+    : ((studySessionRows ?? []) as StudySessionRow[]).map((row) => ({
+        id: row.id,
+        tipo: row.tipo,
+        data: row.data_realizacao,
+        endedAt: row.ended_at,
+        durationSeconds: row.duration_seconds,
+        materiaId: row.materia_id ?? undefined,
+        materiaNome: row.materia_nome ?? undefined,
+        topicoId: row.topico_id ?? undefined,
+        topicoTitulo: row.topico_titulo ?? undefined,
+        reviewId: row.review_id ?? undefined,
+      }));
+
   return {
     subjects,
     topics,
@@ -155,6 +163,7 @@ export async function loadRemoteState(supabase: SupabaseClient, userId: string):
     goals: goals.length > 0 ? goals : defaultGoals(),
     exams,
     questionLogs,
+    studySessions,
   };
 }
 
@@ -170,6 +179,7 @@ export async function saveRemoteState(supabase: SupabaseClient, userId: string, 
   const examIds = state.exams.map((e) => e.id);
   const validQuestionLogs = state.questionLogs.filter((q) => subjectIds.includes(q.materiaId) && topicIds.includes(q.topicoId));
   const questionLogIds = validQuestionLogs.map((q) => q.id);
+  const studySessionIds = state.studySessions.map((s) => s.id);
   // ── Materias ──────────────────────────────────────────────────────────────
   if (state.subjects.length > 0) {
     const { error } = await supabase.from("materias").upsert(
@@ -306,6 +316,40 @@ export async function saveRemoteState(supabase: SupabaseClient, userId: string, 
     }
   } catch (error) {
     if (!isMissingTableError(error, "questoes")) {
+      throw error;
+    }
+  }
+
+  // ── Sessões de estudo ────────────────────────────────────────────────────
+  try {
+    if (state.studySessions.length > 0) {
+      const { error } = await supabase.from("sessoes_estudo").upsert(
+        state.studySessions.map((s) => ({
+          id: s.id,
+          user_id: userId,
+          tipo: s.tipo,
+          data_realizacao: s.data,
+          ended_at: s.endedAt,
+          duration_seconds: s.durationSeconds,
+          materia_id: s.materiaId ?? null,
+          materia_nome: s.materiaNome ?? null,
+          topico_id: s.topicoId ?? null,
+          topico_titulo: s.topicoTitulo ?? null,
+          review_id: s.reviewId ?? null,
+        })),
+        { onConflict: "id" },
+      );
+      if (error) throw error;
+    }
+    {
+      const base = supabase.from("sessoes_estudo").delete().eq("user_id", userId);
+      const { error } = studySessionIds.length > 0
+        ? await base.not("id", "in", `(${studySessionIds.join(",")})`)
+        : await base;
+      if (error) throw error;
+    }
+  } catch (error) {
+    if (!isMissingTableError(error, "sessoes_estudo")) {
       throw error;
     }
   }

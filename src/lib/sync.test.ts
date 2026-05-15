@@ -47,6 +47,7 @@ describe("serializeAppState", () => {
     goals: [],
     exams: [],
     questionLogs: [],
+    studySessions: [],
   };
 
   it("retorna string JSON", () => {

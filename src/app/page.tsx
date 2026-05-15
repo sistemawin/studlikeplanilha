@@ -34,6 +34,7 @@ import type {
   QuestionLog,
   Review,
   ReviewType,
+  StudySession,
   Subject,
   SyncStatus,
   Suggestion,
@@ -102,6 +103,12 @@ function normalizeAdminAppState(value: unknown): AppState {
           acertos: log.acertos === null ? null : Number(log.acertos),
         }))
       : [],
+    studySessions: Array.isArray(candidate.studySessions)
+      ? candidate.studySessions.map((session) => ({
+          ...session,
+          durationSeconds: Number(session.durationSeconds),
+        }))
+      : [],
   };
 }
 
@@ -117,6 +124,7 @@ export default function Home() {
   const [goals, setGoals] = useState<Goal[]>(() => defaultGoals());
   const [exams, setExams] = useState<Exam[]>([]);
   const [questionLogs, setQuestionLogs] = useState<QuestionLog[]>([]);
+  const [studySessions, setStudySessions] = useState<StudySession[]>([]);
 
   // ── UI state ──────────────────────────────────────────────────────────────
   const [newTopicText, setNewTopicText] = useState("");
@@ -350,6 +358,7 @@ export default function Home() {
         setGoals(remote.goals);
         setExams(remote.exams);
         setQuestionLogs(remote.questionLogs);
+        setStudySessions(remote.studySessions);
         setSelectedSubject(remote.subjects[0]?.id ?? "");
         setSelectedManualTopic(remote.topics[0]?.id ?? "");
         lastSyncedStateRef.current = serializeAppState(remote);
@@ -405,7 +414,7 @@ export default function Home() {
       return;
     }
 
-    const state: AppState = { subjects, topics, reviews, schedule, goals, exams, questionLogs };
+    const state: AppState = { subjects, topics, reviews, schedule, goals, exams, questionLogs, studySessions };
     const serialized = serializeAppState(state);
     latestStateRef.current = state;
     latestSerializedStateRef.current = serialized;
@@ -450,7 +459,7 @@ export default function Home() {
 
     const id = window.setTimeout(() => void runSync(), SYNC_DEBOUNCE_MS);
     return () => window.clearTimeout(id);
-  }, [subjects, topics, reviews, schedule, goals, exams, questionLogs, session, remoteReady, readOnlyUser]);
+  }, [subjects, topics, reviews, schedule, goals, exams, questionLogs, studySessions, session, remoteReady, readOnlyUser]);
 
   // ── Derived state ─────────────────────────────────────────────────────────
   const topicById = useMemo(
@@ -489,6 +498,7 @@ export default function Home() {
     setGoals(state.goals);
     setExams(state.exams);
     setQuestionLogs(state.questionLogs);
+    setStudySessions(state.studySessions);
     setSelectedSubject(state.subjects[0]?.id ?? "");
     setSelectedManualTopic(state.topics[0]?.id ?? "");
   }
@@ -1196,6 +1206,11 @@ export default function Home() {
 
     const sessionHours = Math.round((timerSeconds / 3600) * 100) / 100;
     const timeStr = formatTimer(timerSeconds);
+    const topic = topicId ? topicById[topicId] : undefined;
+    const review = reviewId ? reviews.find((r) => r.id === reviewId) : undefined;
+    const reviewTopic = review ? topicById[review.topicoId] : undefined;
+    const sessionTopic = topic ?? reviewTopic;
+    const sessionSubject = sessionTopic ? subjectById[sessionTopic.materiaId] : undefined;
 
     if (timerSeconds > 0) {
       setGoals((gs) =>
@@ -1205,6 +1220,21 @@ export default function Home() {
             : g,
         ),
       );
+      setStudySessions((sessions) => [
+        {
+          id: crypto.randomUUID(),
+          tipo: topicId ? "topico" : reviewId ? "revisao" : "livre",
+          data: todayIso,
+          endedAt: new Date().toISOString(),
+          durationSeconds: timerSeconds,
+          materiaId: sessionSubject?.id,
+          materiaNome: sessionSubject?.nome,
+          topicoId: sessionTopic?.id,
+          topicoTitulo: sessionTopic?.titulo,
+          reviewId,
+        },
+        ...sessions,
+      ]);
     }
 
     if (reviewId) {
@@ -1217,11 +1247,10 @@ export default function Home() {
           t.id === topicId ? { ...t, estudadoEm: t.estudadoEm ?? todayIso } : t,
         ),
       );
-      const label = topics.find((t) => t.id === topicId)?.titulo ?? "tópico";
+      const label = topic?.titulo ?? "tópico";
       setNotice(`${timeStr} registrado — ${label}.`);
     } else if (reviewId) {
-      const topic = topicById[reviews.find((r) => r.id === reviewId)?.topicoId ?? ""];
-      setNotice(`${timeStr} registrado · revisão "${topic?.titulo ?? ""}" concluída.`);
+      setNotice(`${timeStr} registrado · revisão "${reviewTopic?.titulo ?? ""}" concluída.`);
     } else {
       setNotice(`Sessão de ${timeStr} registrada.`);
     }
@@ -1702,6 +1731,7 @@ export default function Home() {
                   generalProgress={generalProgress}
                   timerRunning={timerRunning}
                   timerLabel={formatTimer(timerSeconds)}
+                  studySessions={studySessions}
                   notice={notice}
                   activeSection={activeSection}
                   onOpenFocusTimer={openFocusTimer}

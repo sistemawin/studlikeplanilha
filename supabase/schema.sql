@@ -11,6 +11,7 @@ create type topic_difficulty as enum ('Fácil', 'Médio', 'Difícil');
 create type review_type as enum ('1', '7', '21', '30', 'manual', 'dificuldade');
 create type goal_type as enum ('horas', 'questões');
 create type suggestion_status as enum ('nova', 'lida', 'planejada', 'resolvida', 'arquivada');
+create type study_session_type as enum ('topico', 'revisao', 'livre');
 
 create table public.materias (
   id uuid primary key default gen_random_uuid(),
@@ -81,6 +82,21 @@ create table public.questoes (
   constraint questoes_acertos_validos check (acertos is null or acertos <= quantidade)
 );
 
+create table public.sessoes_estudo (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  tipo study_session_type not null,
+  data_realizacao date not null default current_date,
+  ended_at timestamptz not null default now(),
+  duration_seconds integer not null check (duration_seconds > 0),
+  materia_id uuid references public.materias(id) on delete set null,
+  materia_nome text,
+  topico_id uuid references public.topicos(id) on delete set null,
+  topico_titulo text,
+  review_id uuid references public.revisoes(id) on delete set null,
+  created_at timestamptz not null default now()
+);
+
 create table public.app_admins (
   user_id uuid primary key references auth.users(id) on delete cascade,
   created_at timestamptz not null default now()
@@ -103,6 +119,7 @@ alter table public.cronograma enable row level security;
 alter table public.metas enable row level security;
 alter table public.simulados enable row level security;
 alter table public.questoes enable row level security;
+alter table public.sessoes_estudo enable row level security;
 alter table public.app_admins enable row level security;
 alter table public.sugestoes enable row level security;
 
@@ -114,6 +131,7 @@ grant select, insert, update, delete on public.cronograma to authenticated;
 grant select, insert, update, delete on public.metas to authenticated;
 grant select, insert, update, delete on public.simulados to authenticated;
 grant select, insert, update, delete on public.questoes to authenticated;
+grant select, insert, update, delete on public.sessoes_estudo to authenticated;
 grant select on public.app_admins to authenticated;
 grant select, insert, update on public.sugestoes to authenticated;
 
@@ -174,6 +192,9 @@ create policy "questoes do usuario" on public.questoes
         and materias.user_id = auth.uid()
     )
   );
+
+create policy "sessoes de estudo do usuario" on public.sessoes_estudo
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 create policy "admin ve proprio registro" on public.app_admins
   for select using (auth.uid() = user_id);
