@@ -127,10 +127,21 @@ create policy "metas do usuario" on public.metas
 create policy "simulados do usuario" on public.simulados
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
+-- Performance indexes
+create index idx_topicos_materia_id   on public.topicos (materia_id);
+create index idx_topicos_status       on public.topicos (status);
+create index idx_topicos_estudado_em  on public.topicos (estudado_em);
+create index idx_metas_user_id        on public.metas (user_id);
+create index idx_simulados_user_id    on public.simulados (user_id);
+create index idx_cronograma_user_id   on public.cronograma (user_id);
+
 create index revisoes_pendentes_idx
   on public.revisoes (data_agendada)
   where concluida = false;
 
+-- Idempotent trigger: only fires when status transitions INTO a studied state
+-- and no standard review (tipo '1') exists yet for this topic.
+-- This prevents duplicate reviews when the sync strategy re-saves the same row.
 create or replace function public.agendar_revisoes_padrao()
 returns trigger
 language plpgsql
@@ -138,24 +149,29 @@ security definer
 as $$
 begin
   if new.status in ('Questões Feitas', 'Revisado')
-     and coalesce(old.status, 'Não Estudado') not in ('Questões Feitas', 'Revisado') then
+     and coalesce(old.status, 'Não Estudado') not in ('Questões Feitas', 'Revisado')
+     and not exists (
+       select 1 from public.revisoes
+       where topico_id = new.id and tipo = '1'
+     ) then
+
     insert into public.revisoes (topico_id, data_agendada, tipo)
     values
-      (new.id, current_date + 1, '1'),
-      (new.id, current_date + 7, '7'),
+      (new.id, current_date + 1,  '1'),
+      (new.id, current_date + 7,  '7'),
       (new.id, current_date + 21, '21'),
       (new.id, current_date + 30, '30');
 
     if new.dificuldade = 'Difícil' then
       insert into public.revisoes (topico_id, data_agendada, tipo)
       values
-        (new.id, current_date + 3, 'dificuldade'),
+        (new.id, current_date + 3,  'dificuldade'),
         (new.id, current_date + 10, 'dificuldade'),
         (new.id, current_date + 17, 'dificuldade');
     elsif new.dificuldade = 'Médio' then
       insert into public.revisoes (topico_id, data_agendada, tipo)
       values
-        (new.id, current_date + 7, 'dificuldade'),
+        (new.id, current_date + 7,  'dificuldade'),
         (new.id, current_date + 21, 'dificuldade');
     else
       insert into public.revisoes (topico_id, data_agendada, tipo)
