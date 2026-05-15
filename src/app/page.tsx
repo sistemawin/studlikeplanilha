@@ -932,7 +932,7 @@ export default function Home() {
               <div className="flex items-center gap-3">
                 <StudlikeLogo size={40} className="shrink-0 rounded-xl xl:hidden" />
                 <div className="min-w-0">
-                  <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-pink-600">
+                  <p className="bg-gradient-to-r from-blue-700 via-sky-500 to-cyan-400 bg-clip-text text-[11px] font-bold uppercase tracking-[0.14em] text-transparent">
                     {adminView ? "Admin" : sectionTitle[activeSection]}
                   </p>
                   <h1 className="mt-0.5 truncate text-xl font-semibold tracking-normal text-slate-950 sm:text-2xl md:text-3xl">
@@ -970,7 +970,7 @@ export default function Home() {
 
               <button
                 onClick={() => setSuggestionOpen(true)}
-                className="flex h-11 items-center justify-center gap-2 rounded-xl bg-pink-600 px-4 text-sm font-semibold text-white shadow-sm shadow-pink-600/20 hover:bg-pink-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-pink-500"
+                className="flex h-11 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-700 via-sky-600 to-cyan-500 px-4 text-sm font-semibold text-white shadow-sm shadow-blue-700/20 hover:from-blue-800 hover:via-sky-700 hover:to-cyan-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
               >
                 <MessageSquarePlus className="h-4 w-4" aria-hidden="true" />
                 <span className="truncate">Sugerir melhoria</span>

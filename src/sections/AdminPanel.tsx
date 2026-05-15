@@ -35,7 +35,7 @@ export function AdminPanel({ suggestions, loading, error, onBack, onRefresh, onS
               <ShieldCheck className="h-5 w-5" aria-hidden="true" />
             </span>
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-pink-600">Admin</p>
+              <p className="bg-gradient-to-r from-blue-700 via-sky-500 to-cyan-400 bg-clip-text text-[11px] font-bold uppercase tracking-[0.16em] text-transparent">Admin</p>
               <h2 className="text-xl font-semibold text-slate-950">Sugestões dos usuários</h2>
               <p className="text-sm text-slate-500">
                 {suggestions.length} enviada{suggestions.length !== 1 ? "s" : ""} · {openCount} nova{openCount !== 1 ? "s" : ""}
