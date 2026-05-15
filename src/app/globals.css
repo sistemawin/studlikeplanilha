@@ -23,7 +23,6 @@ html {
   max-width: 100%;
   min-height: 100%;
   overflow-x: hidden;
-  overflow-y: auto;
   overscroll-behavior-x: none;
   overscroll-behavior-y: auto;
   background: var(--background);
@@ -48,20 +47,20 @@ body {
   -webkit-font-smoothing: antialiased;
   text-rendering: geometricPrecision;
   overflow-x: hidden;
-  overflow-y: auto;
   overscroll-behavior-x: none;
   overscroll-behavior-y: auto;
 }
 
 .mobile-bottom-nav {
-  position: fixed;
+  position: fixed !important;
+  top: auto !important;
   left: 0;
   right: 0;
-  bottom: 0;
-  z-index: 30;
+  bottom: 0 !important;
+  z-index: 2147483647;
   width: 100%;
   min-height: calc(4.75rem + env(safe-area-inset-bottom));
-  transform: translate3d(0, 0, 0);
+  transform: none !important;
 }
 
 ::selection {
