@@ -1,6 +1,5 @@
 import { X } from "lucide-react";
 import { useState } from "react";
-import { motion } from "framer-motion";
 import type { Subject } from "@/types";
 import { useScrollLock } from "@/hooks/useScrollLock";
 
@@ -58,19 +57,15 @@ export function SubjectModal({ subject, onSave, onClose }: Props) {
         aria-hidden="true"
       />
 
-      {/* Side panel — slides in from right */}
-      <motion.form
-        initial={{ x: "100%" }}
-        animate={{ x: 0 }}
-        transition={{ type: "spring", damping: 32, stiffness: 320 }}
+      <form
         onSubmit={(event) => {
           event.preventDefault();
           handleSave();
         }}
-        className="relative z-10 flex h-[100dvh] max-h-[100dvh] w-full max-w-sm flex-col bg-white shadow-2xl"
+        className="relative z-10 flex h-[100svh] max-h-[100svh] w-full max-w-sm flex-col overflow-hidden bg-white shadow-2xl sm:h-auto sm:max-h-[calc(100svh-2rem)] sm:rounded-2xl"
       >
         {/* Header */}
-        <div className="flex shrink-0 items-center justify-between border-b border-slate-100 px-5 py-4">
+        <div className="sticky top-0 z-20 flex shrink-0 items-center justify-between border-b border-slate-100 bg-white px-5 py-4">
           <h2 id="subject-modal-title" className="text-lg font-semibold text-slate-950">
             {subject ? "Editar matéria" : "Nova matéria"}
           </h2>
@@ -85,7 +80,7 @@ export function SubjectModal({ subject, onSave, onClose }: Props) {
         </div>
 
         {/* Scrollable body — min-h-0 is required for flex-1 to shrink correctly */}
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-6 [-webkit-overflow-scrolling:touch]">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-6 pb-28 [-webkit-overflow-scrolling:touch]">
           <div className="space-y-6">
 
             {/* Nome */}
@@ -179,7 +174,7 @@ export function SubjectModal({ subject, onSave, onClose }: Props) {
         </div>
 
         {/* Footer — always visible */}
-        <div className="shrink-0 border-t border-slate-100 bg-white px-5 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+        <div className="sticky bottom-0 z-20 shrink-0 border-t border-slate-100 bg-white px-5 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-[0_-10px_24px_rgba(15,23,42,0.08)]">
           <div className="grid grid-cols-2 gap-3">
             <button
               type="button"
@@ -196,7 +191,7 @@ export function SubjectModal({ subject, onSave, onClose }: Props) {
             </button>
           </div>
         </div>
-      </motion.form>
+      </form>
     </div>
   );
 }
