@@ -56,7 +56,7 @@ export function Dashboard({
     <>
       <section
         id="dashboard"
-        className={`${isVisible ? "grid" : "hidden"} scroll-mt-24 grid-cols-2 gap-3 md:gap-4 lg:grid xl:grid-cols-4`}
+        className={`${isVisible ? "grid" : "hidden"} scroll-mt-24 grid-cols-2 gap-3 md:gap-4 xl:grid xl:grid-cols-2 2xl:grid-cols-4`}
       >
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5 sm:p-5">
           <div className="flex items-center justify-between">
@@ -107,7 +107,7 @@ export function Dashboard({
       </section>
 
       {/* Mobile subject quick-access strip */}
-      <section className={`${isVisible ? "block" : "hidden"} lg:hidden`}>
+      <section className={`${isVisible ? "block" : "hidden"} xl:hidden`}>
         <div className="w-full max-w-full overflow-hidden">
           <div className="flex max-w-full gap-3 overflow-x-auto overscroll-x-contain pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <button
@@ -143,7 +143,7 @@ export function Dashboard({
       <p
         role="status"
         aria-live="polite"
-        className={`${isVisible ? "block" : "hidden"} rounded-xl border border-blue-100 bg-white px-4 py-3 text-sm font-medium text-blue-700 shadow-sm shadow-slate-900/5 lg:block`}
+        className={`${isVisible ? "block" : "hidden"} rounded-xl border border-blue-100 bg-white px-4 py-3 text-sm font-medium text-blue-700 shadow-sm shadow-slate-900/5 xl:block`}
       >
         {notice}
       </p>

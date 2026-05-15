@@ -1,5 +1,5 @@
 import { CheckCircle2, Pause, Play, RotateCcw, Timer, X } from "lucide-react";
-import type { Goal, Review } from "@/types";
+import type { Goal } from "@/types";
 import { formatTimer } from "@/lib/utils";
 
 type Props = {

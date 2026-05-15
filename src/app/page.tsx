@@ -626,10 +626,10 @@ export default function Home() {
       )}
 
       {/* Desktop sidebar */}
-      <aside className="fixed left-0 top-0 hidden h-screen w-20 border-r border-slate-900 bg-[#050505] p-3 text-white shadow-xl shadow-slate-900/10 lg:block xl:w-64">
+      <aside className="fixed left-0 top-0 hidden h-screen w-64 border-r border-slate-900 bg-[#050505] p-3 text-white shadow-xl shadow-slate-900/10 xl:block">
         <div className="mb-8 flex items-center gap-3 px-2 py-3">
           <StudlikeLogo size={40} className="rounded-lg shadow-sm" />
-          <div className="hidden xl:block">
+          <div>
             <p className="text-sm font-semibold">Studlike</p>
             <p className="text-xs text-slate-400">Plano de estudos</p>
           </div>
@@ -652,12 +652,12 @@ export default function Home() {
       </aside>
 
       {/* Main content */}
-      <section className="w-full max-w-full overflow-x-hidden pb-[calc(5.5rem+env(safe-area-inset-bottom))] lg:ml-20 lg:w-auto lg:pb-0 xl:ml-64">
-        <header className="sticky top-0 z-20 w-full border-b border-slate-200 bg-white/92 px-4 py-3 shadow-sm shadow-slate-900/5 backdrop-blur-xl md:px-8 md:py-4">
-          <div className="mx-auto flex max-w-7xl flex-col gap-3 md:flex-row md:items-center md:justify-between">
+      <section className="w-full max-w-full overflow-x-hidden pb-[calc(5.5rem+env(safe-area-inset-bottom))] xl:ml-64 xl:w-auto xl:pb-0">
+        <header className="sticky top-0 z-20 w-full border-b border-slate-200 bg-white/92 px-4 py-3 shadow-sm shadow-slate-900/5 backdrop-blur-xl md:px-6 md:py-4 xl:px-8">
+          <div className="mx-auto flex max-w-[1600px] flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
             <div className="min-w-0">
               <div className="flex items-center gap-3">
-                <StudlikeLogo size={40} className="shrink-0 rounded-xl lg:hidden" />
+                <StudlikeLogo size={40} className="shrink-0 rounded-xl xl:hidden" />
                 <div className="min-w-0">
                   <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-pink-600">
                     {sectionTitle[activeSection]}
@@ -667,14 +667,14 @@ export default function Home() {
                   </h1>
                 </div>
               </div>
-              <p className="mt-2 hidden text-sm leading-6 text-slate-500 sm:block">
+              <p className="mt-2 hidden text-sm leading-6 text-slate-500 xl:block">
                 Alertas, edital verticalizado e metas do dia em uma tela.
               </p>
               <p className="mt-1 truncate text-xs font-medium text-slate-400 sm:mt-2">
                 {session.user.email}
               </p>
             </div>
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
               {/* Sync status indicator */}
               {syncStatus !== "idle" && (
                 <span
@@ -759,7 +759,7 @@ export default function Home() {
           </div>
         </header>
 
-        <div className="mx-auto w-full max-w-7xl space-y-5 overflow-x-hidden p-4 md:space-y-6 md:p-8">
+        <div className="mx-auto w-full max-w-[1600px] space-y-5 overflow-x-hidden p-4 md:space-y-6 md:p-6 xl:p-8">
           <ErrorBoundary label="Dashboard">
             <Dashboard
               topics={topics}
@@ -812,7 +812,7 @@ export default function Home() {
           <section
             className={`${
               activeSection === "cronograma" || activeSection === "simulados" ? "grid" : "hidden"
-            } gap-5 lg:grid xl:grid-cols-2`}
+            } gap-5 xl:grid 2xl:grid-cols-2`}
           >
             <ErrorBoundary label="Cronograma">
               <Schedule
@@ -852,7 +852,7 @@ export default function Home() {
       {/* Mobile bottom nav */}
       <nav
         aria-label="Navegação mobile"
-        className="fixed inset-x-0 bottom-0 z-30 grid w-full grid-cols-5 overflow-hidden border-t border-slate-200 bg-white/96 px-2 pb-[calc(0.45rem+env(safe-area-inset-bottom))] pt-2 shadow-[0_-10px_30px_rgba(15,23,42,0.08)] backdrop-blur-xl lg:hidden"
+        className="fixed inset-x-0 bottom-0 z-30 grid w-full grid-cols-5 overflow-hidden border-t border-slate-200 bg-white/96 px-2 pb-[calc(0.45rem+env(safe-area-inset-bottom))] pt-2 shadow-[0_-10px_30px_rgba(15,23,42,0.08)] backdrop-blur-xl xl:hidden"
       >
         {mobileNavItems.map((item) => {
           const Icon = item.icon;

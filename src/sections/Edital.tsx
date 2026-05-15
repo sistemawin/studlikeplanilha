@@ -46,24 +46,24 @@ export function Edital({
 
   return (
     <section
-      className={`${isVisible ? "grid" : "hidden"} gap-5 lg:grid xl:grid-cols-[1.15fr_0.85fr]`}
+      className={`${isVisible ? "grid" : "hidden"} gap-5 xl:grid 2xl:grid-cols-[minmax(0,1.15fr)_minmax(360px,0.85fr)]`}
     >
       <div
         id="edital"
         className={`${
           activeSection === "edital" ? "block" : "hidden"
-        } scroll-mt-24 rounded-xl border border-slate-200 bg-white shadow-sm shadow-slate-900/5 lg:block`}
+        } scroll-mt-24 rounded-xl border border-slate-200 bg-white shadow-sm shadow-slate-900/5 xl:block`}
       >
         {/* Header */}
         <div className="flex flex-col gap-3 border-b border-slate-200 p-4 sm:p-5">
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
             <div>
               <h2 className="text-lg font-semibold">Edital verticalizado</h2>
               <p className="text-sm text-slate-500">
                 Tópicos por matéria com status, dificuldade e revisões automáticas.
               </p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="rounded-lg bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700">
                 {studiedTopics}/{topics.length} iniciados
               </span>
@@ -100,7 +100,7 @@ export function Edital({
           )}
           {search && (
             <p className="text-xs text-slate-500">
-              {topics.filter((t) => t.titulo.toLowerCase().includes(lowerSearch)).length} resultado{topics.filter((t) => t.titulo.toLowerCase().includes(lowerSearch)).length !== 1 ? "s" : ""} para "{search}"
+              {topics.filter((t) => t.titulo.toLowerCase().includes(lowerSearch)).length} resultado{topics.filter((t) => t.titulo.toLowerCase().includes(lowerSearch)).length !== 1 ? "s" : ""} para &quot;{search}&quot;
             </p>
           )}
         </div>
@@ -178,10 +178,10 @@ export function Edital({
                   {filteredTopics.map((topic) => (
                     <div
                       key={topic.id}
-                      className="grid gap-3 rounded-xl border border-white/70 bg-white/95 p-3 shadow-sm shadow-slate-900/5 md:grid-cols-[1fr_150px_140px_120px_auto]"
+                      className="grid min-w-0 gap-3 rounded-xl border border-white/70 bg-white/95 p-3 shadow-sm shadow-slate-900/5 2xl:grid-cols-[minmax(0,1fr)_150px_140px_120px_auto]"
                     >
                       <div>
-                        <p className="font-medium">{topic.titulo}</p>
+                        <p className="break-words font-medium">{topic.titulo}</p>
                         <p className="text-xs text-slate-500">
                           {topic.estudadoEm ? `Estudado em ${topic.estudadoEm}` : "Ainda não iniciado"}
                         </p>
@@ -194,7 +194,7 @@ export function Edital({
                         id={`status-${topic.id}`}
                         value={topic.status}
                         onChange={(e) => onStatusChange(topic.id, e.target.value as TopicStatus)}
-                        className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 md:h-10"
+                        className="h-11 min-w-0 rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 2xl:h-10"
                       >
                         <option>Não Estudado</option>
                         <option>Teoria Lida</option>
@@ -209,7 +209,7 @@ export function Edital({
                         id={`dificuldade-${topic.id}`}
                         value={topic.dificuldade}
                         onChange={(e) => onDifficultyChange(topic.id, e.target.value as Difficulty)}
-                        className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 md:h-10"
+                        className="h-11 min-w-0 rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 2xl:h-10"
                       >
                         <option>Fácil</option>
                         <option>Médio</option>
@@ -242,12 +242,12 @@ export function Edital({
       <div
         className={`${
           activeSection === "edital" || activeSection === "revisoes" ? "space-y-5" : "hidden"
-        } lg:block lg:space-y-5`}
+        } xl:block xl:space-y-5`}
       >
         <div
           className={`${
             activeSection === "edital" ? "block" : "hidden"
-          } rounded-xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5 sm:p-5 lg:block`}
+          } rounded-xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5 sm:p-5 xl:block`}
         >
           <h2 className="text-lg font-semibold">Importar tópicos do edital</h2>
           <p className="mt-1 text-sm text-slate-500">

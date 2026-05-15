@@ -19,7 +19,7 @@ export function NavButton({ icon: Icon, label, active, onClick }: Props) {
       }`}
     >
       <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
-      <span className="hidden lg:inline">{label}</span>
+      <span className="truncate">{label}</span>
     </button>
   );
 }

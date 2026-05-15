@@ -44,7 +44,7 @@ export function Schedule({
       id="cronograma"
       className={`${
         activeSection === "cronograma" ? "block" : "hidden"
-      } scroll-mt-24 rounded-xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5 sm:p-5 lg:block`}
+      } scroll-mt-24 rounded-xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5 sm:p-5 xl:block`}
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -90,7 +90,7 @@ export function Schedule({
         </p>
       )}
 
-      <div className="mt-5 grid gap-3 md:grid-cols-2">
+      <div className="mt-5 grid gap-3 lg:grid-cols-2 2xl:grid-cols-3">
         {CALENDAR_DAYS.map((day, index) => {
           if (schedule.modo === "ciclos") {
             const id = schedule.ciclos[index % Math.max(schedule.ciclos.length, 1)];

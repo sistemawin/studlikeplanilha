@@ -1,4 +1,4 @@
-import { BarChart3, Pencil, Save, Trash2, X } from "lucide-react";
+import { Pencil, Save, Trash2, X } from "lucide-react";
 import { useState } from "react";
 import type { Goal, MockExam, NavTarget, Subject, Topic } from "@/types";
 import { PieChart } from "@/components/PieChart";
@@ -166,7 +166,7 @@ export function Exams({
   return (
     <>
       {/* Analytics charts */}
-      <section className={`${isVisible ? "grid" : "hidden"} gap-6 lg:grid xl:grid-cols-[1fr_1fr]`}>
+      <section className={`${isVisible ? "grid" : "hidden"} gap-6 xl:grid 2xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]`}>
         <PieChart
           title="Melhores matérias"
           subtitle="Ranking calculado pelo avanço dos tópicos, dificuldade e status atual."
@@ -182,7 +182,7 @@ export function Exams({
       </section>
 
       {/* Performance bar chart + ranking */}
-      <section className={`${isVisible ? "grid" : "hidden"} gap-5 lg:grid xl:grid-cols-[1.1fr_0.9fr]`}>
+      <section className={`${isVisible ? "grid" : "hidden"} gap-5 xl:grid 2xl:grid-cols-[minmax(0,1.1fr)_minmax(360px,0.9fr)]`}>
         <div className="w-full max-w-full overflow-hidden rounded-xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5 sm:p-5">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0">
@@ -258,7 +258,7 @@ export function Exams({
         id="simulados"
         className={`${
           isVisible ? "block" : "hidden"
-        } w-full max-w-full overflow-hidden scroll-mt-24 rounded-xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5 sm:p-5 lg:block`}
+        } w-full max-w-full overflow-hidden scroll-mt-24 rounded-xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5 sm:p-5 xl:block`}
       >
         <h2 className="break-words text-lg font-semibold">Metas, simulados e revisão manual</h2>
 
@@ -281,7 +281,7 @@ export function Exams({
         {/* Exam registration */}
         <div className="mt-5 min-w-0 rounded-xl border border-slate-200 bg-slate-50/70 p-4">
           <p className="font-semibold">Registrar simulado</p>
-          <div className="mt-3 grid min-w-0 gap-2 sm:grid-cols-[minmax(0,1fr)_90px_90px_auto]">
+          <div className="mt-3 grid min-w-0 gap-2 xl:grid-cols-[minmax(0,1fr)_90px_90px_auto]">
             <label className="sr-only" htmlFor="exam-nome">Nome do simulado</label>
             <input
               id="exam-nome"
@@ -344,7 +344,7 @@ export function Exams({
         {/* Manual review */}
         <div className="mt-5 min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-blue-50/50 p-4">
           <p className="font-semibold">Revisão manual</p>
-          <div className="mt-3 grid min-w-0 max-w-full gap-2 overflow-hidden sm:grid-cols-[minmax(0,1fr)_150px_auto]">
+          <div className="mt-3 grid min-w-0 max-w-full gap-2 overflow-hidden xl:grid-cols-[minmax(0,1fr)_150px_auto]">
             <label className="sr-only" htmlFor="manual-topic">Tópico para revisão</label>
             <select
               id="manual-topic"

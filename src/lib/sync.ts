@@ -136,8 +136,6 @@ export async function saveRemoteState(supabase: SupabaseClient, userId: string, 
   const reviewIds = validReviews.map((r) => r.id);
   const goalIds = state.goals.map((g) => g.id);
   const examIds = state.exams.map((e) => e.id);
-  const today = isoDate(new Date());
-
   // ── Materias ──────────────────────────────────────────────────────────────
   if (state.subjects.length > 0) {
     const { error } = await supabase.from("materias").upsert(

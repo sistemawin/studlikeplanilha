@@ -24,7 +24,7 @@ export function Reviews({ reviews, topics, subjects, todayIso, activeSection, on
       id="revisoes"
       className={`${
         isVisible ? "block" : "hidden"
-      } scroll-mt-24 rounded-xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5 sm:p-5 lg:block`}
+      } scroll-mt-24 rounded-xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5 sm:p-5 xl:block`}
     >
       <h2 className="text-lg font-semibold">Para revisar hoje</h2>
       <div className="mt-4 space-y-3">
