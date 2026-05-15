@@ -1,9 +1,137 @@
 import { ArrowLeft, ChevronRight, Pencil, Plus, Search, Trash2, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { motion, type PanInfo } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
 import type { Difficulty, NavTarget, Subject, Topic, TopicStatus } from "@/types";
 import { ProgressBar } from "@/components/ProgressBar";
 import { corToAccent, pct, statusTone } from "@/lib/utils";
 
+// ── SubjectCard ─────────────────────────────────────────────────────────────
+// Dark card with watermark name + horizontal swipe gesture (mobile) /
+// full-card click (desktop) to open subject detail.
+
+const SWIPE_THRESHOLD_PX = 72;
+const SWIPE_VELOCITY = 450;
+
+function SubjectCard({
+  subject,
+  topics,
+  onOpen,
+  onEdit,
+  onDelete,
+}: {
+  subject: Subject;
+  topics: Topic[];
+  onOpen: (id: string) => void;
+  onEdit: (subject: Subject) => void;
+  onDelete: (id: string) => void;
+}) {
+  const accent = corToAccent(subject.cor);
+  const subjectTopics = topics.filter((t) => t.materiaId === subject.id);
+  const revisedCount = subjectTopics.filter((t) => t.status === "Revisado").length;
+  const progress = pct(revisedCount, subjectTopics.length);
+
+  // Prevent onClick from firing when a drag has occurred
+  const didDragRef = useRef(false);
+
+  function handleDragEnd(_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) {
+    if (Math.abs(info.offset.x) > SWIPE_THRESHOLD_PX || Math.abs(info.velocity.x) > SWIPE_VELOCITY) {
+      didDragRef.current = true;
+      onOpen(subject.id);
+    }
+  }
+
+  function handleClick() {
+    if (didDragRef.current) {
+      didDragRef.current = false;
+      return;
+    }
+    onOpen(subject.id);
+  }
+
+  return (
+    <motion.div
+      drag="x"
+      dragConstraints={{ left: 0, right: 0 }}
+      dragElastic={0.18}
+      dragMomentum={false}
+      onDragEnd={handleDragEnd}
+      onClick={handleClick}
+      whileTap={{ scale: 0.975 }}
+      className="relative cursor-pointer select-none overflow-hidden rounded-2xl shadow-lg"
+      style={{
+        background: `linear-gradient(135deg, #020617 0%, #0f172a 55%, ${accent.chart}28 100%)`,
+      }}
+      aria-label={`Abrir matéria ${subject.nome}`}
+    >
+      {/* Watermark — large transparent subject name */}
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute bottom-1 right-2 select-none text-[64px] font-black leading-none text-white"
+        style={{ opacity: 0.055 }}
+      >
+        {subject.nome}
+      </span>
+
+      {/* Card content */}
+      <div className="relative z-10 p-5">
+        {/* Top row */}
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <span className={`h-2.5 w-2.5 rounded-full ${accent.dot}`} aria-hidden="true" />
+            <span className="text-xs font-semibold text-white/40">Peso {subject.peso}</span>
+          </div>
+          <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={() => onEdit(subject)}
+              aria-label={`Editar ${subject.nome}`}
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-white/30 hover:bg-white/10 hover:text-white/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white/50"
+            >
+              <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
+            </button>
+            <button
+              onClick={() => onDelete(subject.id)}
+              aria-label={`Excluir ${subject.nome}`}
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-white/30 hover:bg-red-500/20 hover:text-red-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-red-400/50"
+            >
+              <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+            </button>
+          </div>
+        </div>
+
+        {/* Subject name */}
+        <h3 className="mt-3 text-xl font-bold leading-tight text-white">{subject.nome}</h3>
+
+        {/* Stats */}
+        <p className="mt-1 text-sm text-white/50">
+          {subjectTopics.length} tópico{subjectTopics.length !== 1 ? "s" : ""}
+          {revisedCount > 0 && ` · ${revisedCount} revisado${revisedCount !== 1 ? "s" : ""}`}
+        </p>
+
+        {/* Progress bar */}
+        <div className="mt-4">
+          <div className="mb-1.5 flex items-center justify-between text-xs text-white/35">
+            <span>Progresso</span>
+            <span>{progress}%</span>
+          </div>
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+            <div
+              className={`h-1.5 rounded-full ${accent.progress}`}
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Swipe hint arrow */}
+      <ChevronRight
+        className="absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-white/20"
+        aria-hidden="true"
+      />
+    </motion.div>
+  );
+}
+
+// ── Props ────────────────────────────────────────────────────────────────────
 type Props = {
   subjects: Subject[];
   topics: Topic[];
@@ -282,65 +410,19 @@ export function Edital({
         </div>
       )}
 
-      {/* Compact subject cards */}
-      {subjects.map((subject) => {
-        const subjectTopics = topics.filter((t) => t.materiaId === subject.id);
-        const progress = pct(
-          subjectTopics.filter((t) => t.status === "Revisado").length,
-          subjectTopics.length,
-        );
-        const accent = corToAccent(subject.cor);
-
-        return (
-          <div
+      {/* Dark swipeable subject cards */}
+      <div className="grid gap-3 sm:grid-cols-2">
+        {subjects.map((subject) => (
+          <SubjectCard
             key={subject.id}
-            className="group flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5 transition hover:border-slate-300 hover:shadow-md"
-          >
-            {/* Clickable area */}
-            <button
-              onClick={() => openDetail(subject.id)}
-              className="flex min-w-0 flex-1 items-center gap-4 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
-              aria-label={`Abrir matéria ${subject.nome}`}
-            >
-              <span className={`h-12 w-1.5 shrink-0 rounded-full ${accent.dot}`} aria-hidden="true" />
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center justify-between gap-2">
-                  <h3 className="truncate font-semibold text-slate-900">{subject.nome}</h3>
-                  <span className="shrink-0 text-xs text-slate-400">
-                    {subjectTopics.length} tópico{subjectTopics.length !== 1 ? "s" : ""}
-                  </span>
-                </div>
-                <div className="mt-2">
-                  <ProgressBar value={progress} tone={accent.progress} label={`Progresso em ${subject.nome}`} />
-                </div>
-                <p className="mt-1 text-xs text-slate-500">
-                  Peso {subject.peso} · {progress}% revisados
-                </p>
-              </div>
-            </button>
-
-            {/* Actions — always visible on mobile, hover on desktop */}
-            <div className="flex shrink-0 items-center gap-1 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
-              <button
-                onClick={(e) => { e.stopPropagation(); onEditSubject(subject); }}
-                aria-label={`Editar ${subject.nome}`}
-                className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
-              >
-                <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
-              </button>
-              <button
-                onClick={(e) => { e.stopPropagation(); onDeleteSubject(subject.id); }}
-                aria-label={`Excluir ${subject.nome}`}
-                className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-red-500"
-              >
-                <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
-              </button>
-            </div>
-
-            <ChevronRight className="h-4 w-4 shrink-0 text-slate-300" aria-hidden="true" />
-          </div>
-        );
-      })}
+            subject={subject}
+            topics={topics}
+            onOpen={openDetail}
+            onEdit={onEditSubject}
+            onDelete={onDeleteSubject}
+          />
+        ))}
+      </div>
     </div>
   );
 }
