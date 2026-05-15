@@ -206,9 +206,27 @@ export default function Home() {
 
     void checkVersion();
     const id = window.setInterval(checkVersion, 60_000);
+
+    function checkWhenVisible() {
+      if (document.visibilityState === "visible") {
+        void checkVersion();
+      }
+    }
+
+    function checkAfterPageShow() {
+      void checkVersion();
+    }
+
+    document.addEventListener("visibilitychange", checkWhenVisible);
+    window.addEventListener("focus", checkAfterPageShow);
+    window.addEventListener("pageshow", checkAfterPageShow);
+
     return () => {
       cancelled = true;
       window.clearInterval(id);
+      document.removeEventListener("visibilitychange", checkWhenVisible);
+      window.removeEventListener("focus", checkAfterPageShow);
+      window.removeEventListener("pageshow", checkAfterPageShow);
     };
   }, []);
 
