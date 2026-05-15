@@ -1,18 +1,19 @@
 import { X } from "lucide-react";
 import { useState } from "react";
+import { motion } from "framer-motion";
 import type { Subject } from "@/types";
 import { useScrollLock } from "@/hooks/useScrollLock";
 
 const COLOR_OPTIONS: { cor: string; label: string; dot: string }[] = [
-  { cor: "bg-emerald-500", label: "Verde",    dot: "bg-emerald-500" },
-  { cor: "bg-sky-500",     label: "Azul claro", dot: "bg-sky-500"  },
-  { cor: "bg-blue-500",    label: "Azul",     dot: "bg-blue-500"    },
-  { cor: "bg-amber-500",   label: "Âmbar",    dot: "bg-amber-500"   },
-  { cor: "bg-rose-500",    label: "Rosa",     dot: "bg-rose-500"    },
-  { cor: "bg-fuchsia-500", label: "Fúcsia",   dot: "bg-fuchsia-500" },
-  { cor: "bg-violet-500",  label: "Violeta",  dot: "bg-violet-500"  },
-  { cor: "bg-orange-500",  label: "Laranja",  dot: "bg-orange-500"  },
-  { cor: "bg-zinc-500",    label: "Cinza",    dot: "bg-zinc-500"    },
+  { cor: "bg-emerald-500", label: "Verde",      dot: "bg-emerald-500" },
+  { cor: "bg-sky-500",     label: "Azul claro", dot: "bg-sky-500"     },
+  { cor: "bg-blue-500",    label: "Azul",        dot: "bg-blue-500"   },
+  { cor: "bg-amber-500",   label: "Âmbar",       dot: "bg-amber-500"  },
+  { cor: "bg-rose-500",    label: "Rosa",         dot: "bg-rose-500"  },
+  { cor: "bg-fuchsia-500", label: "Fúcsia",      dot: "bg-fuchsia-500"},
+  { cor: "bg-violet-500",  label: "Violeta",     dot: "bg-violet-500" },
+  { cor: "bg-orange-500",  label: "Laranja",     dot: "bg-orange-500" },
+  { cor: "bg-zinc-500",    label: "Cinza",        dot: "bg-zinc-500"  },
 ];
 
 type SaveData = { nome: string; peso: number; cor: string; topicos: string[] };
@@ -45,31 +46,43 @@ export function SubjectModal({ subject, onSave, onClose }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm sm:items-center sm:p-4"
+      className="fixed inset-0 z-50 flex justify-end"
       role="dialog"
       aria-modal="true"
       aria-labelledby="subject-modal-title"
     >
-      {/* Panel — flex column so header + footer stay fixed while body scrolls */}
-      <div className="flex max-h-[92dvh] w-full max-w-md flex-col rounded-t-3xl border border-slate-200 bg-white shadow-2xl sm:rounded-2xl">
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        onClick={onClose}
+        aria-hidden="true"
+      />
 
-        {/* Fixed header */}
-        <div className="flex shrink-0 items-center justify-between border-b border-slate-100 px-5 py-4 sm:px-6">
+      {/* Side panel — slides in from right */}
+      <motion.div
+        initial={{ x: "100%" }}
+        animate={{ x: 0 }}
+        transition={{ type: "spring", damping: 32, stiffness: 320 }}
+        className="relative z-10 flex h-full w-full max-w-sm flex-col bg-white shadow-2xl"
+      >
+        {/* Header */}
+        <div className="flex shrink-0 items-center justify-between border-b border-slate-100 px-5 py-4">
           <h2 id="subject-modal-title" className="text-lg font-semibold text-slate-950">
             {subject ? "Editar matéria" : "Nova matéria"}
           </h2>
           <button
             onClick={onClose}
             aria-label="Fechar"
-            className="flex h-11 w-11 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
+            className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
           >
             <X className="h-4 w-4" aria-hidden="true" />
           </button>
         </div>
 
-        {/* Scrollable content — min-h-0 lets flex-1 shrink so the footer stays visible */}
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-5 [-webkit-overflow-scrolling:touch] sm:px-6">
-          <div className="space-y-5">
+        {/* Scrollable body — min-h-0 is required for flex-1 to shrink correctly */}
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-6 [-webkit-overflow-scrolling:touch]">
+          <div className="space-y-6">
+
             {/* Nome */}
             <div>
               <label htmlFor="subject-nome" className="block text-sm font-semibold text-slate-700">
@@ -124,21 +137,23 @@ export function SubjectModal({ subject, onSave, onClose }: Props) {
               </div>
             </div>
 
-            {/* Tópicos — só exibe na criação */}
+            {/* Tópicos — somente na criação */}
             {isCreate && (
               <div>
                 <label htmlFor="modal-topicos" className="block text-sm font-semibold text-slate-700">
                   Tópicos{" "}
                   <span className="font-normal text-slate-400">(opcional)</span>
                 </label>
-                <p className="mt-0.5 text-xs text-slate-500">Cole uma lista — cada linha vira um tópico.</p>
+                <p className="mt-0.5 text-xs text-slate-500">
+                  Cole a lista — cada linha vira um tópico.
+                </p>
                 <textarea
                   id="modal-topicos"
                   value={topicosText}
                   onChange={(e) => setTopicosText(e.target.value)}
-                  rows={4}
+                  rows={5}
                   placeholder={"Organização do Estado\nAdministração Pública\nPoder Legislativo"}
-                  className="mt-2 w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  className="mt-2 w-full resize-none rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                 />
                 {topicosText.trim() && (
                   <p className="mt-1 text-xs text-blue-600">
@@ -149,31 +164,31 @@ export function SubjectModal({ subject, onSave, onClose }: Props) {
             )}
 
             {error && (
-              <p role="alert" className="text-sm font-medium text-rose-600">
+              <p role="alert" className="rounded-lg bg-rose-50 px-3 py-2 text-sm font-medium text-rose-600">
                 {error}
               </p>
             )}
           </div>
         </div>
 
-        {/* Fixed footer — always visible */}
-        <div className="shrink-0 border-t border-slate-100 px-5 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:px-6 sm:pb-4">
-          <div className="grid grid-cols-2 gap-2">
+        {/* Footer — always visible */}
+        <div className="shrink-0 border-t border-slate-100 px-5 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+          <div className="grid grid-cols-2 gap-3">
             <button
               onClick={onClose}
-              className="h-11 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
+              className="h-11 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
             >
               Cancelar
             </button>
             <button
               onClick={handleSave}
-              className="h-11 rounded-xl bg-slate-950 text-sm font-semibold text-white hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
+              className="h-11 rounded-xl bg-slate-950 text-sm font-semibold text-white transition hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
             >
               Salvar
             </button>
           </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }
