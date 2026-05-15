@@ -13,6 +13,19 @@ import type {
 import { isoDate } from "@/lib/utils";
 import { defaultSchedule, defaultGoals } from "@/lib/seed";
 
+function isMissingTableError(error: unknown, tableName: string) {
+  if (!error || typeof error !== "object") return false;
+  const candidate = error as { code?: string; message?: string };
+  const message = candidate.message?.toLowerCase() ?? "";
+  const table = tableName.toLowerCase();
+
+  return (
+    candidate.code === "42P01"
+    || candidate.code === "PGRST205"
+    || (message.includes(table) && (message.includes("could not find") || message.includes("does not exist")))
+  );
+}
+
 export function serializeAppState(state: AppState) {
   return JSON.stringify(state);
 }
@@ -72,7 +85,9 @@ export async function loadRemoteState(supabase: SupabaseClient, userId: string):
   if (scheduleError) throw scheduleError;
   if (goalsError) throw goalsError;
   if (examsError) throw examsError;
-  if (questionLogsError) throw questionLogsError;
+  if (questionLogsError && !isMissingTableError(questionLogsError, "questoes")) {
+    throw questionLogsError;
+  }
 
   const subjects = (subjectRows as SubjectRow[]).map((row) => ({
     id: row.id,
@@ -121,14 +136,16 @@ export async function loadRemoteState(supabase: SupabaseClient, userId: string):
     data: row.data_realizacao,
   }));
 
-  const questionLogs = ((questionLogRows ?? []) as QuestionLogRow[]).map((row) => ({
-    id: row.id,
-    materiaId: row.materia_id,
-    topicoId: row.topico_id,
-    quantidade: row.quantidade,
-    acertos: row.acertos,
-    data: row.data_realizacao,
-  }));
+  const questionLogs = questionLogsError
+    ? []
+    : ((questionLogRows ?? []) as QuestionLogRow[]).map((row) => ({
+        id: row.id,
+        materiaId: row.materia_id,
+        topicoId: row.topico_id,
+        quantidade: row.quantidade,
+        acertos: row.acertos,
+        data: row.data_realizacao,
+      }));
 
   return {
     subjects,
@@ -264,27 +281,33 @@ export async function saveRemoteState(supabase: SupabaseClient, userId: string, 
   }
 
   // ── Questões por tópico ──────────────────────────────────────────────────
-  if (validQuestionLogs.length > 0) {
-    const { error } = await supabase.from("questoes").upsert(
-      validQuestionLogs.map((q) => ({
-        id: q.id,
-        user_id: userId,
-        materia_id: q.materiaId,
-        topico_id: q.topicoId,
-        quantidade: q.quantidade,
-        acertos: q.acertos,
-        data_realizacao: q.data,
-      })),
-      { onConflict: "id" },
-    );
-    if (error) throw error;
-  }
-  {
-    const base = supabase.from("questoes").delete().eq("user_id", userId);
-    const { error } = questionLogIds.length > 0
-      ? await base.not("id", "in", `(${questionLogIds.join(",")})`)
-      : await base;
-    if (error) throw error;
+  try {
+    if (validQuestionLogs.length > 0) {
+      const { error } = await supabase.from("questoes").upsert(
+        validQuestionLogs.map((q) => ({
+          id: q.id,
+          user_id: userId,
+          materia_id: q.materiaId,
+          topico_id: q.topicoId,
+          quantidade: q.quantidade,
+          acertos: q.acertos,
+          data_realizacao: q.data,
+        })),
+        { onConflict: "id" },
+      );
+      if (error) throw error;
+    }
+    {
+      const base = supabase.from("questoes").delete().eq("user_id", userId);
+      const { error } = questionLogIds.length > 0
+        ? await base.not("id", "in", `(${questionLogIds.join(",")})`)
+        : await base;
+      if (error) throw error;
+    }
+  } catch (error) {
+    if (!isMissingTableError(error, "questoes")) {
+      throw error;
+    }
   }
 
   // ── Cronograma (single JSONB row per user) ────────────────────────────────
