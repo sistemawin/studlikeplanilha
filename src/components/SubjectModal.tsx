@@ -45,7 +45,7 @@ export function SubjectModal({ subject, onSave, onClose }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex justify-end"
+      className="fixed inset-0 z-[2147483647] flex justify-end"
       role="dialog"
       aria-modal="true"
       aria-labelledby="subject-modal-title"
