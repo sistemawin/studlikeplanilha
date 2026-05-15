@@ -46,6 +46,7 @@ describe("serializeAppState", () => {
     schedule: defaultSchedule,
     goals: [],
     exams: [],
+    questionLogs: [],
   };
 
   it("retorna string JSON", () => {

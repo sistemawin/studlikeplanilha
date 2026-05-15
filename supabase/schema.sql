@@ -68,12 +68,25 @@ create table public.simulados (
   constraint simulados_acertos_validos check (acertos <= total_questoes)
 );
 
+create table public.questoes (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  materia_id uuid not null references public.materias(id) on delete cascade,
+  topico_id uuid not null references public.topicos(id) on delete cascade,
+  quantidade integer not null check (quantidade > 0),
+  acertos integer check (acertos >= 0),
+  data_realizacao date not null default current_date,
+  created_at timestamptz not null default now(),
+  constraint questoes_acertos_validos check (acertos is null or acertos <= quantidade)
+);
+
 alter table public.materias enable row level security;
 alter table public.topicos enable row level security;
 alter table public.revisoes enable row level security;
 alter table public.cronograma enable row level security;
 alter table public.metas enable row level security;
 alter table public.simulados enable row level security;
+alter table public.questoes enable row level security;
 
 grant usage on schema public to authenticated;
 grant select, insert, update, delete on public.materias to authenticated;
@@ -82,6 +95,7 @@ grant select, insert, update, delete on public.revisoes to authenticated;
 grant select, insert, update, delete on public.cronograma to authenticated;
 grant select, insert, update, delete on public.metas to authenticated;
 grant select, insert, update, delete on public.simulados to authenticated;
+grant select, insert, update, delete on public.questoes to authenticated;
 
 create policy "materias do usuario" on public.materias
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
@@ -127,6 +141,20 @@ create policy "metas do usuario" on public.metas
 create policy "simulados do usuario" on public.simulados
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
+create policy "questoes do usuario" on public.questoes
+  for all using (auth.uid() = user_id)
+  with check (
+    auth.uid() = user_id
+    and exists (
+      select 1
+      from public.topicos
+      join public.materias on materias.id = topicos.materia_id
+      where topicos.id = questoes.topico_id
+        and materias.id = questoes.materia_id
+        and materias.user_id = auth.uid()
+    )
+  );
+
 -- Performance indexes
 create index idx_topicos_materia_id   on public.topicos (materia_id);
 create index idx_topicos_status       on public.topicos (status);
@@ -134,6 +162,8 @@ create index idx_topicos_estudado_em  on public.topicos (estudado_em);
 create index idx_metas_user_id        on public.metas (user_id);
 create index idx_simulados_user_id    on public.simulados (user_id);
 create index idx_cronograma_user_id   on public.cronograma (user_id);
+create index idx_questoes_user_id     on public.questoes (user_id);
+create index idx_questoes_topico_id   on public.questoes (topico_id);
 
 create index revisoes_pendentes_idx
   on public.revisoes (data_agendada)

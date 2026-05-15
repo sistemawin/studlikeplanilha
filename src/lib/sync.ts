@@ -3,6 +3,7 @@ import type {
   AppState,
   ExamRow,
   GoalRow,
+  QuestionLogRow,
   ReviewRow,
   ScheduleConfig,
   ScheduleRow,
@@ -46,6 +47,7 @@ export async function loadRemoteState(supabase: SupabaseClient, userId: string):
       schedule: defaultSchedule,
       goals: defaultGoals(),
       exams: [],
+      questionLogs: [],
     };
   }
 
@@ -55,12 +57,14 @@ export async function loadRemoteState(supabase: SupabaseClient, userId: string):
     { data: scheduleRows, error: scheduleError },
     { data: goalRows, error: goalsError },
     { data: examRows, error: examsError },
+    { data: questionLogRows, error: questionLogsError },
   ] = await Promise.all([
     supabase.from("topicos").select("id,materia_id,titulo,status,dificuldade,estudado_em").order("created_at"),
     supabase.from("revisoes").select("id,topico_id,data_agendada,concluida,tipo").order("data_agendada"),
     supabase.from("cronograma").select("id,configuracao").eq("user_id", userId).order("created_at").limit(1),
     supabase.from("metas").select("id,tipo,valor_objetivo,valor_atual").eq("user_id", userId).order("created_at"),
     supabase.from("simulados").select("id,nome,acertos,total_questoes,data_realizacao").eq("user_id", userId).order("created_at", { ascending: false }),
+    supabase.from("questoes").select("id,materia_id,topico_id,quantidade,acertos,data_realizacao").eq("user_id", userId).order("created_at", { ascending: false }),
   ]);
 
   if (topicsError) throw topicsError;
@@ -68,6 +72,7 @@ export async function loadRemoteState(supabase: SupabaseClient, userId: string):
   if (scheduleError) throw scheduleError;
   if (goalsError) throw goalsError;
   if (examsError) throw examsError;
+  if (questionLogsError) throw questionLogsError;
 
   const subjects = (subjectRows as SubjectRow[]).map((row) => ({
     id: row.id,
@@ -116,6 +121,15 @@ export async function loadRemoteState(supabase: SupabaseClient, userId: string):
     data: row.data_realizacao,
   }));
 
+  const questionLogs = ((questionLogRows ?? []) as QuestionLogRow[]).map((row) => ({
+    id: row.id,
+    materiaId: row.materia_id,
+    topicoId: row.topico_id,
+    quantidade: row.quantidade,
+    acertos: row.acertos,
+    data: row.data_realizacao,
+  }));
+
   return {
     subjects,
     topics,
@@ -123,6 +137,7 @@ export async function loadRemoteState(supabase: SupabaseClient, userId: string):
     schedule: validateSchedule(scheduleConfig, defaultSchedule),
     goals: goals.length > 0 ? goals : defaultGoals(),
     exams,
+    questionLogs,
   };
 }
 
@@ -136,6 +151,8 @@ export async function saveRemoteState(supabase: SupabaseClient, userId: string, 
   const reviewIds = validReviews.map((r) => r.id);
   const goalIds = state.goals.map((g) => g.id);
   const examIds = state.exams.map((e) => e.id);
+  const validQuestionLogs = state.questionLogs.filter((q) => subjectIds.includes(q.materiaId) && topicIds.includes(q.topicoId));
+  const questionLogIds = validQuestionLogs.map((q) => q.id);
   // ── Materias ──────────────────────────────────────────────────────────────
   if (state.subjects.length > 0) {
     const { error } = await supabase.from("materias").upsert(
@@ -242,6 +259,30 @@ export async function saveRemoteState(supabase: SupabaseClient, userId: string, 
     const base = supabase.from("simulados").delete().eq("user_id", userId);
     const { error } = examIds.length > 0
       ? await base.not("id", "in", `(${examIds.join(",")})`)
+      : await base;
+    if (error) throw error;
+  }
+
+  // ── Questões por tópico ──────────────────────────────────────────────────
+  if (validQuestionLogs.length > 0) {
+    const { error } = await supabase.from("questoes").upsert(
+      validQuestionLogs.map((q) => ({
+        id: q.id,
+        user_id: userId,
+        materia_id: q.materiaId,
+        topico_id: q.topicoId,
+        quantidade: q.quantidade,
+        acertos: q.acertos,
+        data_realizacao: q.data,
+      })),
+      { onConflict: "id" },
+    );
+    if (error) throw error;
+  }
+  {
+    const base = supabase.from("questoes").delete().eq("user_id", userId);
+    const { error } = questionLogIds.length > 0
+      ? await base.not("id", "in", `(${questionLogIds.join(",")})`)
       : await base;
     if (error) throw error;
   }

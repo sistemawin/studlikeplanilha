@@ -3,7 +3,7 @@
 -- inclusive para usuários que já tinham conta.
 
 delete from public.simulados;
+delete from public.questoes;
 delete from public.metas;
 delete from public.cronograma;
 delete from public.materias;
-

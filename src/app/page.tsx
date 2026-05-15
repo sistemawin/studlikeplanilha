@@ -7,7 +7,6 @@ import {
   Check,
   ClipboardList,
   HomeIcon,
-  ListChecks,
   Loader2,
   LogOut,
   Maximize2,
@@ -28,6 +27,7 @@ import type {
   Exam,
   NavTarget,
   PlanningMode,
+  QuestionLog,
   Review,
   ReviewType,
   Subject,
@@ -59,6 +59,7 @@ export default function Home() {
   const [schedule, setSchedule] = useState(defaultSchedule);
   const [goals, setGoals] = useState<Goal[]>(() => defaultGoals());
   const [exams, setExams] = useState<Exam[]>([]);
+  const [questionLogs, setQuestionLogs] = useState<QuestionLog[]>([]);
 
   // ── UI state ──────────────────────────────────────────────────────────────
   const [newTopicText, setNewTopicText] = useState("");
@@ -87,10 +88,6 @@ export default function Home() {
 
   // ── Subject modal state ───────────────────────────────────────────────────
   const [subjectModal, setSubjectModal] = useState<{ open: boolean; subject?: Subject }>({ open: false });
-
-  // ── Questões input state ──────────────────────────────────────────────────
-  const [questoesOpen, setQuestoesOpen] = useState(false);
-  const [questoesQty, setQuestoesQty] = useState("");
 
   // ── Sync status ───────────────────────────────────────────────────────────
   const [syncStatus, setSyncStatus] = useState<SyncStatus>("idle");
@@ -164,6 +161,7 @@ export default function Home() {
         setSchedule(remote.schedule);
         setGoals(remote.goals);
         setExams(remote.exams);
+        setQuestionLogs(remote.questionLogs);
         setSelectedSubject(remote.subjects[0]?.id ?? "");
         setSelectedManualTopic(remote.topics[0]?.id ?? "");
         lastSyncedStateRef.current = serializeAppState(remote);
@@ -187,7 +185,7 @@ export default function Home() {
   useEffect(() => {
     if (!session || !remoteReady) return;
 
-    const state: AppState = { subjects, topics, reviews, schedule, goals, exams };
+    const state: AppState = { subjects, topics, reviews, schedule, goals, exams, questionLogs };
     const serialized = serializeAppState(state);
     latestStateRef.current = state;
     latestSerializedStateRef.current = serialized;
@@ -232,7 +230,7 @@ export default function Home() {
 
     const id = window.setTimeout(() => void runSync(), SYNC_DEBOUNCE_MS);
     return () => window.clearTimeout(id);
-  }, [subjects, topics, reviews, schedule, goals, exams, session, remoteReady]);
+  }, [subjects, topics, reviews, schedule, goals, exams, questionLogs, session, remoteReady]);
 
   // ── Derived state ─────────────────────────────────────────────────────────
   const topicById = useMemo(
@@ -368,44 +366,13 @@ export default function Home() {
     setNotice("Simulado salvo.");
   }
 
-  function confirmQuestions() {
-    const qty = Number.parseInt(questoesQty.trim(), 10);
-    if (!Number.isFinite(qty) || qty <= 0) {
-      setNotice("Digite a quantidade de questões antes de confirmar.");
-      return;
-    }
-    if (qty > 999) {
-      setNotice("Registre no máximo 999 questões por vez.");
-      return;
-    }
-
-    setGoals((gs) => {
-      const existing = gs.find((g) => g.tipo === "questões");
-      if (!existing) {
-        return [
-          ...gs,
-          {
-            id: crypto.randomUUID(),
-            tipo: "questões",
-            valorObjetivo: qty,
-            valorAtual: qty,
-            dataReferencia: todayIso,
-          },
-        ];
-      }
-      return gs.map((g) => (g.tipo === "questões" ? { ...g, valorAtual: g.valorAtual + qty } : g));
-    });
-    setNotice(`${qty} questão${qty !== 1 ? "ões" : ""} registrada${qty !== 1 ? "s" : ""}.`);
-    setQuestoesOpen(false);
-    setQuestoesQty("");
-  }
-
   function deleteTopic(topicId: string) {
     const topic = topics.find((t) => t.id === topicId);
     if (!topic) return;
     const remainingTopics = topics.filter((t) => t.id !== topicId);
     setTopics(remainingTopics);
     setReviews((rs) => rs.filter((r) => r.topicoId !== topicId));
+    setQuestionLogs((logs) => logs.filter((log) => log.topicoId !== topicId));
     if (selectedManualTopic === topicId) setSelectedManualTopic(remainingTopics[0]?.id ?? "");
     setNotice(`Tópico "${topic.titulo}" removido.`);
   }
@@ -439,6 +406,79 @@ export default function Home() {
     setSchedule((sc) => ({ ...sc, semanal: { ...sc.semanal, [day]: ids } }));
   }
 
+  function addQuestionLog(data: { materiaId: string; topicoId: string; quantidade: number; acertos: number | null; data: string }) {
+    const subject = subjects.find((s) => s.id === data.materiaId);
+    const topic = topics.find((t) => t.id === data.topicoId && t.materiaId === data.materiaId);
+    if (!subject || !topic) {
+      setNotice("Escolha uma matéria e um tópico válidos.");
+      return;
+    }
+    if (data.quantidade <= 0) {
+      setNotice("Informe a quantidade de questões feitas.");
+      return;
+    }
+    if (data.acertos !== null && (data.acertos < 0 || data.acertos > data.quantidade)) {
+      setNotice("Acertos não podem ser maiores que a quantidade de questões.");
+      return;
+    }
+
+    setQuestionLogs((logs) => [
+      {
+        id: crypto.randomUUID(),
+        materiaId: data.materiaId,
+        topicoId: data.topicoId,
+        quantidade: data.quantidade,
+        acertos: data.acertos,
+        data: data.data,
+      },
+      ...logs,
+    ]);
+
+    if (data.data === todayIso) {
+      setGoals((gs) => {
+        const existing = gs.find((g) => g.tipo === "questões");
+        if (!existing) {
+          return [
+            ...gs,
+            {
+              id: crypto.randomUUID(),
+              tipo: "questões",
+              valorObjetivo: data.quantidade,
+              valorAtual: data.quantidade,
+              dataReferencia: todayIso,
+            },
+          ];
+        }
+        return gs.map((g) =>
+          g.tipo === "questões"
+            ? { ...g, valorAtual: g.valorAtual + data.quantidade, dataReferencia: todayIso }
+            : g,
+        );
+      });
+    }
+
+    if (topic.status === "Não Estudado" || topic.status === "Teoria Lida") {
+      updateTopicStatus(topic.id, "Questões Feitas");
+    }
+
+    setNotice(`${data.quantidade} questão${data.quantidade !== 1 ? "ões" : ""} registrada${data.quantidade !== 1 ? "s" : ""} em ${subject.nome}.`);
+  }
+
+  function deleteQuestionLog(logId: string) {
+    const log = questionLogs.find((q) => q.id === logId);
+    setQuestionLogs((logs) => logs.filter((q) => q.id !== logId));
+    if (log?.data === todayIso) {
+      setGoals((gs) =>
+        gs.map((g) =>
+          g.tipo === "questões"
+            ? { ...g, valorAtual: Math.max(0, g.valorAtual - log.quantidade), dataReferencia: todayIso }
+            : g,
+        ),
+      );
+    }
+    setNotice("Registro de questões removido.");
+  }
+
   function addSubject(data: { nome: string; peso: number; cor: string }) {
     const newSubject: Subject = { id: crypto.randomUUID(), ...data };
     setSubjects((ss) => [...ss, newSubject]);
@@ -469,6 +509,7 @@ export default function Home() {
     setSubjects(remainingSubjects);
     setTopics(remainingTopics);
     setReviews((rs) => rs.filter((r) => !topicIds.has(r.topicoId)));
+    setQuestionLogs((logs) => logs.filter((log) => log.materiaId !== subjectId));
     setSchedule((sc) => ({
       ...sc,
       ciclos: sc.ciclos.filter((id) => id !== subjectId),
@@ -495,6 +536,7 @@ export default function Home() {
     setReviews([]);
     setGoals([]);
     setExams([]);
+    setQuestionLogs([]);
     setSchedule(defaultSchedule);
     // Reset selectors — topics no longer exist
     setSelectedManualTopic("");
@@ -741,51 +783,6 @@ export default function Home() {
                 </span>
               </button>
 
-              {/* Questões button with custom quantity input */}
-              {questoesOpen ? (
-                <form
-                  onSubmit={(e) => { e.preventDefault(); confirmQuestions(); }}
-                  className="grid w-full max-w-sm grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-1.5 sm:w-auto sm:max-w-none"
-                >
-                  <label className="sr-only" htmlFor="questoes-qty">Quantidade de questões</label>
-                  <input
-                    id="questoes-qty"
-                    type="number"
-                    inputMode="numeric"
-                    min={1}
-                    max={999}
-                    value={questoesQty}
-                    onChange={(e) => setQuestoesQty(e.target.value)}
-                    placeholder="Qtd."
-                    autoFocus
-                    onKeyDown={(e) => { if (e.key === "Escape") setQuestoesOpen(false); }}
-                    className="h-11 min-w-0 rounded-xl border border-slate-200 px-3 text-center text-sm font-semibold outline-none focus:border-blue-500"
-                  />
-                  <button
-                    type="submit"
-                    disabled={!questoesQty.trim()}
-                    className="h-11 rounded-xl bg-slate-950 px-3 text-sm font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    OK
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setQuestoesOpen(false)}
-                    className="h-11 rounded-xl border border-slate-200 px-3 text-sm text-slate-500 hover:bg-slate-50"
-                  >
-                    Cancelar
-                  </button>
-                </form>
-              ) : (
-                <button
-                  onClick={() => { setQuestoesQty(""); setQuestoesOpen(true); }}
-                  className="flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
-                >
-                  <ListChecks className="h-4 w-4" aria-hidden="true" />
-                  <span className="truncate">Questões</span>
-                </button>
-              )}
-
               <button
                 onClick={signOut}
                 className="flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-600 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
@@ -869,6 +866,7 @@ export default function Home() {
                 subjects={subjects}
                 topics={topics}
                 exams={exams}
+                questionLogs={questionLogs}
                 goals={goals}
                 examDraft={examDraft}
                 selectedManualTopic={selectedManualTopic}
@@ -881,6 +879,8 @@ export default function Home() {
                 onManualDateChange={setManualDate}
                 onAddManualReview={addManualReview}
                 onUpdateGoalObjective={updateGoalObjective}
+                onAddQuestionLog={addQuestionLog}
+                onDeleteQuestionLog={deleteQuestionLog}
               />
             </ErrorBoundary>
           </section>

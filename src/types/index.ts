@@ -59,6 +59,15 @@ export type Exam = {
   data: string;
 };
 
+export type QuestionLog = {
+  id: string;
+  materiaId: string;
+  topicoId: string;
+  quantidade: number;
+  acertos: number | null;
+  data: string;
+};
+
 export type SubjectAccent = {
   dot: string;
   card: string;
@@ -82,6 +91,7 @@ export type AppState = {
   schedule: ScheduleConfig;
   goals: Goal[];
   exams: Exam[];
+  questionLogs: QuestionLog[];
 };
 
 // Database row types
@@ -127,5 +137,14 @@ export type ExamRow = {
   nome: string;
   acertos: number;
   total_questoes: number;
+  data_realizacao: string;
+};
+
+export type QuestionLogRow = {
+  id: string;
+  materia_id: string;
+  topico_id: string;
+  quantidade: number;
+  acertos: number | null;
   data_realizacao: string;
 };
