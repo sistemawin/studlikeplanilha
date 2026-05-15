@@ -19,7 +19,7 @@ import {
 import { StudlikeLogo } from "@/components/StudlikeLogo";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
-import { getSupabaseBrowserClient } from "@/lib/supabase";
+import { getSupabaseBrowserClient, getSupabasePasswordVerifierClient } from "@/lib/supabase";
 import { loadRemoteState, saveRemoteState, serializeAppState, validateSchedule } from "@/lib/sync";
 import { addDays, formatTimer, isoDate, pct } from "@/lib/utils";
 import { defaultGoals, defaultSchedule } from "@/lib/seed";
@@ -55,6 +55,7 @@ import { Schedule } from "@/sections/Schedule";
 import { Exams } from "@/sections/Exams";
 import { FocusTimer } from "@/sections/FocusTimer";
 import { SuggestionModal } from "@/components/SuggestionModal";
+import { ArchiveEditalModal } from "@/components/ArchiveEditalModal";
 import { AdminPanel } from "@/sections/AdminPanel";
 
 const SYNC_DEBOUNCE_MS = 700;
@@ -135,6 +136,12 @@ export default function Home() {
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState("");
   const [authMessage, setAuthMessage] = useState("");
+
+  // ── Archive modal state ──────────────────────────────────────────────────
+  const [archiveModalOpen, setArchiveModalOpen] = useState(false);
+  const [archivePassword, setArchivePassword] = useState("");
+  const [archiveLoading, setArchiveLoading] = useState(false);
+  const [archiveError, setArchiveError] = useState("");
 
   // ── Subject modal state ───────────────────────────────────────────────────
   const [subjectModal, setSubjectModal] = useState<{ open: boolean; subject?: Subject }>({ open: false });
@@ -927,10 +934,21 @@ export default function Home() {
     setNotice(`Matéria "${label}" excluída.`);
   }
 
-  function archiveAll() {
+  function openArchiveModal() {
     if (preventReadOnlyAction()) return;
-    const ok = window.confirm("Arquivar o edital atual? Isso limpa tópicos, revisões, metas e simulados.");
-    if (!ok) return;
+    setArchivePassword("");
+    setArchiveError("");
+    setArchiveModalOpen(true);
+  }
+
+  function closeArchiveModal() {
+    if (archiveLoading) return;
+    setArchiveModalOpen(false);
+    setArchivePassword("");
+    setArchiveError("");
+  }
+
+  function archiveAll() {
     setTopics([]);
     setReviews([]);
     setGoals([]);
@@ -940,6 +958,40 @@ export default function Home() {
     // Reset selectors — topics no longer exist
     setSelectedManualTopic("");
     setNotice("Edital arquivado. Dados principais foram limpos.");
+  }
+
+  async function confirmArchiveAll() {
+    if (preventReadOnlyAction()) return;
+
+    const email = session?.user.email;
+    if (!email) {
+      setArchiveError("Não foi possível confirmar a senha porque sua conta não tem e-mail.");
+      return;
+    }
+    if (!archivePassword.trim()) {
+      setArchiveError("Digite sua senha para confirmar.");
+      return;
+    }
+
+    setArchiveLoading(true);
+    setArchiveError("");
+    try {
+      const verifier = getSupabasePasswordVerifierClient();
+      const { error } = await verifier.auth.signInWithPassword({
+        email,
+        password: archivePassword,
+      });
+      if (error) throw error;
+
+      archiveAll();
+      setArchiveModalOpen(false);
+      setArchivePassword("");
+      setArchiveError("");
+    } catch {
+      setArchiveError("Senha inválida. Confira a senha da sua conta e tente novamente.");
+    } finally {
+      setArchiveLoading(false);
+    }
   }
 
   function openFocusTimer() {
@@ -1201,6 +1253,23 @@ export default function Home() {
         onClose={() => setSuggestionOpen(false)}
       />
 
+      <ArchiveEditalModal
+        open={archiveModalOpen}
+        counts={{
+          topics: topics.length,
+          reviews: reviews.length,
+          goals: goals.length,
+          exams: exams.length,
+          questionLogs: questionLogs.length,
+        }}
+        password={archivePassword}
+        loading={archiveLoading}
+        error={archiveError}
+        onPasswordChange={setArchivePassword}
+        onSubmit={confirmArchiveAll}
+        onClose={closeArchiveModal}
+      />
+
       {/* Desktop sidebar */}
       <aside className="fixed left-0 top-0 hidden h-screen w-64 border-r border-slate-900 bg-[#050505] p-3 text-white shadow-xl shadow-slate-900/10 xl:block">
         <div className="mb-8 flex items-center gap-3 px-2 py-3">
@@ -1218,7 +1287,8 @@ export default function Home() {
           <NavButton icon={BarChart3} label="Simulados" active={activeSection === "simulados"} onClick={() => scrollToSection("simulados")} />
         </nav>
         <button
-          onClick={archiveAll}
+          type="button"
+          onClick={openArchiveModal}
           aria-label="Arquivar edital atual"
           className="absolute bottom-4 left-3 right-3 flex items-center justify-center gap-2 rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-sm font-semibold text-white hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
         >
@@ -1297,6 +1367,17 @@ export default function Home() {
               >
                 <MessageSquarePlus className="h-4 w-4" aria-hidden="true" />
                 <span className="truncate">Sugerir melhoria</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={openArchiveModal}
+                disabled={Boolean(readOnlyUser)}
+                aria-label="Arquivar edital atual"
+                className="flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500 disabled:cursor-not-allowed disabled:opacity-50 xl:hidden"
+              >
+                <Archive className="h-4 w-4" aria-hidden="true" />
+                <span className="truncate">Arquivar edital</span>
               </button>
 
               {isAdmin && (
