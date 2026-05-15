@@ -2,17 +2,9 @@
 
 import { ChevronLeft, Pencil, Plus, Trash2 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import type { Difficulty, NavTarget, Subject, Topic, TopicStatus } from "@/types";
 import { corToAccent } from "@/lib/utils";
-
-const SWIPE_THRESHOLD_PX = 72;
-const SWIPE_VELOCITY = 450;
-
-// Module-level touch detection — safe since this file is only rendered on the client
-const IS_TOUCH_DEVICE =
-  typeof window !== "undefined" &&
-  window.matchMedia("(hover: none) and (pointer: coarse)").matches;
 
 const STATUS_COLORS: Record<TopicStatus, { bg: string; text: string }> = {
   "Não Estudado": { bg: "rgba(239,68,68,0.18)", text: "#fca5a5" },
@@ -60,35 +52,14 @@ function SubjectCard({
   onEdit: () => void;
   onDelete: () => void;
 }) {
-  const didDragRef = useRef(false);
   const accent = corToAccent(subject.cor);
   const completedCount = topics.filter((t) => t.status === "Revisado").length;
   const progress = topics.length === 0 ? 0 : Math.round((completedCount / topics.length) * 100);
 
-  function handleClick() {
-    if (didDragRef.current) return;
-    onOpen();
-  }
-
   return (
     <motion.div
-      drag={IS_TOUCH_DEVICE ? "x" : false}
-      dragConstraints={{ left: 0, right: 0 }}
-      dragElastic={0.18}
-      dragMomentum={false}
-      onDragStart={() => {
-        didDragRef.current = true;
-      }}
-      onDragEnd={(_, info) => {
-        const farEnough = Math.abs(info.offset.x) > SWIPE_THRESHOLD_PX;
-        const fastEnough = Math.abs(info.velocity.x) > SWIPE_VELOCITY;
-        if (farEnough || fastEnough) onDelete();
-        setTimeout(() => {
-          didDragRef.current = false;
-        }, 50);
-      }}
       whileHover={{ y: -2, transition: { duration: 0.15 } }}
-      onClick={handleClick}
+      onClick={onOpen}
       className="relative cursor-pointer overflow-hidden rounded-2xl p-5 shadow-lg select-none"
       style={{
         background: `linear-gradient(135deg, #020617 0%, #0f172a 55%, ${accent.chart}28 100%)`,
@@ -159,7 +130,6 @@ export function Edital({
   subjects,
   topics,
   newTopicText,
-  selectedSubject,
   activeSection,
   onTopicTextChange,
   onSubjectChange,
