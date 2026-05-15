@@ -353,21 +353,21 @@ function PieChart({
   const total = slices.reduce((sum, slice) => sum + slice.value, 0);
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5 sm:p-5">
+    <div className="w-full max-w-full overflow-hidden rounded-xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5 sm:p-5">
       <div className="flex items-start justify-between gap-4">
-        <div>
+        <div className="min-w-0">
           <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400">
             Analytics
           </p>
-          <h2 className="mt-1 text-xl font-semibold text-slate-950">{title}</h2>
-          <p className="mt-1 text-sm leading-6 text-slate-500">{subtitle}</p>
+          <h2 className="mt-1 break-words text-xl font-semibold text-slate-950">{title}</h2>
+          <p className="mt-1 break-words text-sm leading-6 text-slate-500">{subtitle}</p>
         </div>
-        <BarChart3 className="h-5 w-5 text-blue-500" />
+        <BarChart3 className="h-5 w-5 shrink-0 text-blue-500" />
       </div>
 
-      <div className="mt-5 grid gap-5 sm:grid-cols-[160px_1fr] sm:items-center">
+      <div className="mt-5 grid min-w-0 gap-5 sm:grid-cols-[160px_minmax(0,1fr)] sm:items-center">
         <div
-          className="relative mx-auto h-40 w-40 rounded-full shadow-inner shadow-slate-900/10"
+          className="relative mx-auto h-40 w-40 max-w-full rounded-full shadow-inner shadow-slate-900/10"
           style={{ background: pieBackground(slices) }}
         >
           <div className="absolute inset-5 flex flex-col items-center justify-center rounded-full bg-white text-center shadow-sm">
@@ -378,18 +378,18 @@ function PieChart({
           </div>
         </div>
 
-        <div className="space-y-3">
+        <div className="min-w-0 space-y-3">
           {slices.map((slice) => (
-            <div key={slice.label}>
+            <div key={slice.label} className="min-w-0">
               <div className="mb-1 flex items-center justify-between gap-3 text-sm">
-                <span className="flex items-center gap-2 font-medium text-slate-700">
+                <span className="flex min-w-0 items-center gap-2 font-medium text-slate-700">
                   <span
-                    className="h-2.5 w-2.5 rounded-full"
+                    className="h-2.5 w-2.5 shrink-0 rounded-full"
                     style={{ backgroundColor: slice.color }}
                   />
-                  {slice.label}
+                  <span className="min-w-0 break-words leading-5">{slice.label}</span>
                 </span>
-                <span className="font-semibold text-slate-950">
+                <span className="shrink-0 font-semibold text-slate-950">
                   {total === 0 ? 0 : pct(slice.value, total)}%
                 </span>
               </div>
@@ -1304,25 +1304,25 @@ export default function Home() {
               activeSection === "simulados" ? "grid" : "hidden"
             } gap-5 lg:grid xl:grid-cols-[1.1fr_0.9fr]`}
           >
-            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5 sm:p-5">
+            <div className="w-full max-w-full overflow-hidden rounded-xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5 sm:p-5">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                <div>
+                <div className="min-w-0">
                   <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-blue-500">
                     Acertos
                   </p>
-                  <h2 className="mt-1 text-xl font-semibold text-slate-950">
+                  <h2 className="mt-1 break-words text-xl font-semibold text-slate-950">
                     Desempenho em simulados
                   </h2>
-                  <p className="mt-1 text-sm leading-6 text-slate-500">
+                  <p className="mt-1 break-words text-sm leading-6 text-slate-500">
                     Evolução dos percentuais de acerto registrados.
                   </p>
                 </div>
-                <span className="w-fit rounded-lg bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700">
+                <span className="w-fit shrink-0 rounded-lg bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700">
                   média {Number.isFinite(avgExam) ? avgExam : 0}%
                 </span>
               </div>
 
-              <div className="mt-6 flex h-48 items-end gap-2 rounded-xl border border-slate-100 bg-slate-50/70 px-3 py-5 sm:h-52 sm:gap-3 sm:px-4">
+              <div className="mt-6 flex h-48 max-w-full items-end gap-2 overflow-hidden rounded-xl border border-slate-100 bg-slate-50/70 px-3 py-5 sm:h-52 sm:gap-3 sm:px-4">
                 {examTrend.length === 0 ? (
                   <p className="self-center text-sm text-slate-500">Nenhum simulado registrado.</p>
                 ) : (
@@ -1344,7 +1344,7 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5 sm:p-5">
+            <div className="w-full max-w-full overflow-hidden rounded-xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5 sm:p-5">
               <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400">
                 Ranking
               </p>
@@ -1353,12 +1353,12 @@ export default function Home() {
               </h2>
               <div className="mt-5 space-y-4">
                 {bestSubjects.slice(0, 3).map((item, index) => (
-                  <div key={item.subject.id}>
+                  <div key={item.subject.id} className="min-w-0">
                     <div className="mb-1 flex items-center justify-between gap-3">
-                      <span className="text-sm font-semibold text-slate-800">
+                      <span className="min-w-0 break-words text-sm font-semibold leading-5 text-slate-800">
                         {index + 1}. {item.subject.nome}
                       </span>
-                      <span className="text-sm font-semibold text-slate-950">{item.score}%</span>
+                      <span className="shrink-0 text-sm font-semibold text-slate-950">{item.score}%</span>
                     </div>
                     <ProgressBar value={item.score} tone={item.accent.progress} />
                   </div>
@@ -1368,15 +1368,15 @@ export default function Home() {
                 {bestTopics.slice(0, 3).map((item) => (
                   <div
                     key={item.topic.id}
-                    className="rounded-lg border border-slate-100 bg-slate-50 p-3"
+                    className="min-w-0 rounded-lg border border-slate-100 bg-slate-50 p-3"
                   >
                     <div className="flex items-center justify-between gap-3">
-                      <p className="min-w-0 truncate text-sm font-semibold text-slate-900">
+                      <p className="min-w-0 break-words text-sm font-semibold leading-5 text-slate-900">
                         {item.topic.titulo}
                       </p>
-                      <span className="text-sm font-semibold text-blue-700">{item.score}%</span>
+                      <span className="shrink-0 text-sm font-semibold text-blue-700">{item.score}%</span>
                     </div>
-                    <p className="mt-1 text-xs font-medium text-slate-500">
+                    <p className="mt-1 break-words text-xs font-medium leading-5 text-slate-500">
                       {item.subject?.nome ?? "Sem matéria"} · {item.topic.status}
                     </p>
                   </div>
@@ -1667,19 +1667,19 @@ export default function Home() {
               id="simulados"
               className={`${
                 activeSection === "simulados" ? "block" : "hidden"
-              } scroll-mt-24 rounded-xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5 sm:p-5 lg:block`}
+              } w-full max-w-full overflow-hidden scroll-mt-24 rounded-xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5 sm:p-5 lg:block`}
             >
-              <h2 className="text-lg font-semibold">Metas, simulados e revisão manual</h2>
+              <h2 className="break-words text-lg font-semibold">Metas, simulados e revisão manual</h2>
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
-                  <p className="text-sm font-medium text-blue-800">Horas estudadas</p>
+                <div className="min-w-0 rounded-xl border border-blue-200 bg-blue-50 p-4">
+                  <p className="break-words text-sm font-medium text-blue-800">Horas estudadas</p>
                   <p className="mt-2 text-2xl font-semibold">
                     {hourGoal.valorAtual}/{hourGoal.valorObjetivo}h
                   </p>
                   <ProgressBar value={pct(hourGoal.valorAtual, hourGoal.valorObjetivo)} tone="bg-blue-500" />
                 </div>
-                <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
-                  <p className="text-sm font-medium text-emerald-800">Questões diárias</p>
+                <div className="min-w-0 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+                  <p className="break-words text-sm font-medium text-emerald-800">Questões diárias</p>
                   <p className="mt-2 text-2xl font-semibold">
                     {questionGoal.valorAtual}/{questionGoal.valorObjetivo}
                   </p>
@@ -1687,9 +1687,9 @@ export default function Home() {
                 </div>
               </div>
 
-              <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50/70 p-4">
+              <div className="mt-5 min-w-0 rounded-xl border border-slate-200 bg-slate-50/70 p-4">
                 <p className="font-semibold">Registrar simulado</p>
-                <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_90px_90px_auto]">
+                <div className="mt-3 grid min-w-0 gap-2 sm:grid-cols-[minmax(0,1fr)_90px_90px_auto]">
                   <input
                     value={examDraft.nome}
                     onChange={(event) => setExamDraft((draft) => ({ ...draft, nome: event.target.value }))}
@@ -1732,13 +1732,13 @@ export default function Home() {
                 </div>
               </div>
 
-              <div className="mt-5 rounded-xl border border-slate-200 bg-blue-50/50 p-4">
+              <div className="mt-5 min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-blue-50/50 p-4">
                 <p className="font-semibold">Revisão manual</p>
-                <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_150px_auto]">
+                <div className="mt-3 grid min-w-0 max-w-full gap-2 overflow-hidden sm:grid-cols-[minmax(0,1fr)_150px_auto]">
                   <select
                     value={selectedManualTopic}
                     onChange={(event) => setSelectedManualTopic(event.target.value)}
-                    className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-blue-500 md:h-10"
+                    className="h-11 w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-blue-500 md:h-10"
                   >
                     {topics.map((topic) => (
                       <option key={topic.id} value={topic.id}>
@@ -1750,11 +1750,11 @@ export default function Home() {
                     type="date"
                     value={manualDate}
                     onChange={(event) => setManualDate(event.target.value)}
-                    className="h-11 rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-blue-500 md:h-10"
+                    className="h-11 w-full min-w-0 rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-blue-500 md:h-10"
                   />
                   <button
                     onClick={() => addManualReview(selectedManualTopic)}
-                    className="h-11 rounded-xl bg-slate-950 px-3 text-sm font-semibold text-white hover:bg-slate-800 md:h-10"
+                    className="h-11 w-full min-w-0 rounded-xl bg-slate-950 px-3 text-sm font-semibold text-white hover:bg-slate-800 md:h-10"
                   >
                     Agendar
                   </button>
