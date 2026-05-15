@@ -1198,7 +1198,7 @@ export default function Home() {
   // ── Loading & auth gates ──────────────────────────────────────────────────
   if (!authReady) {
     return (
-      <main className="flex min-h-dvh w-full items-center justify-center bg-[#f7f7f8] text-blue-700">
+      <main className="flex min-h-dvh w-full items-center justify-center bg-[#090e1a] text-blue-400">
         <Loader2 className="h-7 w-7 animate-spin" aria-label="Carregando" />
       </main>
     );
@@ -1244,12 +1244,12 @@ export default function Home() {
 
   if (!remoteReady || remoteLoading) {
     return (
-      <main className="flex min-h-dvh w-full items-center justify-center bg-[#f7f7f8] text-slate-950">
+      <main className="flex min-h-dvh w-full items-center justify-center bg-[#090e1a] text-white">
         <div className="flex flex-col items-center gap-3">
           <Loader2 className="h-7 w-7 animate-spin" aria-label="Carregando dados" />
-          <p className="text-sm font-semibold text-slate-600">Carregando seus dados</p>
+          <p className="text-sm font-semibold text-white/60">Carregando seus dados</p>
           {remoteError && (
-            <p role="alert" className="max-w-xs text-center text-xs font-medium text-rose-600">
+            <p role="alert" className="max-w-xs text-center text-xs font-medium text-rose-400">
               {remoteError}
             </p>
           )}
@@ -1267,7 +1267,7 @@ export default function Home() {
   ];
 
   return (
-    <main className="min-h-dvh w-full max-w-full bg-[#f7f7f8] text-slate-950">
+    <main className="min-h-dvh w-full max-w-full bg-[#090e1a] text-white">
       {subjectModal.open && (
         <SubjectModal
           subject={subjectModal.subject}
@@ -1356,7 +1356,7 @@ export default function Home() {
       {/* Main content */}
       <section className="w-full max-w-full overflow-x-hidden pb-[calc(5.5rem+env(safe-area-inset-bottom))] xl:ml-64 xl:w-auto xl:pb-0">
         {updateAvailable && (
-          <div className="sticky top-0 z-30 border-b border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-900 shadow-sm shadow-emerald-900/5 md:px-6 xl:px-8">
+          <div className="sticky top-0 z-30 border-b border-emerald-400/20 bg-emerald-500/10 px-4 py-3 text-emerald-200 shadow-sm md:px-6 xl:px-8">
             <div className="mx-auto flex max-w-[1600px] flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm font-semibold">
                 Nova versão disponível. Atualize para receber as melhorias.
@@ -1365,7 +1365,7 @@ export default function Home() {
                 type="button"
                 aria-label="Recarregar aplicativo"
                 onClick={refreshAppVersion}
-                className="flex h-10 w-fit items-center justify-center gap-2 rounded-xl bg-emerald-700 px-4 text-sm font-semibold text-white hover:bg-emerald-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-500"
+                className="flex h-10 w-fit items-center justify-center gap-2 rounded-xl bg-emerald-500/20 px-4 text-sm font-semibold text-emerald-200 ring-1 ring-emerald-400/30 hover:bg-emerald-500/30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-400"
               >
                 <RefreshCw className="h-4 w-4" aria-hidden="true" />
                 Recarregar app
@@ -1373,7 +1373,7 @@ export default function Home() {
             </div>
           </div>
         )}
-        <header className="sticky top-0 z-20 w-full border-b border-slate-200 bg-white/92 px-4 py-3 shadow-sm shadow-slate-900/5 backdrop-blur-xl md:px-6 md:py-4 xl:px-8">
+        <header className="sticky top-0 z-20 w-full border-b border-white/8 bg-[#090e1a]/95 px-4 py-3 shadow-sm shadow-black/20 backdrop-blur-xl md:px-6 md:py-4 xl:px-8">
           <div className="mx-auto flex max-w-[1600px] flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
             <div className="min-w-0">
               <div className="flex items-center gap-3">
@@ -1382,15 +1382,15 @@ export default function Home() {
                   <p className="bg-gradient-to-r from-blue-700 via-sky-500 to-cyan-400 bg-clip-text text-[11px] font-bold uppercase tracking-[0.14em] text-transparent">
                     {adminView ? "Admin" : readOnlyUser ? "Modo leitura" : sectionTitle[activeSection]}
                   </p>
-                  <h1 className="mt-0.5 truncate text-xl font-semibold tracking-normal text-slate-950 sm:text-2xl md:text-3xl">
+                  <h1 className="mt-0.5 truncate text-xl font-semibold tracking-normal text-white sm:text-2xl md:text-3xl">
                     {adminView ? "Área admin" : readOnlyUser ? readOnlyUser.email : "Studlike"}
                   </h1>
                 </div>
               </div>
-              <p className="mt-2 hidden text-sm leading-6 text-slate-500 xl:block">
+              <p className="mt-2 hidden text-sm leading-6 text-white/40 xl:block">
                 Alertas, edital verticalizado e metas do dia em uma tela.
               </p>
-              <p className="mt-1 truncate text-xs font-medium text-slate-400 sm:mt-2">
+              <p className="mt-1 truncate text-xs font-medium text-white/30 sm:mt-2">
                 {session.user.email}
               </p>
             </div>
@@ -1401,10 +1401,10 @@ export default function Home() {
                   aria-live="polite"
                   className={`flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-semibold transition ${
                     syncStatus === "saving" || syncStatus === "pending"
-                      ? "bg-amber-50 text-amber-600"
+                      ? "bg-amber-500/15 text-amber-300"
                       : syncStatus === "saved"
-                      ? "bg-emerald-50 text-emerald-600"
-                      : "bg-rose-50 text-rose-600"
+                      ? "bg-emerald-500/15 text-emerald-300"
+                      : "bg-rose-500/15 text-rose-300"
                   }`}
                 >
                   {(syncStatus === "saving" || syncStatus === "pending") && (
@@ -1430,7 +1430,7 @@ export default function Home() {
                 onClick={openArchiveModal}
                 disabled={Boolean(readOnlyUser)}
                 aria-label="Arquivar edital atual"
-                className="flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500 disabled:cursor-not-allowed disabled:opacity-50 xl:hidden"
+                className="flex h-11 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 text-sm font-semibold text-white/70 hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-400 disabled:cursor-not-allowed disabled:opacity-40 xl:hidden"
               >
                 <Archive className="h-4 w-4" aria-hidden="true" />
                 <span className="truncate">Arquivar edital</span>
@@ -1440,7 +1440,7 @@ export default function Home() {
                 <button
                   type="button"
                   onClick={adminView ? () => setAdminView(false) : openAdminView}
-                  className="flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
+                  className="flex h-11 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 text-sm font-semibold text-white/70 hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-400"
                 >
                   {adminView ? <AppWindow className="h-4 w-4" aria-hidden="true" /> : <ShieldCheck className="h-4 w-4" aria-hidden="true" />}
                   <span className="truncate">{adminView ? "Voltar ao app" : "Admin"}</span>
@@ -1462,7 +1462,7 @@ export default function Home() {
               <button
                 type="button"
                 onClick={signOut}
-                className="flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-600 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
+                className="flex h-11 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 text-sm font-semibold text-white/60 hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-400"
               >
                 <LogOut className="h-4 w-4" aria-hidden="true" />
                 Sair
@@ -1473,10 +1473,10 @@ export default function Home() {
 
         <div className="mx-auto w-full max-w-[1600px] space-y-5 overflow-x-hidden p-4 md:space-y-6 md:p-6 xl:p-8">
           {readOnlyUser && !adminView && (
-            <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-blue-900 shadow-sm shadow-blue-900/5 sm:flex sm:items-center sm:justify-between sm:gap-4">
+            <div className="rounded-xl border border-blue-400/20 bg-blue-500/10 p-4 text-blue-200 shadow-sm sm:flex sm:items-center sm:justify-between sm:gap-4">
               <div>
                 <p className="text-sm font-bold">Visualização em modo leitura</p>
-                <p className="mt-1 text-sm text-blue-800/80">
+                <p className="mt-1 text-sm text-blue-300/70">
                   Você está vendo o app de {readOnlyUser.email}. Alterações e salvamento estão bloqueados.
                 </p>
               </div>
@@ -1623,7 +1623,7 @@ export default function Home() {
       {/* Mobile bottom nav */}
       <nav
         aria-label="Navegação mobile"
-        className={`${adminView ? "hidden" : "grid"} fixed inset-x-0 bottom-0 z-30 w-full grid-cols-5 overflow-hidden border-t border-slate-200 bg-white/96 px-2 pb-[calc(0.45rem+env(safe-area-inset-bottom))] pt-2 shadow-[0_-10px_30px_rgba(15,23,42,0.08)] backdrop-blur-xl xl:hidden`}
+        className={`${adminView ? "hidden" : "grid"} fixed inset-x-0 bottom-0 z-30 w-full grid-cols-5 overflow-hidden border-t border-white/8 bg-[#090e1a]/96 px-2 pb-[calc(0.45rem+env(safe-area-inset-bottom))] pt-2 shadow-[0_-10px_30px_rgba(0,0,0,0.35)] backdrop-blur-xl xl:hidden`}
       >
         {mobileNavItems.map((item) => {
           const Icon = item.icon;
@@ -1635,8 +1635,8 @@ export default function Home() {
               aria-current={active ? "page" : undefined}
               className={`flex min-h-14 flex-col items-center justify-center gap-1 rounded-2xl px-1.5 py-1 text-[10px] font-bold transition sm:text-[11px] ${
                 active
-                  ? "bg-slate-950 text-white shadow-sm shadow-slate-900/15"
-                  : "text-slate-500 hover:bg-slate-100 hover:text-slate-950"
+                  ? "bg-white/10 text-white shadow-sm"
+                  : "text-white/40 hover:bg-white/8 hover:text-white"
               }`}
             >
               <Icon className="h-5 w-5" aria-hidden="true" />

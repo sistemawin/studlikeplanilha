@@ -1,16 +1,51 @@
-import { ArrowLeft, ChevronRight, Pencil, Plus, Search, Trash2, X } from "lucide-react";
-import { motion, type PanInfo } from "framer-motion";
-import { useEffect, useRef, useState } from "react";
-import type { Difficulty, NavTarget, Subject, Topic, TopicStatus } from "@/types";
-import { ProgressBar } from "@/components/ProgressBar";
-import { corToAccent, pct, statusTone } from "@/lib/utils";
+"use client";
 
-// ── SubjectCard ─────────────────────────────────────────────────────────────
-// Dark card with watermark name + horizontal swipe gesture (mobile) /
-// full-card click (desktop) to open subject detail.
+import { ChevronLeft, Pencil, Plus, Trash2 } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { useRef, useState } from "react";
+import type { Difficulty, NavTarget, Subject, Topic, TopicStatus } from "@/types";
+import { corToAccent } from "@/lib/utils";
 
 const SWIPE_THRESHOLD_PX = 72;
 const SWIPE_VELOCITY = 450;
+
+// Module-level touch detection — safe since this file is only rendered on the client
+const IS_TOUCH_DEVICE =
+  typeof window !== "undefined" &&
+  window.matchMedia("(hover: none) and (pointer: coarse)").matches;
+
+const STATUS_COLORS: Record<TopicStatus, { bg: string; text: string }> = {
+  "Não Estudado": { bg: "rgba(239,68,68,0.18)", text: "#fca5a5" },
+  "Teoria Lida": { bg: "rgba(245,158,11,0.18)", text: "#fcd34d" },
+  "Questões Feitas": { bg: "rgba(59,130,246,0.18)", text: "#93c5fd" },
+  Revisado: { bg: "rgba(16,185,129,0.18)", text: "#6ee7b7" },
+};
+
+const DIFFICULTY_COLORS: Record<Difficulty, { bg: string; text: string }> = {
+  Fácil: { bg: "rgba(16,185,129,0.12)", text: "#6ee7b7" },
+  Médio: { bg: "rgba(245,158,11,0.12)", text: "#fcd34d" },
+  Difícil: { bg: "rgba(239,68,68,0.12)", text: "#fca5a5" },
+};
+
+const STATUS_CYCLE: TopicStatus[] = ["Não Estudado", "Teoria Lida", "Questões Feitas", "Revisado"];
+const DIFFICULTY_CYCLE: Difficulty[] = ["Fácil", "Médio", "Difícil"];
+
+type Props = {
+  subjects: Subject[];
+  topics: Topic[];
+  newTopicText: string;
+  selectedSubject: string;
+  activeSection: NavTarget;
+  onTopicTextChange: (text: string) => void;
+  onSubjectChange: (id: string) => void;
+  onStatusChange: (topicId: string, status: TopicStatus) => void;
+  onDifficultyChange: (topicId: string, difficulty: Difficulty) => void;
+  onAddTopics: () => void;
+  onDeleteTopic: (topicId: string) => void;
+  onAddSubject: () => void;
+  onEditSubject: (subject: Subject) => void;
+  onDeleteSubject: (subjectId: string) => void;
+};
 
 function SubjectCard({
   subject,
@@ -21,133 +56,104 @@ function SubjectCard({
 }: {
   subject: Subject;
   topics: Topic[];
-  onOpen: (id: string) => void;
-  onEdit: (subject: Subject) => void;
-  onDelete: (id: string) => void;
+  onOpen: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
 }) {
-  const accent = corToAccent(subject.cor);
-  const subjectTopics = topics.filter((t) => t.materiaId === subject.id);
-  const revisedCount = subjectTopics.filter((t) => t.status === "Revisado").length;
-  const progress = pct(revisedCount, subjectTopics.length);
-
-  // Prevent onClick from firing when a drag has occurred
   const didDragRef = useRef(false);
-
-  function handleDragEnd(_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) {
-    if (Math.abs(info.offset.x) > SWIPE_THRESHOLD_PX || Math.abs(info.velocity.x) > SWIPE_VELOCITY) {
-      didDragRef.current = true;
-      onOpen(subject.id);
-    }
-  }
+  const accent = corToAccent(subject.cor);
+  const completedCount = topics.filter((t) => t.status === "Revisado").length;
+  const progress = topics.length === 0 ? 0 : Math.round((completedCount / topics.length) * 100);
 
   function handleClick() {
-    if (didDragRef.current) {
-      didDragRef.current = false;
-      return;
-    }
-    onOpen(subject.id);
+    if (didDragRef.current) return;
+    onOpen();
   }
 
   return (
     <motion.div
-      drag="x"
+      drag={IS_TOUCH_DEVICE ? "x" : false}
       dragConstraints={{ left: 0, right: 0 }}
       dragElastic={0.18}
       dragMomentum={false}
-      onDragEnd={handleDragEnd}
+      onDragStart={() => {
+        didDragRef.current = true;
+      }}
+      onDragEnd={(_, info) => {
+        const farEnough = Math.abs(info.offset.x) > SWIPE_THRESHOLD_PX;
+        const fastEnough = Math.abs(info.velocity.x) > SWIPE_VELOCITY;
+        if (farEnough || fastEnough) onDelete();
+        setTimeout(() => {
+          didDragRef.current = false;
+        }, 50);
+      }}
+      whileHover={{ y: -2, transition: { duration: 0.15 } }}
       onClick={handleClick}
-      whileTap={{ scale: 0.975 }}
-      className="relative cursor-pointer select-none overflow-hidden rounded-2xl shadow-lg"
+      className="relative cursor-pointer overflow-hidden rounded-2xl p-5 shadow-lg select-none"
       style={{
         background: `linear-gradient(135deg, #020617 0%, #0f172a 55%, ${accent.chart}28 100%)`,
       }}
-      aria-label={`Abrir matéria ${subject.nome}`}
     >
-      {/* Watermark — large transparent subject name */}
+      {/* Watermark */}
       <span
         aria-hidden="true"
-        className="pointer-events-none absolute bottom-1 right-2 select-none text-[64px] font-black leading-none text-white"
-        style={{ opacity: 0.055 }}
+        className="pointer-events-none absolute -right-3 bottom-1 max-w-[85%] truncate text-[56px] font-black leading-none select-none opacity-[0.055]"
+        style={{ color: accent.chart }}
       >
         {subject.nome}
       </span>
 
-      {/* Card content */}
-      <div className="relative z-10 p-5">
-        {/* Top row */}
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <span className={`h-2.5 w-2.5 rounded-full ${accent.dot}`} aria-hidden="true" />
-            <span className="text-xs font-semibold text-white/40">Peso {subject.peso}</span>
+      <div className="relative z-10">
+        <span
+          className="mb-3 block h-1.5 w-10 rounded-full"
+          style={{ backgroundColor: accent.chart }}
+        />
+
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <p className="truncate text-base font-bold text-white">{subject.nome}</p>
+            <p className="mt-0.5 text-xs font-medium text-white/40">
+              {topics.length} tópico{topics.length !== 1 ? "s" : ""}
+              {topics.length > 0 && ` · ${progress}% pronto`}
+            </p>
           </div>
-          <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+
+          <div className="flex shrink-0 gap-1">
             <button
-              onClick={() => onEdit(subject)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit();
+              }}
               aria-label={`Editar ${subject.nome}`}
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-white/30 hover:bg-white/10 hover:text-white/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white/50"
+              className="flex h-7 w-7 items-center justify-center rounded-lg text-white/30 hover:bg-white/10 hover:text-white/70 transition"
             >
               <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
             </button>
             <button
-              onClick={() => onDelete(subject.id)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete();
+              }}
               aria-label={`Excluir ${subject.nome}`}
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-white/30 hover:bg-red-500/20 hover:text-red-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-red-400/50"
+              className="flex h-7 w-7 items-center justify-center rounded-lg text-white/30 hover:bg-red-500/20 hover:text-red-400 transition"
             >
               <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
             </button>
           </div>
         </div>
 
-        {/* Subject name */}
-        <h3 className="mt-3 text-xl font-bold leading-tight text-white">{subject.nome}</h3>
-
-        {/* Stats */}
-        <p className="mt-1 text-sm text-white/50">
-          {subjectTopics.length} tópico{subjectTopics.length !== 1 ? "s" : ""}
-          {revisedCount > 0 && ` · ${revisedCount} revisado${revisedCount !== 1 ? "s" : ""}`}
-        </p>
-
-        {/* Progress bar */}
-        <div className="mt-4">
-          <div className="mb-1.5 flex items-center justify-between text-xs text-white/35">
-            <span>Progresso</span>
-            <span>{progress}%</span>
-          </div>
-          <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+        {topics.length > 0 && (
+          <div className="mt-3 h-1 w-full overflow-hidden rounded-full bg-white/10">
             <div
-              className={`h-1.5 rounded-full ${accent.progress}`}
-              style={{ width: `${progress}%` }}
+              className="h-1 rounded-full transition-[width] duration-700 ease-out"
+              style={{ width: `${progress}%`, backgroundColor: accent.chart }}
             />
           </div>
-        </div>
+        )}
       </div>
-
-      {/* Swipe hint arrow */}
-      <ChevronRight
-        className="absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-white/20"
-        aria-hidden="true"
-      />
     </motion.div>
   );
 }
-
-// ── Props ────────────────────────────────────────────────────────────────────
-type Props = {
-  subjects: Subject[];
-  topics: Topic[];
-  newTopicText: string;
-  selectedSubject: string;
-  activeSection: NavTarget;
-  onTopicTextChange: (value: string) => void;
-  onSubjectChange: (id: string) => void;
-  onStatusChange: (topicId: string, status: TopicStatus) => void;
-  onDifficultyChange: (topicId: string, difficulty: Difficulty) => void;
-  onAddTopics: () => void;
-  onDeleteTopic: (topicId: string) => void;
-  onAddSubject: () => void;
-  onEditSubject: (subject: Subject) => void;
-  onDeleteSubject: (subjectId: string) => void;
-};
 
 export function Edital({
   subjects,
@@ -165,264 +171,204 @@ export function Edital({
   onEditSubject,
   onDeleteSubject,
 }: Props) {
-  const [search, setSearch] = useState("");
   const [activeSubjectId, setActiveSubjectId] = useState<string | null>(null);
+  const isVisible = activeSection === "edital";
 
-  // Se a matéria ativa for excluída, volta para a lista
-  useEffect(() => {
-    if (activeSubjectId && !subjects.some((s) => s.id === activeSubjectId)) {
-      setActiveSubjectId(null);
-    }
-  }, [subjects, activeSubjectId]);
-
-  const isVisible = activeSection === "edital" || activeSection === "revisoes";
-  const activeSubject = subjects.find((s) => s.id === activeSubjectId) ?? null;
-
-  function openDetail(subjectId: string) {
-    setActiveSubjectId(subjectId);
-    onSubjectChange(subjectId);
-    setSearch("");
+  function openDetail(id: string) {
+    setActiveSubjectId(id);
+    onSubjectChange(id);
   }
 
-  function closeDetail() {
-    setActiveSubjectId(null);
-    setSearch("");
-  }
+  const detailSubject = subjects.find((s) => s.id === activeSubjectId);
 
-  // ── DETAIL VIEW ────────────────────────────────────────────────────────────
-  if (activeSubject && isVisible) {
-    const subjectTopics = topics.filter((t) => t.materiaId === activeSubject.id);
-    const lowerSearch = search.toLowerCase();
-    const filteredTopics = search
-      ? subjectTopics.filter((t) => t.titulo.toLowerCase().includes(lowerSearch))
-      : subjectTopics;
-    const progress = pct(
-      subjectTopics.filter((t) => t.status === "Revisado").length,
-      subjectTopics.length,
-    );
-    const accent = corToAccent(activeSubject.cor);
-    const studiedCount = subjectTopics.filter((t) => t.status !== "Não Estudado").length;
+  // ── Detail view ──────────────────────────────────────────────────────────
+  if (activeSubjectId && detailSubject) {
+    const subjectTopics = topics.filter((t) => t.materiaId === activeSubjectId);
+    const accent = corToAccent(detailSubject.cor);
+    const lineCount = newTopicText.split("\n").filter((l) => l.trim()).length;
 
     return (
-      <div id="edital" className="scroll-mt-24 space-y-4">
+      <div
+        id="edital"
+        className={`${isVisible ? "block" : "hidden"} scroll-mt-24 xl:block`}
+      >
         {/* Breadcrumb */}
-        <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
-          <button
-            onClick={closeDetail}
-            className="flex items-center gap-1.5 text-sm font-semibold text-slate-500 hover:text-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
-            aria-label="Voltar ao edital"
-          >
-            <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-            Edital
-          </button>
-          <span className="text-slate-300" aria-hidden="true">/</span>
-          <span className={`h-2.5 w-2.5 rounded-full ${accent.dot}`} aria-hidden="true" />
-          <span className="min-w-0 truncate font-semibold text-slate-900">{activeSubject.nome}</span>
-          <div className="ml-auto flex shrink-0 items-center gap-1">
-            <button
-              onClick={() => onEditSubject(activeSubject)}
-              aria-label={`Editar ${activeSubject.nome}`}
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700"
-            >
-              <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
-            </button>
-            <button
-              onClick={() => { onDeleteSubject(activeSubject.id); }}
-              aria-label={`Excluir ${activeSubject.nome}`}
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-600"
-            >
-              <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
-            </button>
-          </div>
-        </div>
+        <button
+          onClick={() => setActiveSubjectId(null)}
+          className="mb-4 flex items-center gap-1.5 text-sm font-semibold text-white/40 transition hover:text-white"
+        >
+          <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+          Todas as matérias
+        </button>
 
-        {/* Subject progress bar */}
-        <div className={`rounded-xl border p-4 ${accent.border} ${accent.card}`}>
-          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-            <span className={`text-sm font-semibold ${accent.text}`}>Peso {activeSubject.peso}</span>
-            <span className="text-xs text-slate-500">
-              {studiedCount}/{subjectTopics.length} iniciados · {progress}% revisados
-            </span>
-          </div>
-          <ProgressBar value={progress} tone={accent.progress} label={`Progresso em ${activeSubject.nome}`} />
-        </div>
-
-        {/* Topics panel */}
-        <div className="rounded-xl border border-slate-200 bg-white shadow-sm shadow-slate-900/5">
-          {/* Panel header with search */}
-          <div className="flex flex-col gap-3 border-b border-slate-200 p-4 sm:p-5">
-            <div className="flex items-center justify-between gap-3">
-              <h2 className="text-lg font-semibold">Tópicos</h2>
-              {search && (
-                <span className="text-xs text-slate-500">
-                  {filteredTopics.length} de {subjectTopics.length}
-                </span>
-              )}
-            </div>
-            {subjectTopics.length > 0 && (
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
-                <input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Buscar tópico..."
-                  className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-9 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                />
-                {search && (
-                  <button
-                    onClick={() => setSearch("")}
-                    aria-label="Limpar busca"
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
-                  >
-                    <X className="h-4 w-4" aria-hidden="true" />
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-
-          <div className="space-y-3 p-4 sm:p-5">
-            {filteredTopics.length === 0 && subjectTopics.length === 0 && (
-              <p className="rounded-xl bg-slate-50 px-4 py-6 text-center text-sm text-slate-500">
-                Nenhum tópico ainda. Importe abaixo.
-              </p>
-            )}
-            {filteredTopics.length === 0 && subjectTopics.length > 0 && (
-              <p className="text-sm text-slate-500">Nenhum resultado para &quot;{search}&quot;.</p>
-            )}
-            {filteredTopics.map((topic) => (
-              <div
-                key={topic.id}
-                className="grid gap-3 rounded-xl border border-slate-100 bg-slate-50/50 p-3 sm:grid-cols-[1fr_150px_140px_120px_auto]"
-              >
-                <div>
-                  <p className="font-medium text-slate-900">{topic.titulo}</p>
-                  <p className="text-xs text-slate-500">
-                    {topic.estudadoEm ? `Estudado em ${topic.estudadoEm}` : "Ainda não iniciado"}
-                  </p>
-                </div>
-
-                <label className="sr-only" htmlFor={`status-${topic.id}`}>Status de {topic.titulo}</label>
-                <select
-                  id={`status-${topic.id}`}
-                  value={topic.status}
-                  onChange={(e) => onStatusChange(topic.id, e.target.value as TopicStatus)}
-                  className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 md:h-10"
-                >
-                  <option>Não Estudado</option>
-                  <option>Teoria Lida</option>
-                  <option>Questões Feitas</option>
-                  <option>Revisado</option>
-                </select>
-
-                <label className="sr-only" htmlFor={`dificuldade-${topic.id}`}>Dificuldade de {topic.titulo}</label>
-                <select
-                  id={`dificuldade-${topic.id}`}
-                  value={topic.dificuldade}
-                  onChange={(e) => onDifficultyChange(topic.id, e.target.value as Difficulty)}
-                  className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 md:h-10"
-                >
-                  <option>Fácil</option>
-                  <option>Médio</option>
-                  <option>Difícil</option>
-                </select>
-
-                <span className={`inline-flex h-10 items-center justify-center rounded-xl px-3 text-xs font-semibold ring-1 ${statusTone(topic.status)}`}>
-                  {topic.status}
-                </span>
-
-                <button
-                  onClick={() => onDeleteTopic(topic.id)}
-                  aria-label={`Excluir tópico ${topic.titulo}`}
-                  className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-300 hover:bg-red-50 hover:text-red-500"
-                >
-                  <Trash2 className="h-4 w-4" aria-hidden="true" />
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Import topics — below the list */}
-        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5 sm:p-5">
-          <h2 className="text-lg font-semibold">Importar tópicos</h2>
-          <p className="mt-1 text-sm text-slate-500">
-            Cole uma lista — cada linha vira um tópico de{" "}
-            <span className={`font-semibold ${accent.text}`}>{activeSubject.nome}</span>.
+        {/* Subject header card */}
+        <div
+          className="mb-5 overflow-hidden rounded-2xl p-5 shadow-lg"
+          style={{
+            background: `linear-gradient(135deg, #020617 0%, #0f172a 55%, ${accent.chart}22 100%)`,
+          }}
+        >
+          <span
+            className="mb-2 block h-1.5 w-10 rounded-full"
+            style={{ backgroundColor: accent.chart }}
+          />
+          <h2 className="text-2xl font-black text-white">{detailSubject.nome}</h2>
+          <p className="mt-1 text-sm text-white/40">
+            {subjectTopics.length} tópico{subjectTopics.length !== 1 ? "s" : ""}
+            {detailSubject.peso > 0 && ` · peso ${detailSubject.peso}`}
           </p>
-          <label className="sr-only" htmlFor="detail-topics-textarea">Tópicos (um por linha)</label>
+        </div>
+
+        {/* Topics list */}
+        <div className="space-y-2">
+          <AnimatePresence initial={false}>
+            {subjectTopics.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-white/10 px-4 py-6 text-center text-sm font-medium text-white/30">
+                Nenhum tópico ainda. Adicione abaixo.
+              </div>
+            ) : (
+              subjectTopics.map((topic) => {
+                const statusStyle = STATUS_COLORS[topic.status];
+                const diffStyle = DIFFICULTY_COLORS[topic.dificuldade];
+
+                function cycleStatus() {
+                  const idx = STATUS_CYCLE.indexOf(topic.status);
+                  onStatusChange(topic.id, STATUS_CYCLE[(idx + 1) % STATUS_CYCLE.length]);
+                }
+
+                function cycleDifficulty() {
+                  const idx = DIFFICULTY_CYCLE.indexOf(topic.dificuldade);
+                  onDifficultyChange(topic.id, DIFFICULTY_CYCLE[(idx + 1) % DIFFICULTY_CYCLE.length]);
+                }
+
+                return (
+                  <motion.div
+                    key={topic.id}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, x: 30, transition: { duration: 0.18 } }}
+                    className="group flex items-center gap-3 rounded-xl border border-white/5 bg-white/[0.04] px-4 py-3 transition hover:bg-white/[0.07]"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold leading-snug text-white">{topic.titulo}</p>
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        <button
+                          onClick={cycleStatus}
+                          className="rounded-lg px-2.5 py-0.5 text-xs font-bold transition hover:opacity-80"
+                          style={{ backgroundColor: statusStyle.bg, color: statusStyle.text }}
+                          aria-label={`Status: ${topic.status}. Clique para alterar.`}
+                        >
+                          {topic.status}
+                        </button>
+                        <button
+                          onClick={cycleDifficulty}
+                          className="rounded-lg px-2.5 py-0.5 text-xs font-bold transition hover:opacity-80"
+                          style={{ backgroundColor: diffStyle.bg, color: diffStyle.text }}
+                          aria-label={`Dificuldade: ${topic.dificuldade}. Clique para alterar.`}
+                        >
+                          {topic.dificuldade}
+                        </button>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => onDeleteTopic(topic.id)}
+                      aria-label={`Excluir tópico ${topic.titulo}`}
+                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-white/20 opacity-0 transition group-hover:opacity-100 hover:bg-red-500/20 hover:text-red-400"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                    </button>
+                  </motion.div>
+                );
+              })
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Add topics form */}
+        <div className="mt-5 rounded-2xl border border-white/8 bg-white/[0.03] p-4">
+          <p className="mb-2 text-sm font-semibold text-white/50">Adicionar tópicos</p>
           <textarea
-            id="detail-topics-textarea"
             value={newTopicText}
             onChange={(e) => onTopicTextChange(e.target.value)}
+            placeholder="Cole os tópicos aqui, um por linha…"
             rows={4}
-            placeholder={"Organização do Estado\nAdministração Pública\nPoder Legislativo"}
-            className="mt-3 w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            className="w-full resize-none rounded-xl border border-white/10 bg-white/5 p-3 text-sm text-white placeholder:text-white/25 outline-none focus:border-blue-400/50 focus:ring-2 focus:ring-blue-400/15"
           />
-          <button
-            onClick={onAddTopics}
-            className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-slate-950 text-sm font-semibold text-white hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
-          >
-            <Plus className="h-4 w-4" aria-hidden="true" />
-            Adicionar tópicos
-          </button>
+          <div className="mt-2 flex items-center justify-between">
+            <span className="text-xs text-white/30">
+              {lineCount} linha{lineCount !== 1 ? "s" : ""}
+            </span>
+            <button
+              onClick={onAddTopics}
+              disabled={!newTopicText.trim()}
+              className="flex h-9 items-center gap-2 rounded-xl bg-blue-600 px-4 text-sm font-bold text-white transition hover:bg-blue-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-400 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <Plus className="h-4 w-4" aria-hidden="true" />
+              Adicionar
+            </button>
+          </div>
         </div>
       </div>
     );
   }
 
-  // ── LIST VIEW ──────────────────────────────────────────────────────────────
-  const studiedTopics = topics.filter((t) => t.status !== "Não Estudado").length;
-
+  // ── List view ────────────────────────────────────────────────────────────
   return (
     <div
       id="edital"
-      className={`scroll-mt-24 space-y-3 ${!isVisible ? "hidden xl:block" : ""}`}
+      className={`${isVisible ? "block" : "hidden"} scroll-mt-24 xl:block`}
     >
-      {/* Header */}
-      <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-5">
+      <div className="mb-4 flex items-center justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold">Edital verticalizado</h2>
-          <p className="text-sm text-slate-500">
-            {studiedTopics}/{topics.length} tópicos iniciados em {subjects.length} matéria{subjects.length !== 1 ? "s" : ""}
+          <h2 className="text-lg font-bold text-white">Edital verticalizado</h2>
+          <p className="text-sm text-white/40">
+            {subjects.length === 0
+              ? "Adicione matérias para começar."
+              : "Clique em uma matéria para ver os tópicos."}
           </p>
         </div>
         <button
           onClick={onAddSubject}
-          className="flex h-9 w-fit items-center gap-1.5 rounded-lg bg-slate-950 px-3 text-sm font-semibold text-white hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
+          className="flex h-10 items-center gap-2 rounded-xl bg-blue-600 px-4 text-sm font-bold text-white transition hover:bg-blue-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-400"
         >
           <Plus className="h-4 w-4" aria-hidden="true" />
-          Nova matéria
+          <span className="hidden sm:inline">Nova matéria</span>
         </button>
       </div>
 
-      {/* Empty state */}
-      {subjects.length === 0 && (
-        <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-10 text-center">
-          <p className="text-sm font-medium text-slate-500">Nenhuma matéria cadastrada.</p>
-          <button
-            onClick={onAddSubject}
-            className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
-          >
-            <Plus className="h-4 w-4" aria-hidden="true" />
-            Adicionar matéria
-          </button>
+      {subjects.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-white/10 px-6 py-12 text-center">
+          <p className="text-sm font-semibold text-white/40">Nenhuma matéria cadastrada.</p>
+          <p className="mt-1 text-xs text-white/25">
+            Clique em &quot;Nova matéria&quot; para começar.
+          </p>
+        </div>
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-3">
+          <AnimatePresence initial={false}>
+            {subjects.map((subject) => {
+              const subjectTopics = topics.filter((t) => t.materiaId === subject.id);
+              return (
+                <motion.div
+                  key={subject.id}
+                  layout
+                  initial={{ opacity: 0, scale: 0.96 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.92, transition: { duration: 0.18 } }}
+                >
+                  <SubjectCard
+                    subject={subject}
+                    topics={subjectTopics}
+                    onOpen={() => openDetail(subject.id)}
+                    onEdit={() => onEditSubject(subject)}
+                    onDelete={() => onDeleteSubject(subject.id)}
+                  />
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
         </div>
       )}
-
-      {/* Dark swipeable subject cards */}
-      <div className="grid gap-3 sm:grid-cols-2">
-        {subjects.map((subject) => (
-          <SubjectCard
-            key={subject.id}
-            subject={subject}
-            topics={topics}
-            onOpen={openDetail}
-            onEdit={onEditSubject}
-            onDelete={onDeleteSubject}
-          />
-        ))}
-      </div>
     </div>
   );
 }
