@@ -715,6 +715,13 @@ export default function Home() {
     ...exam,
     percent: pct(exam.acertos, exam.total),
   }));
+  const sectionTitle: Record<NavTarget, string> = {
+    dashboard: "Hoje",
+    edital: "Edital",
+    revisoes: "Revisões",
+    cronograma: "Plano",
+    simulados: "Dados",
+  };
 
   function scheduleReviews(topic: Topic) {
     const base = new Date(`${todayIso}T12:00:00`);
@@ -742,6 +749,11 @@ export default function Home() {
   function scrollToSection(target: NavTarget) {
     setActiveSection(target);
     document.getElementById(target)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function openMobileSection(target: NavTarget) {
+    setActiveSection(target);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function formatTimer(seconds: number) {
@@ -947,11 +959,11 @@ export default function Home() {
     target?: NavTarget;
     action: () => void;
   }[] = [
-    { icon: HomeIcon, label: "Início", target: "dashboard", action: () => scrollToSection("dashboard") },
-    { icon: ClipboardList, label: "Edital", target: "edital", action: () => scrollToSection("edital") },
-    { icon: RotateCcw, label: "Revisar", target: "revisoes", action: () => scrollToSection("revisoes") },
-    { icon: Timer, label: "Timer", action: openFocusTimer },
-    { icon: BarChart3, label: "Dados", target: "simulados", action: () => scrollToSection("simulados") },
+    { icon: HomeIcon, label: "Início", target: "dashboard", action: () => openMobileSection("dashboard") },
+    { icon: ClipboardList, label: "Edital", target: "edital", action: () => openMobileSection("edital") },
+    { icon: RotateCcw, label: "Revisar", target: "revisoes", action: () => openMobileSection("revisoes") },
+    { icon: CalendarDays, label: "Plano", target: "cronograma", action: () => openMobileSection("cronograma") },
+    { icon: BarChart3, label: "Dados", target: "simulados", action: () => openMobileSection("simulados") },
   ];
 
   if (!authReady) {
@@ -986,7 +998,7 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-[#f6f8fb] text-slate-950">
+    <main className="min-h-screen bg-[#f7f7f8] text-slate-950">
       {timerFocusOpen && (
         <section className="fixed inset-0 z-50 flex min-h-screen flex-col bg-[radial-gradient(circle_at_top,#1d4ed8_0,#0f172a_44%,#020617_100%)] px-5 py-5 text-white md:px-10 md:py-8">
           <div className="flex items-center justify-between gap-3">
@@ -1068,7 +1080,7 @@ export default function Home() {
         </section>
       )}
 
-      <aside className="fixed left-0 top-0 hidden h-screen w-20 border-r border-slate-800 bg-slate-950 p-3 text-white shadow-xl shadow-slate-900/10 lg:block xl:w-64">
+      <aside className="fixed left-0 top-0 hidden h-screen w-20 border-r border-slate-900 bg-[#050505] p-3 text-white shadow-xl shadow-slate-900/10 lg:block xl:w-64">
         <div className="mb-8 flex items-center gap-3 px-2 py-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white text-slate-950 shadow-sm">
             <BookOpenCheck className="h-5 w-5" />
@@ -1120,7 +1132,7 @@ export default function Home() {
       </aside>
 
       <section className="pb-24 lg:ml-20 lg:pb-0 xl:ml-64">
-        <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 px-4 py-3 shadow-sm shadow-slate-900/5 backdrop-blur-xl md:px-8 md:py-4">
+        <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/92 px-4 py-3 shadow-sm shadow-slate-900/5 backdrop-blur-xl md:px-8 md:py-4">
           <div className="mx-auto flex max-w-7xl flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div className="min-w-0">
               <div className="flex items-center gap-3">
@@ -1128,11 +1140,11 @@ export default function Home() {
                   <BookOpenCheck className="h-5 w-5" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-blue-600">
-                    Hoje
+                  <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-pink-600">
+                    {sectionTitle[activeSection]}
                   </p>
                   <h1 className="mt-0.5 truncate text-xl font-semibold tracking-normal text-slate-950 sm:text-2xl md:text-3xl">
-                    Dashboard de estudos
+                    Studlike
                   </h1>
                 </div>
               </div>
@@ -1146,7 +1158,7 @@ export default function Home() {
             <div className="grid grid-cols-2 gap-2 sm:flex sm:shrink-0">
               <button
                 onClick={openFocusTimer}
-                className="flex h-11 items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 text-sm font-semibold text-white shadow-sm shadow-slate-900/15 hover:bg-slate-800"
+                className="hidden h-11 items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 text-sm font-semibold text-white shadow-sm shadow-slate-900/15 hover:bg-slate-800 sm:flex"
               >
                 <Maximize2 className="h-4 w-4" />
                 <span className="truncate">{timerRunning ? `Foco ${formatTimer(timerSeconds)}` : `Iniciar foco`}</span>
@@ -1160,7 +1172,7 @@ export default function Home() {
               </button>
               <button
                 onClick={signOut}
-                className="col-span-2 flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-600 hover:bg-slate-50 sm:col-span-1"
+                className="flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-600 hover:bg-slate-50"
               >
                 <LogOut className="h-4 w-4" />
                 Sair
@@ -1170,7 +1182,12 @@ export default function Home() {
         </header>
 
         <div className="mx-auto max-w-7xl space-y-5 p-4 md:space-y-6 md:p-8">
-          <section id="dashboard" className="scroll-mt-24 grid grid-cols-2 gap-3 md:gap-4 xl:grid-cols-4">
+          <section
+            id="dashboard"
+            className={`scroll-mt-24 ${
+              activeSection === "dashboard" ? "grid" : "hidden"
+            } grid-cols-2 gap-3 md:gap-4 lg:grid xl:grid-cols-4`}
+          >
             <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5 sm:p-5">
               <div className="flex items-center justify-between">
                 <p className="text-sm font-medium text-slate-500">Progresso geral</p>
@@ -1214,11 +1231,57 @@ export default function Home() {
             </div>
           </section>
 
-          <p className="rounded-xl border border-blue-100 bg-white px-4 py-3 text-sm font-medium text-blue-700 shadow-sm shadow-slate-900/5">
+          <section
+            className={`${
+              activeSection === "dashboard" ? "block" : "hidden"
+            } lg:hidden`}
+          >
+            <div className="flex gap-3 overflow-x-auto pb-1">
+              <button
+                onClick={openFocusTimer}
+                className="flex min-w-[150px] items-center gap-3 rounded-2xl bg-[#050505] p-3 text-left text-white shadow-lg shadow-slate-900/15"
+              >
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/12">
+                  <Timer className="h-5 w-5" />
+                </span>
+                <span>
+                  <span className="block text-xs font-semibold text-white/60">Foco</span>
+                  <span className="block text-sm font-semibold">
+                    {timerRunning ? formatTimer(timerSeconds) : "Iniciar"}
+                  </span>
+                </span>
+              </button>
+              {bestSubjects.slice(0, 3).map((item) => (
+                <button
+                  key={item.subject.id}
+                  onClick={() => openMobileSection("edital")}
+                  className="min-w-[126px] rounded-2xl border border-slate-200 bg-white p-3 text-left shadow-sm shadow-slate-900/5"
+                >
+                  <span className={`mb-3 block h-2 w-10 rounded-full ${item.accent.progress}`} />
+                  <span className="block truncate text-sm font-semibold text-slate-950">
+                    {item.subject.nome.replace("Direito ", "")}
+                  </span>
+                  <span className="mt-1 block text-xs font-medium text-slate-500">
+                    {item.score}% pronto
+                  </span>
+                </button>
+              ))}
+            </div>
+          </section>
+
+          <p
+            className={`${
+              activeSection === "dashboard" ? "block" : "hidden"
+            } rounded-xl border border-blue-100 bg-white px-4 py-3 text-sm font-medium text-blue-700 shadow-sm shadow-slate-900/5 lg:block`}
+          >
             {notice}
           </p>
 
-          <section className="grid gap-6 xl:grid-cols-[1fr_1fr]">
+          <section
+            className={`${
+              activeSection === "simulados" ? "grid" : "hidden"
+            } gap-6 lg:grid xl:grid-cols-[1fr_1fr]`}
+          >
             <PieChart
               title="Melhores matérias"
               subtitle="Ranking calculado pelo avanço dos tópicos, dificuldade e status atual."
@@ -1234,7 +1297,11 @@ export default function Home() {
             />
           </section>
 
-          <section className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
+          <section
+            className={`${
+              activeSection === "simulados" ? "grid" : "hidden"
+            } gap-5 lg:grid xl:grid-cols-[1.1fr_0.9fr]`}
+          >
             <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5 sm:p-5">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                 <div>
@@ -1316,8 +1383,17 @@ export default function Home() {
             </div>
           </section>
 
-          <section className="grid gap-5 xl:grid-cols-[1.15fr_0.85fr]">
-            <div id="edital" className="scroll-mt-24 rounded-xl border border-slate-200 bg-white shadow-sm shadow-slate-900/5">
+          <section
+            className={`${
+              activeSection === "edital" || activeSection === "revisoes" ? "grid" : "hidden"
+            } gap-5 lg:grid xl:grid-cols-[1.15fr_0.85fr]`}
+          >
+            <div
+              id="edital"
+              className={`${
+                activeSection === "edital" ? "block" : "hidden"
+              } scroll-mt-24 rounded-xl border border-slate-200 bg-white shadow-sm shadow-slate-900/5 lg:block`}
+            >
               <div className="flex flex-col gap-3 border-b border-slate-200 p-4 md:flex-row md:items-center md:justify-between sm:p-5">
                 <div>
                   <h2 className="text-lg font-semibold">Edital verticalizado</h2>
@@ -1413,8 +1489,17 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="space-y-5">
-              <div id="revisoes" className="scroll-mt-24 rounded-xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5 sm:p-5">
+            <div
+              className={`${
+                activeSection === "edital" || activeSection === "revisoes" ? "space-y-5" : "hidden"
+              } lg:block lg:space-y-5`}
+            >
+              <div
+                id="revisoes"
+                className={`${
+                  activeSection === "revisoes" ? "block" : "hidden"
+                } scroll-mt-24 rounded-xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5 sm:p-5 lg:block`}
+              >
                 <h2 className="text-lg font-semibold">Para revisar hoje</h2>
                 <div className="mt-4 space-y-3">
                   {pendingToday.length === 0 ? (
@@ -1465,7 +1550,11 @@ export default function Home() {
                 </div>
               </div>
 
-              <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5 sm:p-5">
+              <div
+                className={`${
+                  activeSection === "edital" ? "block" : "hidden"
+                } rounded-xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5 sm:p-5 lg:block`}
+              >
                 <h2 className="text-lg font-semibold">Importar tópicos do edital</h2>
                 <p className="mt-1 text-sm text-slate-500">
                   Cole uma lista. Cada linha vira um tópico da matéria selecionada.
@@ -1499,8 +1588,17 @@ export default function Home() {
             </div>
           </section>
 
-          <section className="grid gap-5 xl:grid-cols-2">
-            <div id="cronograma" className="scroll-mt-24 rounded-xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5 sm:p-5">
+          <section
+            className={`${
+              activeSection === "cronograma" || activeSection === "simulados" ? "grid" : "hidden"
+            } gap-5 lg:grid xl:grid-cols-2`}
+          >
+            <div
+              id="cronograma"
+              className={`${
+                activeSection === "cronograma" ? "block" : "hidden"
+              } scroll-mt-24 rounded-xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5 sm:p-5 lg:block`}
+            >
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <h2 className="text-lg font-semibold">Planejamento flexível</h2>
@@ -1563,7 +1661,12 @@ export default function Home() {
               </div>
             </div>
 
-            <div id="simulados" className="scroll-mt-24 rounded-xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5 sm:p-5">
+            <div
+              id="simulados"
+              className={`${
+                activeSection === "simulados" ? "block" : "hidden"
+              } scroll-mt-24 rounded-xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5 sm:p-5 lg:block`}
+            >
               <h2 className="text-lg font-semibold">Metas, simulados e revisão manual</h2>
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
                 <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
