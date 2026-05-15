@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f6f8fb;
+  --background: #f7f7f8;
   --foreground: #111827;
 }
 
@@ -12,7 +12,23 @@
   --font-mono: "Geist Mono", "Geist Mono Fallback", ui-monospace, monospace;
 }
 
+* {
+  box-sizing: border-box;
+}
+
+html {
+  width: 100%;
+  max-width: 100%;
+  min-height: 100%;
+  overflow-x: hidden;
+  overscroll-behavior: none;
+  background: var(--background);
+}
+
 body {
+  width: 100%;
+  max-width: 100%;
+  min-height: 100dvh;
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
@@ -23,6 +39,7 @@ body {
   -webkit-font-smoothing: antialiased;
   text-rendering: geometricPrecision;
   overflow-x: hidden;
+  overscroll-behavior: none;
 }
 
 ::selection {

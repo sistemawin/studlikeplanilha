@@ -440,7 +440,7 @@ function AuthScreen({
   const isSignup = mode === "signup";
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#f6f8fb] px-4 py-6 text-slate-950 sm:py-10">
+    <main className="flex min-h-dvh w-full max-w-full items-center justify-center overflow-x-hidden bg-[#f7f7f8] px-4 py-6 text-slate-950 sm:py-10">
       <section className="grid w-full max-w-5xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-900/8 lg:grid-cols-[0.92fr_1.08fr]">
         <div className="flex min-h-0 flex-col justify-between bg-slate-950 p-5 text-white sm:p-8 lg:min-h-[560px] lg:p-10">
           <div>
@@ -968,7 +968,7 @@ export default function Home() {
 
   if (!authReady) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#eef4ff] text-blue-700">
+      <main className="flex min-h-dvh w-full max-w-full items-center justify-center overflow-x-hidden bg-[#f7f7f8] text-blue-700">
         <Loader2 className="h-7 w-7 animate-spin" />
       </main>
     );
@@ -998,9 +998,9 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-[#f7f7f8] text-slate-950">
+    <main className="min-h-dvh w-full max-w-full overflow-x-hidden bg-[#f7f7f8] text-slate-950">
       {timerFocusOpen && (
-        <section className="fixed inset-0 z-50 flex min-h-screen flex-col bg-[radial-gradient(circle_at_top,#1d4ed8_0,#0f172a_44%,#020617_100%)] px-5 py-5 text-white md:px-10 md:py-8">
+        <section className="fixed inset-0 z-50 flex min-h-dvh w-full max-w-full flex-col overflow-x-hidden bg-[radial-gradient(circle_at_top,#1d4ed8_0,#0f172a_44%,#020617_100%)] px-5 py-5 text-white md:px-10 md:py-8">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/10 text-blue-100 ring-1 ring-white/15">
@@ -1131,8 +1131,8 @@ export default function Home() {
         </button>
       </aside>
 
-      <section className="pb-24 lg:ml-20 lg:pb-0 xl:ml-64">
-        <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/92 px-4 py-3 shadow-sm shadow-slate-900/5 backdrop-blur-xl md:px-8 md:py-4">
+      <section className="w-full max-w-full overflow-x-hidden pb-24 lg:ml-20 lg:w-auto lg:pb-0 xl:ml-64">
+        <header className="sticky top-0 z-20 w-full max-w-full overflow-x-hidden border-b border-slate-200 bg-white/92 px-4 py-3 shadow-sm shadow-slate-900/5 backdrop-blur-xl md:px-8 md:py-4">
           <div className="mx-auto flex max-w-7xl flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div className="min-w-0">
               <div className="flex items-center gap-3">
@@ -1181,7 +1181,7 @@ export default function Home() {
           </div>
         </header>
 
-        <div className="mx-auto max-w-7xl space-y-5 p-4 md:space-y-6 md:p-8">
+        <div className="mx-auto w-full max-w-7xl space-y-5 overflow-x-hidden p-4 md:space-y-6 md:p-8">
           <section
             id="dashboard"
             className={`scroll-mt-24 ${
@@ -1236,10 +1236,11 @@ export default function Home() {
               activeSection === "dashboard" ? "block" : "hidden"
             } lg:hidden`}
           >
-            <div className="flex gap-3 overflow-x-auto pb-1">
+            <div className="w-full max-w-full overflow-hidden">
+              <div className="flex max-w-full gap-3 overflow-x-auto overscroll-x-contain pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               <button
                 onClick={openFocusTimer}
-                className="flex min-w-[150px] items-center gap-3 rounded-2xl bg-[#050505] p-3 text-left text-white shadow-lg shadow-slate-900/15"
+                className="flex w-[150px] shrink-0 items-center gap-3 rounded-2xl bg-[#050505] p-3 text-left text-white shadow-lg shadow-slate-900/15"
               >
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/12">
                   <Timer className="h-5 w-5" />
@@ -1255,7 +1256,7 @@ export default function Home() {
                 <button
                   key={item.subject.id}
                   onClick={() => openMobileSection("edital")}
-                  className="min-w-[126px] rounded-2xl border border-slate-200 bg-white p-3 text-left shadow-sm shadow-slate-900/5"
+                  className="w-[126px] shrink-0 rounded-2xl border border-slate-200 bg-white p-3 text-left shadow-sm shadow-slate-900/5"
                 >
                   <span className={`mb-3 block h-2 w-10 rounded-full ${item.accent.progress}`} />
                   <span className="block truncate text-sm font-semibold text-slate-950">
@@ -1266,6 +1267,7 @@ export default function Home() {
                   </span>
                 </button>
               ))}
+              </div>
             </div>
           </section>
 
@@ -1763,7 +1765,7 @@ export default function Home() {
         </div>
       </section>
 
-      <nav className="fixed bottom-3 left-3 right-3 z-30 grid grid-cols-5 rounded-2xl border border-slate-200 bg-white/95 p-1.5 shadow-2xl shadow-slate-900/18 backdrop-blur-xl lg:hidden">
+      <nav className="fixed bottom-3 left-3 right-3 z-30 grid max-w-[calc(100vw-1.5rem)] grid-cols-5 overflow-hidden rounded-2xl border border-slate-200 bg-white/95 p-1.5 shadow-2xl shadow-slate-900/18 backdrop-blur-xl lg:hidden">
         {mobileNavItems.map((item) => {
           const MobileIcon = item.icon;
           const active = item.target ? activeSection === item.target : item.label === "Timer" && timerRunning;
