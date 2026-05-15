@@ -45,13 +45,16 @@ export function SubjectModal({ subject, onSave, onClose }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center overflow-hidden bg-black/40 p-0 backdrop-blur-sm sm:items-center sm:p-4"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm sm:items-center sm:p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="subject-modal-title"
     >
-      <div className="max-h-[92dvh] w-full max-w-md overflow-y-auto rounded-t-3xl border border-slate-200 bg-white p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-2xl sm:rounded-2xl sm:p-6">
-        <div className="flex items-center justify-between">
+      {/* Panel — flex column so header + footer stay fixed while body scrolls */}
+      <div className="flex max-h-[92dvh] w-full max-w-md flex-col rounded-t-3xl border border-slate-200 bg-white shadow-2xl sm:rounded-2xl">
+
+        {/* Fixed header */}
+        <div className="flex shrink-0 items-center justify-between border-b border-slate-100 px-5 py-4 sm:px-6">
           <h2 id="subject-modal-title" className="text-lg font-semibold text-slate-950">
             {subject ? "Editar matéria" : "Nova matéria"}
           </h2>
@@ -64,105 +67,111 @@ export function SubjectModal({ subject, onSave, onClose }: Props) {
           </button>
         </div>
 
-        <div className="mt-5 space-y-5">
-          {/* Nome */}
-          <div>
-            <label htmlFor="subject-nome" className="block text-sm font-semibold text-slate-700">
-              Nome
-            </label>
-            <input
-              id="subject-nome"
-              value={nome}
-              onChange={(e) => { setNome(e.target.value); setError(""); }}
-              placeholder="Ex: Direito Constitucional"
-              autoFocus
-              className="mt-2 h-11 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-            />
-          </div>
-
-          {/* Peso */}
-          <div>
-            <p className="text-sm font-semibold text-slate-700">Peso no edital</p>
-            <div className="mt-2 grid grid-cols-5 gap-2" role="group" aria-label="Peso da matéria">
-              {[1, 2, 3, 4, 5].map((p) => (
-                <button
-                  key={p}
-                  onClick={() => setPeso(p)}
-                  aria-pressed={peso === p}
-                  className={`h-11 rounded-xl text-sm font-semibold transition ${
-                    peso === p
-                      ? "bg-slate-950 text-white shadow-sm"
-                      : "border border-slate-200 text-slate-600 hover:bg-slate-50"
-                  }`}
-                >
-                  {p}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Cor */}
-          <div>
-            <p className="text-sm font-semibold text-slate-700">Cor</p>
-            <div className="mt-2 flex flex-wrap gap-3" role="group" aria-label="Cor da matéria">
-              {COLOR_OPTIONS.map((option) => (
-                <button
-                  key={option.cor}
-                  onClick={() => setCor(option.cor)}
-                  aria-label={option.label}
-                  aria-pressed={cor === option.cor}
-                  className={`h-10 w-10 rounded-full transition hover:scale-110 ${option.dot} ${
-                    cor === option.cor ? "ring-2 ring-slate-950 ring-offset-2" : ""
-                  }`}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* Tópicos — só exibe na criação */}
-          {isCreate && (
+        {/* Scrollable content */}
+        <div className="flex-1 overflow-y-auto overscroll-contain px-5 py-5 [-webkit-overflow-scrolling:touch] sm:px-6">
+          <div className="space-y-5">
+            {/* Nome */}
             <div>
-              <label htmlFor="modal-topicos" className="block text-sm font-semibold text-slate-700">
-                Tópicos{" "}
-                <span className="font-normal text-slate-400">(opcional)</span>
+              <label htmlFor="subject-nome" className="block text-sm font-semibold text-slate-700">
+                Nome
               </label>
-              <p className="mt-0.5 text-xs text-slate-500">Cole uma lista — cada linha vira um tópico.</p>
-              <textarea
-                id="modal-topicos"
-                value={topicosText}
-                onChange={(e) => setTopicosText(e.target.value)}
-                rows={4}
-                placeholder={"Organização do Estado\nAdministração Pública\nPoder Legislativo"}
-                className="mt-2 w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              <input
+                id="subject-nome"
+                value={nome}
+                onChange={(e) => { setNome(e.target.value); setError(""); }}
+                placeholder="Ex: Direito Constitucional"
+                autoFocus
+                className="mt-2 h-11 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               />
-              {topicosText.trim() && (
-                <p className="mt-1 text-xs text-blue-600">
-                  {topicosText.split("\n").filter((l) => l.trim()).length} tópico(s) serão adicionados
-                </p>
-              )}
             </div>
-          )}
 
-          {error && (
-            <p role="alert" className="text-sm font-medium text-rose-600">
-              {error}
-            </p>
-          )}
+            {/* Peso */}
+            <div>
+              <p className="text-sm font-semibold text-slate-700">Peso no edital</p>
+              <div className="mt-2 grid grid-cols-5 gap-2" role="group" aria-label="Peso da matéria">
+                {[1, 2, 3, 4, 5].map((p) => (
+                  <button
+                    key={p}
+                    onClick={() => setPeso(p)}
+                    aria-pressed={peso === p}
+                    className={`h-11 rounded-xl text-sm font-semibold transition ${
+                      peso === p
+                        ? "bg-slate-950 text-white shadow-sm"
+                        : "border border-slate-200 text-slate-600 hover:bg-slate-50"
+                    }`}
+                  >
+                    {p}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Cor */}
+            <div>
+              <p className="text-sm font-semibold text-slate-700">Cor</p>
+              <div className="mt-2 flex flex-wrap gap-3" role="group" aria-label="Cor da matéria">
+                {COLOR_OPTIONS.map((option) => (
+                  <button
+                    key={option.cor}
+                    onClick={() => setCor(option.cor)}
+                    aria-label={option.label}
+                    aria-pressed={cor === option.cor}
+                    className={`h-10 w-10 rounded-full transition hover:scale-110 ${option.dot} ${
+                      cor === option.cor ? "ring-2 ring-slate-950 ring-offset-2" : ""
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Tópicos — só exibe na criação */}
+            {isCreate && (
+              <div>
+                <label htmlFor="modal-topicos" className="block text-sm font-semibold text-slate-700">
+                  Tópicos{" "}
+                  <span className="font-normal text-slate-400">(opcional)</span>
+                </label>
+                <p className="mt-0.5 text-xs text-slate-500">Cole uma lista — cada linha vira um tópico.</p>
+                <textarea
+                  id="modal-topicos"
+                  value={topicosText}
+                  onChange={(e) => setTopicosText(e.target.value)}
+                  rows={4}
+                  placeholder={"Organização do Estado\nAdministração Pública\nPoder Legislativo"}
+                  className="mt-2 w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                />
+                {topicosText.trim() && (
+                  <p className="mt-1 text-xs text-blue-600">
+                    {topicosText.split("\n").filter((l) => l.trim()).length} tópico(s) serão adicionados
+                  </p>
+                )}
+              </div>
+            )}
+
+            {error && (
+              <p role="alert" className="text-sm font-medium text-rose-600">
+                {error}
+              </p>
+            )}
+          </div>
         </div>
 
-        <div className="mt-6 grid grid-cols-2 gap-2">
-          <button
-            onClick={onClose}
-            className="h-11 flex-1 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
-          >
-            Cancelar
-          </button>
-          <button
-            onClick={handleSave}
-            className="h-11 flex-1 rounded-xl bg-slate-950 text-sm font-semibold text-white hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
-          >
-            Salvar
-          </button>
+        {/* Fixed footer — always visible */}
+        <div className="shrink-0 border-t border-slate-100 px-5 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:px-6 sm:pb-4">
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              onClick={onClose}
+              className="h-11 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleSave}
+              className="h-11 rounded-xl bg-slate-950 text-sm font-semibold text-white hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
+            >
+              Salvar
+            </button>
+          </div>
         </div>
       </div>
     </div>
