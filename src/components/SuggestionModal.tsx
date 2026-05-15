@@ -1,4 +1,5 @@
 import { Lightbulb, Loader2, Send, X } from "lucide-react";
+import { useScrollLock } from "@/hooks/useScrollLock";
 
 type Props = {
   open: boolean;
@@ -29,6 +30,7 @@ export function SuggestionModal({
   onSubmit,
   onClose,
 }: Props) {
+  useScrollLock(open);
   if (!open) return null;
 
   return (

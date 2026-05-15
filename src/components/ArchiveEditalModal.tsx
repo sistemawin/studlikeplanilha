@@ -1,4 +1,5 @@
 import { Archive, Loader2, LockKeyhole, X } from "lucide-react";
+import { useScrollLock } from "@/hooks/useScrollLock";
 
 type ArchiveCounts = {
   topics: number;
@@ -38,6 +39,7 @@ export function ArchiveEditalModal({
   onSubmit,
   onClose,
 }: Props) {
+  useScrollLock(open);
   if (!open) return null;
 
   return (

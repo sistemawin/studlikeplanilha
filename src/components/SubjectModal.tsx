@@ -1,6 +1,7 @@
 import { X } from "lucide-react";
 import { useState } from "react";
 import type { Subject } from "@/types";
+import { useScrollLock } from "@/hooks/useScrollLock";
 
 const COLOR_OPTIONS: { cor: string; label: string; dot: string }[] = [
   { cor: "bg-emerald-500", label: "Verde",    dot: "bg-emerald-500" },
@@ -23,6 +24,7 @@ type Props = {
 };
 
 export function SubjectModal({ subject, onSave, onClose }: Props) {
+  useScrollLock();
   const isCreate = !subject;
   const [nome, setNome] = useState(subject?.nome ?? "");
   const [peso, setPeso] = useState(subject?.peso ?? 3);

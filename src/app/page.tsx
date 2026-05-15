@@ -22,6 +22,7 @@ import type { Session } from "@supabase/supabase-js";
 import { getSupabaseBrowserClient, getSupabasePasswordVerifierClient } from "@/lib/supabase";
 import { loadRemoteState, saveRemoteState, serializeAppState, validateSchedule } from "@/lib/sync";
 import { addDays, formatTimer, isoDate, pct } from "@/lib/utils";
+import { useScrollLock } from "@/hooks/useScrollLock";
 import { defaultGoals, defaultSchedule } from "@/lib/seed";
 import type {
   AppState,
@@ -202,31 +203,7 @@ export default function Home() {
     return () => window.clearInterval(id);
   }, [timerRunning]);
 
-  useEffect(() => {
-    if (!timerFocusOpen) return;
-
-    const previousHtmlOverflow = document.documentElement.style.overflow;
-    const previousBodyOverflow = document.body.style.overflow;
-    const previousBodyPosition = document.body.style.position;
-    const previousBodyTop = document.body.style.top;
-    const previousBodyWidth = document.body.style.width;
-    const scrollY = window.scrollY;
-
-    document.documentElement.style.overflow = "hidden";
-    document.body.style.overflow = "hidden";
-    document.body.style.position = "fixed";
-    document.body.style.top = `-${scrollY}px`;
-    document.body.style.width = "100%";
-
-    return () => {
-      document.documentElement.style.overflow = previousHtmlOverflow;
-      document.body.style.overflow = previousBodyOverflow;
-      document.body.style.position = previousBodyPosition;
-      document.body.style.top = previousBodyTop;
-      document.body.style.width = previousBodyWidth;
-      window.scrollTo(0, scrollY);
-    };
-  }, [timerFocusOpen]);
+  useScrollLock(timerFocusOpen);
 
   // ── App update detection ─────────────────────────────────────────────────
   useEffect(() => {
@@ -272,6 +249,37 @@ export default function Home() {
       window.removeEventListener("focus", checkAfterPageShow);
       window.removeEventListener("pageshow", checkAfterPageShow);
     };
+  }, []);
+
+  // ── Service worker registration ───────────────────────────────────────────
+  useEffect(() => {
+    if (!("serviceWorker" in navigator)) return;
+
+    navigator.serviceWorker.register("/sw.js", { scope: "/" }).then((registration) => {
+      // A new SW installed and is waiting: surface the in-app banner.
+      function onUpdateFound() {
+        const sw = registration.installing;
+        if (!sw) return;
+        sw.addEventListener("statechange", () => {
+          if (sw.state === "installed" && navigator.serviceWorker.controller) {
+            setUpdateAvailable(true);
+          }
+        });
+      }
+      registration.addEventListener("updatefound", onUpdateFound);
+
+      // Also check for a SW that is already waiting (page refreshed mid-update).
+      if (registration.waiting && navigator.serviceWorker.controller) {
+        setUpdateAvailable(true);
+      }
+    }).catch(() => {
+      // SW registration failures are silent — the app works without it.
+    });
+
+    // When the active SW changes (new SW took control), reload to pick up fresh assets.
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      window.location.reload();
+    });
   }, []);
 
   // ── Auth init ─────────────────────────────────────────────────────────────
@@ -1017,8 +1025,16 @@ export default function Home() {
 
     try {
       if ("serviceWorker" in navigator) {
+        // Tell the waiting SW to take control immediately.
+        const registration = await navigator.serviceWorker.getRegistration("/");
+        if (registration?.waiting) {
+          registration.waiting.postMessage({ type: "SKIP_WAITING" });
+          // controllerchange listener in the SW useEffect will reload the page.
+          return;
+        }
+        // No waiting SW — force-check for updates then reload.
         const registrations = await navigator.serviceWorker.getRegistrations();
-        await Promise.all(registrations.map((registration) => registration.update()));
+        await Promise.all(registrations.map((r) => r.update()));
       }
 
       if ("caches" in window) {
