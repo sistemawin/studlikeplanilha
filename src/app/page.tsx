@@ -792,6 +792,14 @@ export default function Home() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
+  function navigateFromDashboard(target: NavTarget) {
+    if (window.matchMedia("(min-width: 1280px)").matches) {
+      scrollToSection(target);
+      return;
+    }
+    openMobileSection(target);
+  }
+
   // ── Loading & auth gates ──────────────────────────────────────────────────
   if (!authReady) {
     return (
@@ -1035,7 +1043,7 @@ export default function Home() {
                   notice={notice}
                   activeSection={activeSection}
                   onOpenFocusTimer={openFocusTimer}
-                  onNavigate={openMobileSection}
+                  onNavigate={navigateFromDashboard}
                 />
               </ErrorBoundary>
 

@@ -58,7 +58,12 @@ export function Dashboard({
         id="dashboard"
         className={`${isVisible ? "grid" : "hidden"} scroll-mt-24 grid-cols-2 gap-3 md:gap-4 xl:grid xl:grid-cols-2 2xl:grid-cols-4`}
       >
-        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5 sm:p-5">
+        <button
+          type="button"
+          onClick={() => onNavigate("edital")}
+          aria-label="Abrir edital verticalizado"
+          className="rounded-xl border border-slate-200 bg-white p-4 text-left shadow-sm shadow-slate-900/5 transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500 sm:p-5"
+        >
           <div className="flex items-center justify-between">
             <p className="text-sm font-medium text-slate-500">Progresso geral</p>
             <Target className="h-5 w-5 text-blue-500" aria-hidden="true" />
@@ -68,9 +73,14 @@ export function Dashboard({
           <p className="mt-2 text-xs text-slate-500">
             {completedTopics} revisados de {topics.length} tópicos
           </p>
-        </div>
+        </button>
 
-        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 shadow-sm shadow-amber-900/5 sm:p-5">
+        <button
+          type="button"
+          onClick={() => onNavigate("revisoes")}
+          aria-label="Abrir revisões de hoje"
+          className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-left shadow-sm shadow-amber-900/5 transition hover:-translate-y-0.5 hover:border-amber-300 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500 sm:p-5"
+        >
           <div className="flex items-center justify-between">
             <p className="text-sm font-medium text-amber-800">Para revisar hoje</p>
             <RotateCcw className="h-5 w-5 text-amber-500" aria-hidden="true" />
@@ -79,9 +89,14 @@ export function Dashboard({
           <p className="mt-2 text-xs text-amber-800/70">
             {reviews.overdueCount} atrasadas exigem prioridade máxima
           </p>
-        </div>
+        </button>
 
-        <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 shadow-sm shadow-rose-900/5 sm:p-5">
+        <button
+          type="button"
+          onClick={() => onNavigate("simulados")}
+          aria-label="Abrir registro de questões"
+          className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-left shadow-sm shadow-rose-900/5 transition hover:-translate-y-0.5 hover:border-rose-300 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500 sm:p-5"
+        >
           <div className="flex items-center justify-between">
             <p className="text-sm font-medium text-rose-800">Questões hoje</p>
             <Flame className="h-5 w-5 text-red-500" aria-hidden="true" />
@@ -94,16 +109,21 @@ export function Dashboard({
             tone="bg-rose-500"
             label="Questões hoje"
           />
-        </div>
+        </button>
 
-        <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 shadow-sm shadow-emerald-900/5 sm:p-5">
+        <button
+          type="button"
+          onClick={() => onNavigate("simulados")}
+          aria-label="Abrir desempenho em simulados"
+          className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-left shadow-sm shadow-emerald-900/5 transition hover:-translate-y-0.5 hover:border-emerald-300 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500 sm:p-5"
+        >
           <div className="flex items-center justify-between">
             <p className="text-sm font-medium text-emerald-800">Média simulados</p>
             <BarChart3 className="h-5 w-5 text-sky-500" aria-hidden="true" />
           </div>
           <p className="mt-3 text-2xl font-semibold sm:text-3xl">{Number.isFinite(avgExam) ? avgExam : 0}%</p>
           <p className="mt-2 text-xs text-emerald-800/70">Fórmula: acertos / total obrigatório</p>
-        </div>
+        </button>
       </section>
 
       {/* Mobile subject quick-access strip */}
