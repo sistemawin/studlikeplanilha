@@ -1,4 +1,5 @@
-import { BookOpenCheck, Loader2, LockKeyhole, Mail, ShieldCheck, UserPlus } from "lucide-react";
+import { Loader2, LockKeyhole, Mail, ShieldCheck, UserPlus } from "lucide-react";
+import { StudlikeLogo } from "@/components/StudlikeLogo";
 import type { AuthMode } from "@/types";
 
 type Props = {
@@ -37,9 +38,7 @@ export function AuthScreen({
       <section className="grid w-full max-w-5xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-900/8 lg:grid-cols-[0.92fr_1.08fr]">
         <div className="flex min-h-0 flex-col justify-between bg-slate-950 p-5 text-white sm:p-8 lg:min-h-[560px] lg:p-10">
           <div>
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-slate-950 shadow-sm sm:h-11 sm:w-11">
-              <BookOpenCheck className="h-5 w-5 sm:h-6 sm:w-6" aria-hidden="true" />
-            </div>
+            <StudlikeLogo size={44} className="rounded-xl shadow-sm" />
             <p className="mt-5 text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400 lg:mt-8">
               Studlike
             </p>

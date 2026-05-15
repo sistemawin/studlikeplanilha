@@ -3,7 +3,6 @@
 import {
   Archive,
   BarChart3,
-  BookOpenCheck,
   CalendarDays,
   ClipboardList,
   HomeIcon,
@@ -13,6 +12,7 @@ import {
   Maximize2,
   RotateCcw,
 } from "lucide-react";
+import { StudlikeLogo } from "@/components/StudlikeLogo";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
@@ -581,9 +581,7 @@ export default function Home() {
       {/* Desktop sidebar */}
       <aside className="fixed left-0 top-0 hidden h-screen w-20 border-r border-slate-900 bg-[#050505] p-3 text-white shadow-xl shadow-slate-900/10 lg:block xl:w-64">
         <div className="mb-8 flex items-center gap-3 px-2 py-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white text-slate-950 shadow-sm">
-            <BookOpenCheck className="h-5 w-5" aria-hidden="true" />
-          </div>
+          <StudlikeLogo size={40} className="rounded-lg shadow-sm" />
           <div className="hidden xl:block">
             <p className="text-sm font-semibold">Studlike</p>
             <p className="text-xs text-slate-400">Plano de estudos</p>
@@ -612,9 +610,7 @@ export default function Home() {
           <div className="mx-auto flex max-w-7xl flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div className="min-w-0">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-950 text-white lg:hidden">
-                  <BookOpenCheck className="h-5 w-5" aria-hidden="true" />
-                </div>
+                <StudlikeLogo size={40} className="shrink-0 rounded-xl lg:hidden" />
                 <div className="min-w-0">
                   <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-pink-600">
                     {sectionTitle[activeSection]}
