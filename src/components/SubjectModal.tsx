@@ -59,11 +59,15 @@ export function SubjectModal({ subject, onSave, onClose }: Props) {
       />
 
       {/* Side panel — slides in from right */}
-      <motion.div
+      <motion.form
         initial={{ x: "100%" }}
         animate={{ x: 0 }}
         transition={{ type: "spring", damping: 32, stiffness: 320 }}
-        className="relative z-10 flex h-full w-full max-w-sm flex-col bg-white shadow-2xl"
+        onSubmit={(event) => {
+          event.preventDefault();
+          handleSave();
+        }}
+        className="relative z-10 flex h-[100dvh] max-h-[100dvh] w-full max-w-sm flex-col bg-white shadow-2xl"
       >
         {/* Header */}
         <div className="flex shrink-0 items-center justify-between border-b border-slate-100 px-5 py-4">
@@ -71,6 +75,7 @@ export function SubjectModal({ subject, onSave, onClose }: Props) {
             {subject ? "Editar matéria" : "Nova matéria"}
           </h2>
           <button
+            type="button"
             onClick={onClose}
             aria-label="Fechar"
             className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
@@ -104,6 +109,7 @@ export function SubjectModal({ subject, onSave, onClose }: Props) {
               <div className="mt-2 grid grid-cols-5 gap-2" role="group" aria-label="Peso da matéria">
                 {[1, 2, 3, 4, 5].map((p) => (
                   <button
+                    type="button"
                     key={p}
                     onClick={() => setPeso(p)}
                     aria-pressed={peso === p}
@@ -125,6 +131,7 @@ export function SubjectModal({ subject, onSave, onClose }: Props) {
               <div className="mt-2 flex flex-wrap gap-3" role="group" aria-label="Cor da matéria">
                 {COLOR_OPTIONS.map((option) => (
                   <button
+                    type="button"
                     key={option.cor}
                     onClick={() => setCor(option.cor)}
                     aria-label={option.label}
@@ -172,23 +179,24 @@ export function SubjectModal({ subject, onSave, onClose }: Props) {
         </div>
 
         {/* Footer — always visible */}
-        <div className="shrink-0 border-t border-slate-100 px-5 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+        <div className="shrink-0 border-t border-slate-100 bg-white px-5 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
           <div className="grid grid-cols-2 gap-3">
             <button
+              type="button"
               onClick={onClose}
               className="h-11 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
             >
               Cancelar
             </button>
             <button
-              onClick={handleSave}
+              type="submit"
               className="h-11 rounded-xl bg-slate-950 text-sm font-semibold text-white transition hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
             >
               Salvar
             </button>
           </div>
         </div>
-      </motion.div>
+      </motion.form>
     </div>
   );
 }
