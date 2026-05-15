@@ -369,7 +369,16 @@ export default function Home() {
   }
 
   function confirmQuestions() {
-    const qty = Math.max(1, parseInt(questoesQty, 10) || 1);
+    const qty = Number.parseInt(questoesQty.trim(), 10);
+    if (!Number.isFinite(qty) || qty <= 0) {
+      setNotice("Digite a quantidade de questões antes de confirmar.");
+      return;
+    }
+    if (qty > 999) {
+      setNotice("Registre no máximo 999 questões por vez.");
+      return;
+    }
+
     setGoals((gs) => {
       const existing = gs.find((g) => g.tipo === "questões");
       if (!existing) {
@@ -736,23 +745,26 @@ export default function Home() {
               {questoesOpen ? (
                 <form
                   onSubmit={(e) => { e.preventDefault(); confirmQuestions(); }}
-                  className="flex items-center gap-1.5"
+                  className="grid w-full max-w-sm grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-1.5 sm:w-auto sm:max-w-none"
                 >
                   <label className="sr-only" htmlFor="questoes-qty">Quantidade de questões</label>
                   <input
                     id="questoes-qty"
                     type="number"
+                    inputMode="numeric"
                     min={1}
                     max={999}
                     value={questoesQty}
                     onChange={(e) => setQuestoesQty(e.target.value)}
+                    placeholder="Qtd."
                     autoFocus
                     onKeyDown={(e) => { if (e.key === "Escape") setQuestoesOpen(false); }}
-                    className="h-11 w-20 rounded-xl border border-slate-200 px-3 text-center text-sm font-semibold outline-none focus:border-blue-500"
+                    className="h-11 min-w-0 rounded-xl border border-slate-200 px-3 text-center text-sm font-semibold outline-none focus:border-blue-500"
                   />
                   <button
                     type="submit"
-                    className="h-11 rounded-xl bg-slate-950 px-3 text-sm font-semibold text-white hover:bg-slate-800"
+                    disabled={!questoesQty.trim()}
+                    className="h-11 rounded-xl bg-slate-950 px-3 text-sm font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     OK
                   </button>
@@ -766,7 +778,7 @@ export default function Home() {
                 </form>
               ) : (
                 <button
-                  onClick={() => setQuestoesOpen(true)}
+                  onClick={() => { setQuestoesQty(""); setQuestoesOpen(true); }}
                   className="flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
                 >
                   <ListChecks className="h-4 w-4" aria-hidden="true" />
