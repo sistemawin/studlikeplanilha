@@ -51,7 +51,7 @@ export type Goal = {
 
 export type SyncStatus = "idle" | "pending" | "saving" | "saved" | "error";
 
-export type MockExam = {
+export type Exam = {
   id: string;
   nome: string;
   acertos: number;
@@ -81,7 +81,7 @@ export type AppState = {
   reviews: Review[];
   schedule: ScheduleConfig;
   goals: Goal[];
-  exams: MockExam[];
+  exams: Exam[];
 };
 
 // Database row types

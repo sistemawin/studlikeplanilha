@@ -25,7 +25,7 @@ import type {
   AuthMode,
   Difficulty,
   Goal,
-  MockExam,
+  Exam,
   NavTarget,
   PlanningMode,
   Review,
@@ -58,7 +58,7 @@ export default function Home() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [schedule, setSchedule] = useState(defaultSchedule);
   const [goals, setGoals] = useState<Goal[]>(() => defaultGoals());
-  const [exams, setExams] = useState<MockExam[]>([]);
+  const [exams, setExams] = useState<Exam[]>([]);
 
   // ── UI state ──────────────────────────────────────────────────────────────
   const [newTopicText, setNewTopicText] = useState("");
@@ -90,7 +90,7 @@ export default function Home() {
 
   // ── Questões input state ──────────────────────────────────────────────────
   const [questoesOpen, setQuestoesOpen] = useState(false);
-  const [questoesQty, setQuestoesQty] = useState("10");
+  const [questoesQty, setQuestoesQty] = useState("");
 
   // ── Sync status ───────────────────────────────────────────────────────────
   const [syncStatus, setSyncStatus] = useState<SyncStatus>("idle");
@@ -248,8 +248,8 @@ export default function Home() {
   const generalProgress = pct(completedTopics, topics.length);
   const pendingToday = reviews.filter((r) => !r.concluida && r.dataAgendada <= todayIso);
   const overdueCount = pendingToday.filter((r) => r.dataAgendada < todayIso).length;
-  const questionGoal = goals.find((g) => g.tipo === "questões") ?? { id: "", tipo: "questões" as const, valorObjetivo: 50, valorAtual: 0, dataReferencia: todayIso };
-  const hourGoal = goals.find((g) => g.tipo === "horas") ?? { id: "", tipo: "horas" as const, valorObjetivo: 4, valorAtual: 0, dataReferencia: todayIso };
+  const questionGoal = goals.find((g) => g.tipo === "questões") ?? { id: "", tipo: "questões" as const, valorObjetivo: 0, valorAtual: 0, dataReferencia: todayIso };
+  const hourGoal = goals.find((g) => g.tipo === "horas") ?? { id: "", tipo: "horas" as const, valorObjetivo: 0, valorAtual: 0, dataReferencia: todayIso };
   const avgExam = Math.round(
     exams.reduce((sum, e) => sum + (e.acertos / e.total) * 100, 0) / exams.length,
   );
@@ -370,12 +370,25 @@ export default function Home() {
 
   function confirmQuestions() {
     const qty = Math.max(1, parseInt(questoesQty, 10) || 1);
-    setGoals((gs) =>
-      gs.map((g) => (g.tipo === "questões" ? { ...g, valorAtual: g.valorAtual + qty } : g)),
-    );
+    setGoals((gs) => {
+      const existing = gs.find((g) => g.tipo === "questões");
+      if (!existing) {
+        return [
+          ...gs,
+          {
+            id: crypto.randomUUID(),
+            tipo: "questões",
+            valorObjetivo: qty,
+            valorAtual: qty,
+            dataReferencia: todayIso,
+          },
+        ];
+      }
+      return gs.map((g) => (g.tipo === "questões" ? { ...g, valorAtual: g.valorAtual + qty } : g));
+    });
     setNotice(`${qty} questão${qty !== 1 ? "ões" : ""} registrada${qty !== 1 ? "s" : ""}.`);
     setQuestoesOpen(false);
-    setQuestoesQty("10");
+    setQuestoesQty("");
   }
 
   function deleteTopic(topicId: string) {
@@ -395,7 +408,22 @@ export default function Home() {
 
   function updateGoalObjective(tipo: "questões" | "horas", value: number) {
     if (value <= 0) return;
-    setGoals((gs) => gs.map((g) => (g.tipo === tipo ? { ...g, valorObjetivo: value } : g)));
+    setGoals((gs) => {
+      const existing = gs.find((g) => g.tipo === tipo);
+      if (!existing) {
+        return [
+          ...gs,
+          {
+            id: crypto.randomUUID(),
+            tipo,
+            valorObjetivo: value,
+            valorAtual: 0,
+            dataReferencia: todayIso,
+          },
+        ];
+      }
+      return gs.map((g) => (g.tipo === tipo ? { ...g, valorObjetivo: value } : g));
+    });
   }
 
   function updateSemanal(day: string, ids: string[]) {
@@ -456,11 +484,9 @@ export default function Home() {
     if (!ok) return;
     setTopics([]);
     setReviews([]);
-    setGoals([
-      { id: crypto.randomUUID(), tipo: "questões", valorObjetivo: 50, valorAtual: 0, dataReferencia: todayIso },
-      { id: crypto.randomUUID(), tipo: "horas", valorObjetivo: 4, valorAtual: 0, dataReferencia: todayIso },
-    ]);
+    setGoals([]);
     setExams([]);
+    setSchedule(defaultSchedule);
     // Reset selectors — topics no longer exist
     setSelectedManualTopic("");
     setNotice("Edital arquivado. Dados principais foram limpos.");

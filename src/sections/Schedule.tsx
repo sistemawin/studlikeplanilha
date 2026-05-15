@@ -77,7 +77,7 @@ export function Schedule({
       <input
         id="horas-dia"
         type="number"
-        min={1}
+        min={0}
         max={24}
         value={schedule.horasDia}
         onChange={(e) => onHorasChange(Number(e.target.value))}

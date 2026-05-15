@@ -1,6 +1,6 @@
 import { Pencil, Save, Trash2, X } from "lucide-react";
 import { useState } from "react";
-import type { Goal, MockExam, NavTarget, Subject, Topic } from "@/types";
+import type { Exam, Goal, NavTarget, Subject, Topic } from "@/types";
 import { PieChart } from "@/components/PieChart";
 import { ProgressBar } from "@/components/ProgressBar";
 import { corToAccent, pct, topicScore } from "@/lib/utils";
@@ -10,7 +10,7 @@ type ExamDraft = { nome: string; acertos: number; total: number };
 type Props = {
   subjects: Subject[];
   topics: Topic[];
-  exams: MockExam[];
+  exams: Exam[];
   goals: Goal[];
   examDraft: ExamDraft;
   selectedManualTopic: string;
@@ -119,8 +119,8 @@ export function Exams({
 }: Props) {
   const isVisible = activeSection === "simulados";
 
-  const hourGoal = goals.find((g) => g.tipo === "horas") ?? { id: "", tipo: "horas" as const, valorObjetivo: 4, valorAtual: 0, dataReferencia: "" };
-  const questionGoal = goals.find((g) => g.tipo === "questões") ?? { id: "", tipo: "questões" as const, valorObjetivo: 50, valorAtual: 0, dataReferencia: "" };
+  const hourGoal = goals.find((g) => g.tipo === "horas") ?? { id: "", tipo: "horas" as const, valorObjetivo: 0, valorAtual: 0, dataReferencia: "" };
+  const questionGoal = goals.find((g) => g.tipo === "questões") ?? { id: "", tipo: "questões" as const, valorObjetivo: 0, valorAtual: 0, dataReferencia: "" };
 
   const avgExam =
     exams.length === 0
