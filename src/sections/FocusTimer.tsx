@@ -63,28 +63,29 @@ export function FocusTimer({
   return (
     <section
       aria-label="Modo foco"
-      className="fixed inset-0 z-50 flex min-h-dvh w-full max-w-full flex-col overflow-x-hidden bg-[radial-gradient(circle_at_top,#1d4ed8_0,#0f172a_44%,#020617_100%)] px-5 py-5 text-white md:px-10 md:py-8"
+      className="fixed inset-0 z-50 h-dvh w-full max-w-full overflow-hidden bg-[radial-gradient(circle_at_top,#1d4ed8_0,#0f172a_44%,#020617_100%)] text-white"
     >
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/10 text-blue-100 ring-1 ring-white/15">
-            <Timer className="h-5 w-5" aria-hidden="true" />
+      <div className="flex h-full min-h-0 touch-pan-y flex-col overflow-y-auto overscroll-contain px-5 py-5 [-webkit-overflow-scrolling:touch] md:px-10 md:py-8">
+        <div className="flex shrink-0 items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/10 text-blue-100 ring-1 ring-white/15">
+              <Timer className="h-5 w-5" aria-hidden="true" />
+            </div>
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-blue-200">Modo foco</p>
+              <h2 className="text-lg font-semibold md:text-2xl">Sessão de estudo</h2>
+            </div>
           </div>
-          <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-blue-200">Modo foco</p>
-            <h2 className="text-lg font-semibold md:text-2xl">Sessão de estudo</h2>
-          </div>
+          <button
+            onClick={onClose}
+            aria-label="Fechar sem registrar"
+            className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/10 text-white ring-1 ring-white/15 transition hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+          >
+            <X className="h-5 w-5" aria-hidden="true" />
+          </button>
         </div>
-        <button
-          onClick={onClose}
-          aria-label="Fechar sem registrar"
-          className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/10 text-white ring-1 ring-white/15 transition hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
-        >
-          <X className="h-5 w-5" aria-hidden="true" />
-        </button>
-      </div>
 
-      <div className="flex flex-1 flex-col items-center justify-center py-10 text-center">
+      <div className="flex min-h-[420px] shrink-0 flex-col items-center justify-center py-8 text-center sm:min-h-[460px] md:flex-1 md:py-10">
         <p className="rounded-full bg-white/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-blue-100 ring-1 ring-white/15">
           {timerRunning ? "Estudando agora" : "Sessão pausada"}
         </p>
@@ -128,7 +129,7 @@ export function FocusTimer({
       </div>
 
       {/* Session selector — same visual language as info cards below */}
-      <div className="mb-3 rounded-xl bg-white/10 p-4 ring-1 ring-white/10">
+      <div className="mb-3 shrink-0 rounded-xl bg-white/10 p-4 ring-1 ring-white/10">
         <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-blue-200">
           O que está estudando?
         </p>
@@ -221,7 +222,7 @@ export function FocusTimer({
       </div>
 
       {/* Info strip */}
-      <div className="grid gap-3 border-t border-white/10 pt-4 text-sm text-blue-100 md:grid-cols-3">
+      <div className="grid shrink-0 gap-3 border-t border-white/10 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))] text-sm text-blue-100 md:grid-cols-3">
         <div className="rounded-xl bg-white/10 p-4 ring-1 ring-white/10">
           <p className="font-bold text-white">Meta do dia</p>
           <p className="mt-1">{hourGoal.valorAtual}/{hourGoal.valorObjetivo}h registradas</p>
@@ -234,6 +235,7 @@ export function FocusTimer({
           <p className="font-bold text-white">Revisões</p>
           <p className="mt-1">{pendingTodayCount} pendentes agora</p>
         </div>
+      </div>
       </div>
     </section>
   );
