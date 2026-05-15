@@ -10,7 +10,7 @@ import type {
   TopicRow,
 } from "@/types";
 import { isoDate } from "@/lib/utils";
-import { goalsSeed, scheduleSeed, subjectsSeed, topicsSeed, reviewsSeed, examsSeed } from "@/lib/seed";
+import { defaultSchedule, defaultGoals } from "@/lib/seed";
 
 export function serializeAppState(state: AppState) {
   return JSON.stringify(state);
@@ -28,37 +28,6 @@ export function validateSchedule(value: unknown, fallback: ScheduleConfig): Sche
   };
 }
 
-function createInitialRemoteState(): AppState {
-  const subjectIdBySeedId = new Map(subjectsSeed.map((s) => [s.id, crypto.randomUUID()]));
-  const topicIdBySeedId = new Map(topicsSeed.map((t) => [t.id, crypto.randomUUID()]));
-
-  const subjects = subjectsSeed.map((s) => ({ ...s, id: subjectIdBySeedId.get(s.id)! }));
-  const topics = topicsSeed.map((t) => ({
-    ...t,
-    id: topicIdBySeedId.get(t.id)!,
-    materiaId: subjectIdBySeedId.get(t.materiaId)!,
-  }));
-  const reviews = reviewsSeed
-    .map((r) => ({ ...r, id: crypto.randomUUID(), topicoId: topicIdBySeedId.get(r.topicoId) ?? "" }))
-    .filter((r) => r.topicoId);
-  const mapIds = (ids: string[]) => ids.map((id) => subjectIdBySeedId.get(id) ?? id);
-
-  return {
-    subjects,
-    topics,
-    reviews,
-    schedule: {
-      ...scheduleSeed,
-      semanal: Object.fromEntries(
-        Object.entries(scheduleSeed.semanal).map(([day, ids]) => [day, mapIds(ids)]),
-      ),
-      ciclos: mapIds(scheduleSeed.ciclos),
-    },
-    goals: goalsSeed.map((g) => ({ ...g, id: crypto.randomUUID() })),
-    exams: examsSeed.map((e) => ({ ...e, id: crypto.randomUUID() })),
-  };
-}
-
 export async function loadRemoteState(supabase: SupabaseClient, userId: string): Promise<AppState> {
   const { data: subjectRows, error: subjectsError } = await supabase
     .from("materias")
@@ -68,10 +37,16 @@ export async function loadRemoteState(supabase: SupabaseClient, userId: string):
 
   if (subjectsError) throw subjectsError;
 
+  // New user — start with a clean slate; default goals sync on first state change
   if (!subjectRows || subjectRows.length === 0) {
-    const initial = createInitialRemoteState();
-    await saveRemoteState(supabase, userId, initial);
-    return initial;
+    return {
+      subjects: [],
+      topics: [],
+      reviews: [],
+      schedule: defaultSchedule,
+      goals: defaultGoals(),
+      exams: [],
+    };
   }
 
   const [
@@ -139,8 +114,8 @@ export async function loadRemoteState(supabase: SupabaseClient, userId: string):
     subjects,
     topics,
     reviews,
-    schedule: validateSchedule(scheduleConfig, scheduleSeed),
-    goals: goals.length > 0 ? goals : goalsSeed.map((g) => ({ ...g, id: crypto.randomUUID() })),
+    schedule: validateSchedule(scheduleConfig, defaultSchedule),
+    goals: goals.length > 0 ? goals : defaultGoals(),
     exams,
   };
 }

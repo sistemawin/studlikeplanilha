@@ -18,7 +18,7 @@ import type { Session } from "@supabase/supabase-js";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
 import { loadRemoteState, saveRemoteState, serializeAppState } from "@/lib/sync";
 import { addDays, formatTimer, isoDate, pct } from "@/lib/utils";
-import { goalsSeed, scheduleSeed, subjectsSeed, topicsSeed } from "@/lib/seed";
+import { defaultGoals, defaultSchedule } from "@/lib/seed";
 import type {
   AppState,
   AuthMode,
@@ -51,17 +51,17 @@ export default function Home() {
   const todayIso = isoDate(new Date());
 
   // ── App state ─────────────────────────────────────────────────────────────
-  const [subjects, setSubjects] = useState<Subject[]>(subjectsSeed);
-  const [topics, setTopics] = useState<Topic[]>(topicsSeed);
+  const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [topics, setTopics] = useState<Topic[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
-  const [schedule, setSchedule] = useState(scheduleSeed);
-  const [goals, setGoals] = useState<Goal[]>(goalsSeed);
+  const [schedule, setSchedule] = useState(defaultSchedule);
+  const [goals, setGoals] = useState<Goal[]>(() => defaultGoals());
   const [exams, setExams] = useState<MockExam[]>([]);
 
   // ── UI state ──────────────────────────────────────────────────────────────
   const [newTopicText, setNewTopicText] = useState("");
-  const [selectedSubject, setSelectedSubject] = useState(subjectsSeed[0].id);
-  const [selectedManualTopic, setSelectedManualTopic] = useState(topicsSeed[0].id);
+  const [selectedSubject, setSelectedSubject] = useState("");
+  const [selectedManualTopic, setSelectedManualTopic] = useState("");
   const [manualDate, setManualDate] = useState(() => addDays(new Date(), 5));
   const [examDraft, setExamDraft] = useState({ nome: "", acertos: 0, total: 0 });
   const [activeSection, setActiveSection] = useState<NavTarget>("dashboard");
@@ -228,8 +228,8 @@ export default function Home() {
   const generalProgress = pct(completedTopics, topics.length);
   const pendingToday = reviews.filter((r) => !r.concluida && r.dataAgendada <= todayIso);
   const overdueCount = pendingToday.filter((r) => r.dataAgendada < todayIso).length;
-  const questionGoal = goals.find((g) => g.tipo === "questões") ?? goalsSeed[0];
-  const hourGoal = goals.find((g) => g.tipo === "horas") ?? goalsSeed[1];
+  const questionGoal = goals.find((g) => g.tipo === "questões") ?? { id: "", tipo: "questões" as const, valorObjetivo: 50, valorAtual: 0 };
+  const hourGoal = goals.find((g) => g.tipo === "horas") ?? { id: "", tipo: "horas" as const, valorObjetivo: 4, valorAtual: 0 };
   const avgExam = Math.round(
     exams.reduce((sum, e) => sum + (e.acertos / e.total) * 100, 0) / exams.length,
   );
