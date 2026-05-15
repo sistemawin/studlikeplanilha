@@ -67,8 +67,8 @@ export function SubjectModal({ subject, onSave, onClose }: Props) {
           </button>
         </div>
 
-        {/* Scrollable content */}
-        <div className="flex-1 overflow-y-auto overscroll-contain px-5 py-5 [-webkit-overflow-scrolling:touch] sm:px-6">
+        {/* Scrollable content — min-h-0 lets flex-1 shrink so the footer stays visible */}
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-5 [-webkit-overflow-scrolling:touch] sm:px-6">
           <div className="space-y-5">
             {/* Nome */}
             <div>
