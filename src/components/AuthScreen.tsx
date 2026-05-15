@@ -32,6 +32,17 @@ export function AuthScreen({
   onSubmit,
 }: Props) {
   const isSignup = mode === "signup";
+  const isForgot = mode === "forgot";
+  const isReset = mode === "reset";
+  const title = isSignup ? "Criar conta" : isForgot ? "Recuperar senha" : isReset ? "Nova senha" : "Entrar na conta";
+  const description = isSignup
+    ? "Cadastre seu e-mail e senha para começar."
+    : isForgot
+      ? "Informe seu e-mail para receber o link de recuperação."
+      : isReset
+        ? "Digite uma nova senha para sua conta."
+        : "Use seu e-mail e senha cadastrados.";
+  const submitLabel = isSignup ? "Criar conta" : isForgot ? "Enviar link de recuperação" : isReset ? "Salvar nova senha" : "Entrar";
 
   return (
     <main className="flex min-h-dvh w-full max-w-full items-center justify-center overflow-x-hidden bg-[#f7f7f8] px-4 py-6 text-slate-950 sm:py-10">
@@ -68,12 +79,10 @@ export function AuthScreen({
           <div className="mx-auto max-w-md">
             <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-blue-600">Acesso</p>
             <h2 className="mt-2 text-2xl font-semibold text-slate-950 sm:text-3xl">
-              {isSignup ? "Criar conta" : "Entrar na conta"}
+              {title}
             </h2>
             <p className="mt-2 text-sm leading-6 text-slate-500">
-              {isSignup
-                ? "Cadastre seu e-mail e senha para começar."
-                : "Use seu e-mail e senha cadastrados."}
+              {description}
             </p>
 
             <div className="mt-8 space-y-4">
@@ -93,36 +102,51 @@ export function AuthScreen({
                 </label>
               )}
 
-              <label className="block">
-                <span className="text-sm font-semibold text-slate-700">E-mail</span>
-                <div className="mt-2 flex h-12 items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100">
-                  <Mail className="h-4 w-4 text-slate-400" aria-hidden="true" />
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => onEmailChange(e.target.value)}
-                    placeholder="voce@email.com"
-                    autoComplete="email"
-                    className="h-full flex-1 bg-transparent text-sm outline-none"
-                  />
-                </div>
-              </label>
+              {!isReset && (
+                <label className="block">
+                  <span className="text-sm font-semibold text-slate-700">E-mail</span>
+                  <div className="mt-2 flex h-12 items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100">
+                    <Mail className="h-4 w-4 text-slate-400" aria-hidden="true" />
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => onEmailChange(e.target.value)}
+                      placeholder="voce@email.com"
+                      autoComplete="email"
+                      onKeyDown={(e) => { if (e.key === "Enter" && isForgot) onSubmit(); }}
+                      className="h-full flex-1 bg-transparent text-sm outline-none"
+                    />
+                  </div>
+                </label>
+              )}
 
-              <label className="block">
-                <span className="text-sm font-semibold text-slate-700">Senha</span>
-                <div className="mt-2 flex h-12 items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100">
-                  <LockKeyhole className="h-4 w-4 text-slate-400" aria-hidden="true" />
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => onPasswordChange(e.target.value)}
-                    placeholder="mínimo 6 caracteres"
-                    autoComplete={isSignup ? "new-password" : "current-password"}
-                    onKeyDown={(e) => { if (e.key === "Enter") onSubmit(); }}
-                    className="h-full flex-1 bg-transparent text-sm outline-none"
-                  />
-                </div>
-              </label>
+              {!isForgot && (
+                <label className="block">
+                  <span className="text-sm font-semibold text-slate-700">{isReset ? "Nova senha" : "Senha"}</span>
+                  <div className="mt-2 flex h-12 items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100">
+                    <LockKeyhole className="h-4 w-4 text-slate-400" aria-hidden="true" />
+                    <input
+                      type="password"
+                      value={password}
+                      onChange={(e) => onPasswordChange(e.target.value)}
+                      placeholder="mínimo 6 caracteres"
+                      autoComplete={isSignup || isReset ? "new-password" : "current-password"}
+                      onKeyDown={(e) => { if (e.key === "Enter") onSubmit(); }}
+                      className="h-full flex-1 bg-transparent text-sm outline-none"
+                    />
+                  </div>
+                </label>
+              )}
+
+              {mode === "login" && (
+                <button
+                  type="button"
+                  onClick={() => onModeChange("forgot")}
+                  className="text-sm font-semibold text-blue-700 hover:text-blue-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
+                >
+                  Esqueci minha senha
+                </button>
+              )}
 
               {error && (
                 <p role="alert" className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700">
@@ -141,15 +165,15 @@ export function AuthScreen({
                 className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-slate-950 text-sm font-bold text-white shadow-lg shadow-slate-900/15 transition hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500 disabled:cursor-not-allowed disabled:opacity-70"
               >
                 {loading && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
-                {isSignup ? "Criar conta" : "Entrar"}
+                {submitLabel}
               </button>
             </div>
 
             <button
-              onClick={() => onModeChange(isSignup ? "login" : "signup")}
+              onClick={() => onModeChange(isSignup || isForgot || isReset ? "login" : "signup")}
               className="mt-6 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
             >
-              {isSignup ? "Já tenho conta" : "Criar uma nova conta"}
+              {isSignup || isForgot || isReset ? "Voltar para login" : "Criar uma nova conta"}
             </button>
           </div>
         </div>

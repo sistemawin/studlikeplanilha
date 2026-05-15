@@ -171,15 +171,31 @@ export default function Home() {
   useEffect(() => {
     try {
       const supabase = getSupabaseBrowserClient();
+      const urlMarksPasswordRecovery =
+        window.location.hash.includes("type=recovery") || window.location.search.includes("type=recovery");
+
       supabase.auth
         .getSession()
-        .then(({ data }) => setSession(data.session))
+        .then(({ data }) => {
+          if (urlMarksPasswordRecovery && data.session) {
+            setAuthMode("reset");
+            setAuthPassword("");
+            setAuthMessage("Digite sua nova senha para concluir a recuperação.");
+          }
+          setSession(data.session);
+        })
         .catch((err: unknown) => {
           setAuthError(err instanceof Error ? err.message : "Não foi possível carregar a sessão.");
         })
         .finally(() => setAuthReady(true));
 
-      const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, next) => {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((event, next) => {
+        if (event === "PASSWORD_RECOVERY") {
+          setAuthMode("reset");
+          setAuthPassword("");
+          setAuthError("");
+          setAuthMessage("Digite sua nova senha para concluir a recuperação.");
+        }
         setSession(next);
         setAuthReady(true);
       });
@@ -783,17 +799,68 @@ export default function Home() {
     setNotice(`Sessão em ${formatTimer(timerSeconds)}.`);
   }
 
+  function changeAuthMode(next: AuthMode) {
+    setAuthMode(next);
+    setAuthError("");
+    setAuthMessage("");
+    if (authMode === "reset" && next !== "reset") {
+      void getSupabaseBrowserClient().auth.signOut();
+      setSession(null);
+      setAuthPassword("");
+    }
+  }
+
   async function submitAuth() {
     setAuthError("");
     setAuthMessage("");
-    if (!authEmail.trim() || !authPassword) { setAuthError("Preencha e-mail e senha."); return; }
+    const email = authEmail.trim();
+    if (authMode === "forgot") {
+      if (!email) { setAuthError("Informe seu e-mail para recuperar a senha."); return; }
+      setAuthLoading(true);
+      try {
+        const supabase = getSupabaseBrowserClient();
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: window.location.origin,
+        });
+        if (error) throw error;
+        setAuthMessage("Enviamos um link de recuperação para seu e-mail.");
+      } catch (err) {
+        setAuthError(err instanceof Error ? err.message : "Não foi possível enviar o e-mail de recuperação.");
+      } finally {
+        setAuthLoading(false);
+      }
+      return;
+    }
+
+    if (authMode === "reset") {
+      if (!authPassword) { setAuthError("Digite sua nova senha."); return; }
+      if (authPassword.length < 6) { setAuthError("A senha precisa ter pelo menos 6 caracteres."); return; }
+      setAuthLoading(true);
+      try {
+        const supabase = getSupabaseBrowserClient();
+        const { error } = await supabase.auth.updateUser({ password: authPassword });
+        if (error) throw error;
+        await supabase.auth.signOut();
+        setSession(null);
+        setAuthPassword("");
+        setAuthMode("login");
+        setAuthMessage("Senha atualizada. Entre novamente com a nova senha.");
+      } catch (err) {
+        setAuthError(err instanceof Error ? err.message : "Não foi possível atualizar a senha.");
+      } finally {
+        setAuthLoading(false);
+      }
+      return;
+    }
+
+    if (!email || !authPassword) { setAuthError("Preencha e-mail e senha."); return; }
     if (authPassword.length < 6) { setAuthError("A senha precisa ter pelo menos 6 caracteres."); return; }
     setAuthLoading(true);
     try {
       const supabase = getSupabaseBrowserClient();
       if (authMode === "signup") {
         const { data, error } = await supabase.auth.signUp({
-          email: authEmail.trim(),
+          email,
           password: authPassword,
           options: { data: { name: authName.trim() } },
         });
@@ -803,7 +870,7 @@ export default function Home() {
         setNotice("Conta criada com sucesso.");
       } else {
         const { data, error } = await supabase.auth.signInWithPassword({
-          email: authEmail.trim(),
+          email,
           password: authPassword,
         });
         if (error) throw error;
@@ -857,6 +924,25 @@ export default function Home() {
     );
   }
 
+  if (authMode === "reset") {
+    return (
+      <AuthScreen
+        mode={authMode}
+        email={authEmail}
+        password={authPassword}
+        name={authName}
+        loading={authLoading}
+        error={authError}
+        message={authMessage}
+        onModeChange={changeAuthMode}
+        onEmailChange={setAuthEmail}
+        onPasswordChange={setAuthPassword}
+        onNameChange={setAuthName}
+        onSubmit={submitAuth}
+      />
+    );
+  }
+
   if (!session) {
     return (
       <AuthScreen
@@ -867,7 +953,7 @@ export default function Home() {
         loading={authLoading}
         error={authError}
         message={authMessage}
-        onModeChange={(next) => { setAuthMode(next); setAuthError(""); setAuthMessage(""); }}
+        onModeChange={changeAuthMode}
         onEmailChange={setAuthEmail}
         onPasswordChange={setAuthPassword}
         onNameChange={setAuthName}

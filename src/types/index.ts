@@ -8,7 +8,7 @@ export type Difficulty = "Fácil" | "Médio" | "Difícil";
 export type ReviewType = "1" | "7" | "21" | "30" | "manual" | "dificuldade";
 export type PlanningMode = "semanal" | "ciclos";
 export type NavTarget = "dashboard" | "edital" | "revisoes" | "cronograma" | "simulados";
-export type AuthMode = "login" | "signup";
+export type AuthMode = "login" | "signup" | "forgot" | "reset";
 
 export type Subject = {
   id: string;
