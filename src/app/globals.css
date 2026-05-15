@@ -53,6 +53,17 @@ body {
   overscroll-behavior-y: auto;
 }
 
+.mobile-bottom-nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 30;
+  width: 100%;
+  min-height: calc(4.75rem + env(safe-area-inset-bottom));
+  transform: translate3d(0, 0, 0);
+}
+
 ::selection {
   background: #1877f2;
   color: #ffffff;
