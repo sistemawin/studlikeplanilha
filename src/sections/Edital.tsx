@@ -98,7 +98,7 @@ function SubjectCard({
                 onEdit();
               }}
               aria-label={`Editar ${subject.nome}`}
-              className="flex h-7 w-7 items-center justify-center rounded-lg text-white/30 hover:bg-white/10 hover:text-white/70 transition"
+              className="flex h-10 w-10 items-center justify-center rounded-xl text-white/45 transition hover:bg-white/10 hover:text-white/80"
             >
               <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
             </button>
@@ -108,7 +108,7 @@ function SubjectCard({
                 onDelete();
               }}
               aria-label={`Excluir ${subject.nome}`}
-              className="flex h-7 w-7 items-center justify-center rounded-lg text-white/30 hover:bg-red-500/20 hover:text-red-400 transition"
+              className="flex h-10 w-10 items-center justify-center rounded-xl text-white/45 transition hover:bg-red-500/20 hover:text-red-400"
             >
               <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
             </button>
@@ -374,7 +374,7 @@ export function Edital({
                     <button
                       onClick={() => onDeleteTopic(topic.id)}
                       aria-label={`Excluir tópico ${topic.titulo}`}
-                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-white/20 opacity-0 transition group-hover:opacity-100 hover:bg-red-500/20 hover:text-red-400"
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white/35 transition hover:bg-red-500/20 hover:text-red-400"
                     >
                       <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
                     </button>

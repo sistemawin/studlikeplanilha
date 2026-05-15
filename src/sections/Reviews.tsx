@@ -36,10 +36,10 @@ export function Reviews({ reviews, topics, subjects, todayIso, activeSection, on
         isVisible ? "block" : "hidden"
       } scroll-mt-24 rounded-2xl border border-slate-800 bg-slate-950 p-4 shadow-lg sm:p-5 xl:block`}
     >
-      <div className="mb-4 flex items-center justify-between gap-3">
+      <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
         <h2 className="text-lg font-bold text-white">Para revisar hoje</h2>
         {pendingToday.length > 0 && (
-          <span className="rounded-xl bg-amber-500/15 px-3 py-1 text-sm font-bold text-amber-300">
+          <span className="w-fit rounded-xl bg-amber-500/15 px-3 py-1 text-sm font-bold text-amber-300">
             {pendingToday.length} pendente{pendingToday.length !== 1 ? "s" : ""}
           </span>
         )}
@@ -72,7 +72,7 @@ export function Reviews({ reviews, topics, subjects, todayIso, activeSection, on
                       : "linear-gradient(135deg, #1a1200 0%, #271b00 100%)",
                   }}
                 >
-                  <div className="flex items-start justify-between gap-3">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div className="min-w-0">
                       <p className="font-bold leading-snug text-white">{topic.titulo}</p>
                       <p className="mt-0.5 text-sm text-white/45">
@@ -82,7 +82,7 @@ export function Reviews({ reviews, topics, subjects, todayIso, activeSection, on
                       </p>
                     </div>
                     <span
-                      className={`shrink-0 rounded-xl px-2.5 py-1.5 text-xs font-bold ${
+                      className={`w-fit shrink-0 rounded-xl px-2.5 py-1.5 text-xs font-bold ${
                         late
                           ? "bg-red-500/20 text-red-300"
                           : "bg-amber-500/20 text-amber-300"

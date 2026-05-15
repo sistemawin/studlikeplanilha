@@ -55,7 +55,7 @@ function GoalCard({
         <button
           onClick={() => { setDraftValue(String(goal.valorObjetivo)); setEditing(true); }}
           aria-label={`Editar meta de ${label}`}
-          className="flex h-6 w-6 items-center justify-center rounded-md text-slate-400 hover:bg-white/50 hover:text-slate-700"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-slate-500 hover:bg-white/60 hover:text-slate-800"
         >
           <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
         </button>
@@ -427,7 +427,7 @@ export function Exams({
                       <button
                         onClick={() => onDeleteQuestionLog(log.id)}
                         aria-label="Excluir registro de questões"
-                        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-slate-300 hover:bg-red-50 hover:text-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-red-500"
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-slate-400 hover:bg-red-50 hover:text-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-red-500"
                       >
                         <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
                       </button>
@@ -508,7 +508,7 @@ export function Exams({
                   <button
                     onClick={() => onDeleteExam(exam.id)}
                     aria-label={`Excluir simulado ${exam.nome}`}
-                    className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-300 hover:bg-red-50 hover:text-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-red-500"
+                    className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-400 hover:bg-red-50 hover:text-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-red-500"
                   >
                     <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
                   </button>

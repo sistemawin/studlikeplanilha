@@ -73,7 +73,7 @@ export function Schedule({
       </div>
 
       {/* Hours input */}
-      <div className="mt-4 flex items-center gap-3">
+      <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
         <label className="text-sm font-medium text-white/60" htmlFor="horas-dia">
           Meta de horas por dia
         </label>
@@ -168,7 +168,7 @@ export function Schedule({
                       <button
                         onClick={() => removeFromDay(day, id)}
                         aria-label={`Remover ${subject?.nome ?? id} de ${day}`}
-                        className="ml-0.5 rounded-full text-white/50 hover:text-white"
+                        className="ml-0.5 flex h-7 w-7 items-center justify-center rounded-full text-white/60 hover:bg-white/10 hover:text-white"
                       >
                         <X className="h-3 w-3" aria-hidden="true" />
                       </button>
@@ -181,7 +181,7 @@ export function Schedule({
                     <button
                       onClick={() => setPickerDay(pickerDay === day ? null : day)}
                       aria-label={`Adicionar matéria em ${day}`}
-                      className="flex h-6 w-6 items-center justify-center rounded-full border border-dashed border-white/20 text-white/30 hover:border-white/50 hover:text-white/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-400"
+                      className="flex h-10 w-10 items-center justify-center rounded-full border border-dashed border-white/25 text-white/45 hover:border-white/60 hover:text-white/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-400"
                     >
                       <Plus className="h-3 w-3" aria-hidden="true" />
                     </button>
