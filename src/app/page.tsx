@@ -27,8 +27,8 @@ import {
   UserPlus,
   X,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
-import type { Session } from "@supabase/supabase-js";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { Session, SupabaseClient } from "@supabase/supabase-js";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
 
 type TopicStatus =
@@ -104,8 +104,60 @@ type ChartSlice = {
   color: string;
 };
 
+type AppState = {
+  subjects: Subject[];
+  topics: Topic[];
+  reviews: Review[];
+  schedule: ScheduleConfig;
+  goals: Goal[];
+  exams: MockExam[];
+};
+
+type SubjectRow = {
+  id: string;
+  nome: string;
+  peso: number;
+  cor: string;
+};
+
+type TopicRow = {
+  id: string;
+  materia_id: string;
+  titulo: string;
+  status: TopicStatus;
+  dificuldade: Difficulty;
+  estudado_em: string | null;
+};
+
+type ReviewRow = {
+  id: string;
+  topico_id: string;
+  data_agendada: string;
+  concluida: boolean;
+  tipo: ReviewType;
+};
+
+type ScheduleRow = {
+  id: string;
+  configuracao: ScheduleConfig;
+};
+
+type GoalRow = {
+  id: string;
+  tipo: "horas" | "questões";
+  valor_objetivo: number | string;
+  valor_atual: number | string;
+};
+
+type ExamRow = {
+  id: string;
+  nome: string;
+  acertos: number;
+  total_questoes: number;
+  data_realizacao: string;
+};
+
 const today = new Date("2026-05-13T12:00:00");
-const storageKey = "planilhagpt-state-v1";
 
 const subjectsSeed: Subject[] = [
   { id: "const", nome: "Direito Constitucional", peso: 5, cor: "bg-emerald-500" },
@@ -194,6 +246,305 @@ const examsSeed: MockExam[] = [
   { id: "s1", nome: "Simulado Cebraspe 01", acertos: 78, total: 100, data: "2026-05-10" },
   { id: "s2", nome: "Bloco Constitucional", acertos: 34, total: 50, data: "2026-05-12" },
 ];
+
+function serializeAppState(state: AppState) {
+  return JSON.stringify(state);
+}
+
+function createInitialRemoteState(): AppState {
+  const subjectIdBySeedId = new Map(subjectsSeed.map((subject) => [subject.id, crypto.randomUUID()]));
+  const topicIdBySeedId = new Map(topicsSeed.map((topic) => [topic.id, crypto.randomUUID()]));
+
+  const subjects = subjectsSeed.map((subject) => ({
+    ...subject,
+    id: subjectIdBySeedId.get(subject.id)!,
+  }));
+
+  const topics = topicsSeed.map((topic) => ({
+    ...topic,
+    id: topicIdBySeedId.get(topic.id)!,
+    materiaId: subjectIdBySeedId.get(topic.materiaId)!,
+  }));
+
+  const reviews = reviewsSeed
+    .map((review) => ({
+      ...review,
+      id: crypto.randomUUID(),
+      topicoId: topicIdBySeedId.get(review.topicoId) ?? "",
+    }))
+    .filter((review) => review.topicoId);
+
+  const mapScheduleSubjects = (ids: string[]) =>
+    ids.map((id) => subjectIdBySeedId.get(id) ?? id);
+
+  return {
+    subjects,
+    topics,
+    reviews,
+    schedule: {
+      ...scheduleSeed,
+      semanal: Object.fromEntries(
+        Object.entries(scheduleSeed.semanal).map(([day, ids]) => [day, mapScheduleSubjects(ids)]),
+      ),
+      ciclos: mapScheduleSubjects(scheduleSeed.ciclos),
+    },
+    goals: goalsSeed.map((goal) => ({ ...goal, id: crypto.randomUUID() })),
+    exams: examsSeed.map((exam) => ({ ...exam, id: crypto.randomUUID() })),
+  };
+}
+
+function validateSchedule(value: unknown, fallback: ScheduleConfig): ScheduleConfig {
+  if (!value || typeof value !== "object") return fallback;
+  const candidate = value as Partial<ScheduleConfig>;
+  if (candidate.modo !== "semanal" && candidate.modo !== "ciclos") return fallback;
+  return {
+    modo: candidate.modo,
+    horasDia: Number(candidate.horasDia) || fallback.horasDia,
+    semanal: candidate.semanal ?? fallback.semanal,
+    ciclos: candidate.ciclos ?? fallback.ciclos,
+  };
+}
+
+async function loadRemoteState(supabase: SupabaseClient, userId: string): Promise<AppState> {
+  const { data: subjectRows, error: subjectsError } = await supabase
+    .from("materias")
+    .select("id,nome,peso,cor")
+    .eq("user_id", userId)
+    .order("created_at");
+
+  if (subjectsError) throw subjectsError;
+
+  if (!subjectRows || subjectRows.length === 0) {
+    const initialState = createInitialRemoteState();
+    await saveRemoteState(supabase, userId, initialState);
+    return initialState;
+  }
+
+  const [
+    { data: topicRows, error: topicsError },
+    { data: reviewRows, error: reviewsError },
+    { data: scheduleRows, error: scheduleError },
+    { data: goalRows, error: goalsError },
+    { data: examRows, error: examsError },
+  ] = await Promise.all([
+    supabase
+      .from("topicos")
+      .select("id,materia_id,titulo,status,dificuldade,estudado_em")
+      .order("created_at"),
+    supabase
+      .from("revisoes")
+      .select("id,topico_id,data_agendada,concluida,tipo")
+      .order("data_agendada"),
+    supabase
+      .from("cronograma")
+      .select("id,configuracao")
+      .eq("user_id", userId)
+      .order("created_at")
+      .limit(1),
+    supabase
+      .from("metas")
+      .select("id,tipo,valor_objetivo,valor_atual")
+      .eq("user_id", userId)
+      .order("created_at"),
+    supabase
+      .from("simulados")
+      .select("id,nome,acertos,total_questoes,data_realizacao")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false }),
+  ]);
+
+  if (topicsError) throw topicsError;
+  if (reviewsError) throw reviewsError;
+  if (scheduleError) throw scheduleError;
+  if (goalsError) throw goalsError;
+  if (examsError) throw examsError;
+
+  const subjects = (subjectRows as SubjectRow[]).map((row) => ({
+    id: row.id,
+    nome: row.nome,
+    peso: row.peso,
+    cor: row.cor,
+  }));
+
+  const topics = ((topicRows ?? []) as TopicRow[]).map((row) => ({
+    id: row.id,
+    materiaId: row.materia_id,
+    titulo: row.titulo,
+    status: row.status,
+    dificuldade: row.dificuldade,
+    estudadoEm: row.estudado_em ?? undefined,
+  }));
+
+  const reviews = ((reviewRows ?? []) as ReviewRow[]).map((row) => ({
+    id: row.id,
+    topicoId: row.topico_id,
+    dataAgendada: row.data_agendada,
+    concluida: row.concluida,
+    tipo: row.tipo,
+  }));
+
+  const scheduleConfig = ((scheduleRows ?? []) as ScheduleRow[])[0]?.configuracao;
+
+  const goals = ((goalRows ?? []) as GoalRow[]).map((row) => ({
+    id: row.id,
+    tipo: row.tipo,
+    valorObjetivo: Number(row.valor_objetivo),
+    valorAtual: Number(row.valor_atual),
+  }));
+
+  const exams = ((examRows ?? []) as ExamRow[]).map((row) => ({
+    id: row.id,
+    nome: row.nome,
+    acertos: row.acertos,
+    total: row.total_questoes,
+    data: row.data_realizacao,
+  }));
+
+  return {
+    subjects,
+    topics,
+    reviews,
+    schedule: validateSchedule(scheduleConfig, scheduleSeed),
+    goals: goals.length > 0 ? goals : goalsSeed.map((goal) => ({ ...goal, id: crypto.randomUUID() })),
+    exams,
+  };
+}
+
+async function saveRemoteState(
+  supabase: SupabaseClient,
+  userId: string,
+  state: AppState,
+) {
+  const { data: existingSubjects, error: existingSubjectsError } = await supabase
+    .from("materias")
+    .select("id")
+    .eq("user_id", userId);
+
+  if (existingSubjectsError) throw existingSubjectsError;
+
+  const existingSubjectIds = (existingSubjects ?? []).map((row) => row.id as string);
+
+  if (existingSubjectIds.length > 0) {
+    const { data: existingTopics, error: existingTopicsError } = await supabase
+      .from("topicos")
+      .select("id,materia_id")
+      .in("materia_id", existingSubjectIds);
+
+    if (existingTopicsError) throw existingTopicsError;
+
+    const existingTopicIds = (existingTopics ?? []).map((row) => row.id as string);
+
+    if (existingTopicIds.length > 0) {
+      const { error } = await supabase.from("revisoes").delete().in("topico_id", existingTopicIds);
+      if (error) throw error;
+
+      const { error: topicsDeleteError } = await supabase
+        .from("topicos")
+        .delete()
+        .in("id", existingTopicIds);
+      if (topicsDeleteError) throw topicsDeleteError;
+    }
+
+    const { error: subjectsDeleteError } = await supabase
+      .from("materias")
+      .delete()
+      .in("id", existingSubjectIds);
+    if (subjectsDeleteError) throw subjectsDeleteError;
+  }
+
+  const [{ error: scheduleDeleteError }, { error: goalsDeleteError }, { error: examsDeleteError }] =
+    await Promise.all([
+      supabase.from("cronograma").delete().eq("user_id", userId),
+      supabase.from("metas").delete().eq("user_id", userId),
+      supabase.from("simulados").delete().eq("user_id", userId),
+    ]);
+
+  if (scheduleDeleteError) throw scheduleDeleteError;
+  if (goalsDeleteError) throw goalsDeleteError;
+  if (examsDeleteError) throw examsDeleteError;
+
+  if (state.subjects.length > 0) {
+    const { error } = await supabase.from("materias").insert(
+      state.subjects.map((subject) => ({
+        id: subject.id,
+        user_id: userId,
+        nome: subject.nome,
+        peso: subject.peso,
+        cor: subject.cor,
+      })),
+    );
+    if (error) throw error;
+  }
+
+  const validSubjectIds = new Set(state.subjects.map((subject) => subject.id));
+  const validTopics = state.topics.filter((topic) => validSubjectIds.has(topic.materiaId));
+
+  if (validTopics.length > 0) {
+    const { error } = await supabase.from("topicos").insert(
+      validTopics.map((topic) => ({
+        id: topic.id,
+        materia_id: topic.materiaId,
+        titulo: topic.titulo,
+        status: topic.status,
+        dificuldade: topic.dificuldade,
+        estudado_em: topic.estudadoEm ?? null,
+      })),
+    );
+    if (error) throw error;
+  }
+
+  const validTopicIds = new Set(validTopics.map((topic) => topic.id));
+  const validReviews = state.reviews.filter((review) => validTopicIds.has(review.topicoId));
+
+  if (validReviews.length > 0) {
+    const { error } = await supabase.from("revisoes").insert(
+      validReviews.map((review) => ({
+        id: review.id,
+        topico_id: review.topicoId,
+        data_agendada: review.dataAgendada,
+        concluida: review.concluida,
+        tipo: review.tipo,
+      })),
+    );
+    if (error) throw error;
+  }
+
+  const [{ error: scheduleError }, { error: goalsError }, { error: examsError }] =
+    await Promise.all([
+      supabase.from("cronograma").insert({
+        user_id: userId,
+        configuracao: state.schedule,
+      }),
+      state.goals.length > 0
+        ? supabase.from("metas").insert(
+            state.goals.map((goal) => ({
+              id: goal.id,
+              user_id: userId,
+              tipo: goal.tipo,
+              valor_objetivo: goal.valorObjetivo,
+              valor_atual: goal.valorAtual,
+              data_referencia: today.toISOString().slice(0, 10),
+            })),
+          )
+        : Promise.resolve({ error: null }),
+      state.exams.length > 0
+        ? supabase.from("simulados").insert(
+            state.exams.map((exam) => ({
+              id: exam.id,
+              user_id: userId,
+              nome: exam.nome,
+              acertos: exam.acertos,
+              total_questoes: exam.total,
+              data_realizacao: exam.data,
+            })),
+          )
+        : Promise.resolve({ error: null }),
+    ]);
+
+  if (scheduleError) throw scheduleError;
+  if (goalsError) throw goalsError;
+  if (examsError) throw examsError;
+}
 
 function isoDate(date: Date) {
   return date.toISOString().slice(0, 10);
@@ -593,27 +944,14 @@ export default function Home() {
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState("");
   const [authMessage, setAuthMessage] = useState("");
-
-  useEffect(() => {
-    const saved = window.localStorage.getItem(storageKey);
-    if (!saved) return;
-    queueMicrotask(() => {
-      const state = JSON.parse(saved);
-      setSubjects(state.subjects ?? subjectsSeed);
-      setTopics(state.topics ?? topicsSeed);
-      setReviews(state.reviews ?? reviewsSeed);
-      setSchedule(state.schedule ?? scheduleSeed);
-      setGoals(state.goals ?? goalsSeed);
-      setExams(state.exams ?? examsSeed);
-    });
-  }, []);
-
-  useEffect(() => {
-    window.localStorage.setItem(
-      storageKey,
-      JSON.stringify({ subjects, topics, reviews, schedule, goals, exams }),
-    );
-  }, [subjects, topics, reviews, schedule, goals, exams]);
+  const [remoteReady, setRemoteReady] = useState(false);
+  const [remoteLoading, setRemoteLoading] = useState(false);
+  const [remoteError, setRemoteError] = useState("");
+  const lastSyncedStateRef = useRef("");
+  const latestStateRef = useRef<AppState | null>(null);
+  const latestSerializedStateRef = useRef("");
+  const pendingSyncRef = useRef(false);
+  const syncInFlightRef = useRef(false);
 
   useEffect(() => {
     if (!timerRunning) return;
@@ -650,6 +988,106 @@ export default function Home() {
       });
     }
   }, []);
+
+  useEffect(() => {
+    if (!session) {
+      setRemoteReady(false);
+      setRemoteError("");
+      lastSyncedStateRef.current = "";
+      return;
+    }
+
+    let cancelled = false;
+    const supabase = getSupabaseBrowserClient();
+
+    async function loadData() {
+      setRemoteLoading(true);
+      setRemoteReady(false);
+      setRemoteError("");
+
+      try {
+        const remoteState = await loadRemoteState(supabase, session!.user.id);
+        if (cancelled) return;
+
+        setSubjects(remoteState.subjects);
+        setTopics(remoteState.topics);
+        setReviews(remoteState.reviews);
+        setSchedule(remoteState.schedule);
+        setGoals(remoteState.goals);
+        setExams(remoteState.exams);
+        setSelectedSubject(remoteState.subjects[0]?.id ?? "");
+        setSelectedManualTopic(remoteState.topics[0]?.id ?? "");
+        lastSyncedStateRef.current = serializeAppState(remoteState);
+        setNotice("Dados carregados do Supabase.");
+        setRemoteReady(true);
+      } catch (error) {
+        if (cancelled) return;
+        const message = error instanceof Error ? error.message : "Não foi possível carregar dados.";
+        setRemoteError(message);
+        setNotice(message);
+      } finally {
+        if (!cancelled) setRemoteLoading(false);
+      }
+    }
+
+    void loadData();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [session]);
+
+  useEffect(() => {
+    if (!session || !remoteReady) return;
+
+    const state = { subjects, topics, reviews, schedule, goals, exams };
+    const serialized = serializeAppState(state);
+    latestStateRef.current = state;
+    latestSerializedStateRef.current = serialized;
+
+    if (serialized === lastSyncedStateRef.current) return;
+
+    async function runSync() {
+      if (!session || !latestStateRef.current) return;
+      if (syncInFlightRef.current) {
+        pendingSyncRef.current = true;
+        return;
+      }
+
+      const stateToSave = latestStateRef.current;
+      const serializedToSave = latestSerializedStateRef.current;
+      const supabase = getSupabaseBrowserClient();
+
+      syncInFlightRef.current = true;
+
+      try {
+        await saveRemoteState(supabase, session.user.id, stateToSave);
+        lastSyncedStateRef.current = serializedToSave;
+        setRemoteError("");
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Não foi possível salvar no Supabase.";
+        setRemoteError(message);
+        setNotice(message);
+      } finally {
+        syncInFlightRef.current = false;
+
+        if (
+          pendingSyncRef.current ||
+          latestSerializedStateRef.current !== lastSyncedStateRef.current
+        ) {
+          pendingSyncRef.current = false;
+          void runSync();
+        }
+      }
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      void runSync();
+    }, 700);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [subjects, topics, reviews, schedule, goals, exams, session, remoteReady]);
 
   const completedTopics = topics.filter((topic) => topic.status === "Revisado").length;
   const studiedTopics = topics.filter((topic) => topic.status !== "Não Estudado").length;
@@ -994,6 +1432,20 @@ export default function Home() {
         onNameChange={setAuthName}
         onSubmit={submitAuth}
       />
+    );
+  }
+
+  if (!remoteReady || remoteLoading) {
+    return (
+      <main className="flex min-h-dvh w-full max-w-full items-center justify-center overflow-x-hidden bg-[#f7f7f8] text-slate-950">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="h-7 w-7 animate-spin text-slate-950" />
+          <p className="text-sm font-semibold text-slate-600">Carregando dados do Supabase</p>
+          {remoteError ? (
+            <p className="max-w-xs text-center text-xs font-medium text-rose-600">{remoteError}</p>
+          ) : null}
+        </div>
+      </main>
     );
   }
 
