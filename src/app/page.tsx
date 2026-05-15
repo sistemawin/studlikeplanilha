@@ -161,6 +161,7 @@ export default function Home() {
   const [adminUsersSearch, setAdminUsersSearch] = useState("");
   const [adminUsersLoading, setAdminUsersLoading] = useState(false);
   const [updateAvailable, setUpdateAvailable] = useState(false);
+  const [refreshingApp, setRefreshingApp] = useState(false);
   const currentAppVersionRef = useRef("");
 
   // ── Sync status ───────────────────────────────────────────────────────────
@@ -889,13 +890,23 @@ export default function Home() {
   }
 
   async function refreshAppVersion() {
+    if (refreshingApp) return;
+    setRefreshingApp(true);
+
     try {
       if ("serviceWorker" in navigator) {
         const registrations = await navigator.serviceWorker.getRegistrations();
         await Promise.all(registrations.map((registration) => registration.update()));
       }
+
+      if ("caches" in window) {
+        const cacheNames = await window.caches.keys();
+        await Promise.all(cacheNames.map((cacheName) => window.caches.delete(cacheName)));
+      }
     } finally {
-      window.location.reload();
+      const refreshUrl = new URL(window.location.href);
+      refreshUrl.searchParams.set("refresh", String(Date.now()));
+      window.location.replace(refreshUrl.toString());
     }
   }
 
@@ -1475,6 +1486,17 @@ export default function Home() {
                 <span className="truncate">
                   {timerRunning ? `Foco ${formatTimer(timerSeconds)}` : "Iniciar foco"}
                 </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={refreshAppVersion}
+                disabled={refreshingApp}
+                aria-label="Atualizar aplicativo"
+                className="flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-600 shadow-sm shadow-slate-900/5 hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500 disabled:cursor-wait disabled:opacity-60"
+              >
+                <RefreshCw className={`h-4 w-4 ${refreshingApp ? "animate-spin" : ""}`} aria-hidden="true" />
+                <span className="truncate">Atualizar</span>
               </button>
 
               <button
