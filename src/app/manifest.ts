@@ -4,24 +4,24 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "Studlike",
     short_name: "Studlike",
-    description: "Plano de estudos para concursos — edital, revisões e simulados.",
+    description: "Plano de estudos com edital, revisões, metas e simulados.",
     start_url: "/",
+    scope: "/",
     display: "standalone",
     orientation: "portrait",
     background_color: "#f7f7f8",
-    theme_color: "#4B82F5",
+    theme_color: "#050505",
     icons: [
       {
-        src: "/icon",
-        sizes: "512x512",
-        type: "image/png",
-        purpose: "any",
-      },
-      {
-        src: "/apple-icon",
-        sizes: "180x180",
+        src: "/studlike-logo.png",
+        sizes: "1024x1024",
         type: "image/png",
         purpose: "maskable",
+      },
+      {
+        src: "/apple-touch-icon.png",
+        sizes: "1024x1024",
+        type: "image/png",
       },
     ],
   };
