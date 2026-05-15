@@ -57,11 +57,19 @@ import { FocusTimer } from "@/sections/FocusTimer";
 import { SuggestionModal } from "@/components/SuggestionModal";
 import { ArchiveEditalModal } from "@/components/ArchiveEditalModal";
 import { AdminPanel } from "@/sections/AdminPanel";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 const SYNC_DEBOUNCE_MS = 700;
 const ADMIN_USERS_PAGE_SIZE = 20;
 type AdminUserAction = "block" | "unblock" | "delete" | "promote";
 type ReadOnlyUser = { id: string; email: string };
+type ConfirmDialogState = {
+  title: string;
+  description: string;
+  details?: string;
+  confirmLabel?: string;
+  onConfirm: () => void;
+};
 
 function normalizeAdminAppState(value: unknown): AppState {
   if (!value || typeof value !== "object") {
@@ -142,6 +150,7 @@ export default function Home() {
   const [archivePassword, setArchivePassword] = useState("");
   const [archiveLoading, setArchiveLoading] = useState(false);
   const [archiveError, setArchiveError] = useState("");
+  const [confirmDialog, setConfirmDialog] = useState<ConfirmDialogState | null>(null);
 
   // ── Subject modal state ───────────────────────────────────────────────────
   const [subjectModal, setSubjectModal] = useState<{ open: boolean; subject?: Subject }>({ open: false });
@@ -642,8 +651,38 @@ export default function Home() {
     setNotice("Simulado salvo.");
   }
 
+  function closeConfirmDialog() {
+    setConfirmDialog(null);
+  }
+
+  function confirmPendingAction() {
+    const action = confirmDialog?.onConfirm;
+    setConfirmDialog(null);
+    action?.();
+  }
+
   function deleteTopic(topicId: string) {
     if (preventReadOnlyAction()) return;
+    const topic = topics.find((t) => t.id === topicId);
+    if (!topic) return;
+    const reviewCount = reviews.filter((r) => r.topicoId === topicId).length;
+    const questionLogCount = questionLogs.filter((log) => log.topicoId === topicId).length;
+    const relatedEffects = [
+      reviewCount > 0 ? `${reviewCount} revisão${reviewCount !== 1 ? "ões" : ""} vinculada${reviewCount !== 1 ? "s" : ""}` : "",
+      questionLogCount > 0 ? `${questionLogCount} registro${questionLogCount !== 1 ? "s" : ""} de questões vinculado${questionLogCount !== 1 ? "s" : ""}` : "",
+    ].filter(Boolean).join(" e ");
+    setConfirmDialog({
+      title: "Excluir tópico?",
+      description: `Você vai excluir "${topic.titulo}".`,
+      details: relatedEffects
+        ? `${relatedEffects} serão removidos. Essa ação não pode ser desfeita.`
+        : "Essa ação não pode ser desfeita.",
+      confirmLabel: "Excluir tópico",
+      onConfirm: () => confirmDeleteTopic(topicId),
+    });
+  }
+
+  function confirmDeleteTopic(topicId: string) {
     const topic = topics.find((t) => t.id === topicId);
     if (!topic) return;
     const remainingTopics = topics.filter((t) => t.id !== topicId);
@@ -656,6 +695,18 @@ export default function Home() {
 
   function deleteExam(examId: string) {
     if (preventReadOnlyAction()) return;
+    const exam = exams.find((e) => e.id === examId);
+    if (!exam) return;
+    setConfirmDialog({
+      title: "Excluir simulado?",
+      description: `Você vai excluir "${exam.nome}".`,
+      details: `${exam.acertos}/${exam.total} acertos registrados em ${exam.data}. Essa ação não pode ser desfeita.`,
+      confirmLabel: "Excluir simulado",
+      onConfirm: () => confirmDeleteExam(examId),
+    });
+  }
+
+  function confirmDeleteExam(examId: string) {
     setExams((es) => es.filter((e) => e.id !== examId));
     setNotice("Simulado removido.");
   }
@@ -748,6 +799,21 @@ export default function Home() {
   function deleteQuestionLog(logId: string) {
     if (preventReadOnlyAction()) return;
     const log = questionLogs.find((q) => q.id === logId);
+    if (!log) return;
+    const subject = subjects.find((item) => item.id === log.materiaId);
+    const topic = topics.find((item) => item.id === log.topicoId);
+    setConfirmDialog({
+      title: "Excluir registro de questões?",
+      description: `Você vai excluir ${log.quantidade} questão${log.quantidade !== 1 ? "ões" : ""} de "${topic?.titulo ?? "tópico removido"}".`,
+      details: `${subject?.nome ?? "Matéria removida"} · ${log.data}${log.acertos !== null ? ` · ${log.acertos} acerto${log.acertos !== 1 ? "s" : ""}` : ""}. Se for de hoje, a meta diária será ajustada.`,
+      confirmLabel: "Excluir registro",
+      onConfirm: () => confirmDeleteQuestionLog(logId),
+    });
+  }
+
+  function confirmDeleteQuestionLog(logId: string) {
+    const log = questionLogs.find((q) => q.id === logId);
+    if (!log) return;
     setQuestionLogs((logs) => logs.filter((q) => q.id !== logId));
     if (log?.data === todayIso) {
       setGoals((gs) =>
@@ -870,10 +936,30 @@ export default function Home() {
     };
     const destructive = action === "block" || action === "delete";
     if (destructive) {
-      const ok = window.confirm(`Deseja ${actionLabels[action]} a conta ${user.email || user.id}?`);
-      if (!ok) return;
+      setConfirmDialog({
+        title: action === "delete" ? "Excluir conta?" : "Bloquear conta?",
+        description: `Você vai ${actionLabels[action]} a conta ${user.email || user.id}.`,
+        details: action === "delete"
+          ? "Essa ação remove o acesso do usuário e não deve ser usada sem confirmação prévia."
+          : "A conta ficará sem acesso até ser desbloqueada por um admin.",
+        confirmLabel: action === "delete" ? "Excluir conta" : "Bloquear conta",
+        onConfirm: () => {
+          void confirmManageAdminUser(user, action);
+        },
+      });
+      return;
     }
 
+    await confirmManageAdminUser(user, action);
+  }
+
+  async function confirmManageAdminUser(user: AdminUser, action: AdminUserAction) {
+    const actionLabels: Record<AdminUserAction, string> = {
+      block: "bloquear",
+      unblock: "desbloquear",
+      delete: "excluir",
+      promote: "promover a admin",
+    };
     setAdminUsersLoading(true);
     setAdminError("");
     try {
@@ -968,14 +1054,30 @@ export default function Home() {
   function deleteSubject(subjectId: string) {
     if (preventReadOnlyAction()) return;
     const subject = subjects.find((s) => s.id === subjectId);
+    if (!subject) return;
+    const topicsInSubject = topics.filter((t) => t.materiaId === subjectId);
+    const reviewCount = reviews.filter((r) => topicsInSubject.some((topic) => topic.id === r.topicoId)).length;
+    const questionLogCount = questionLogs.filter((log) => log.materiaId === subjectId).length;
+
+    setConfirmDialog({
+      title: "Excluir matéria?",
+      description: `Você vai excluir "${subject.nome}".`,
+      details: [
+        `${topicsInSubject.length} tópico${topicsInSubject.length !== 1 ? "s" : ""}`,
+        `${reviewCount} revisão${reviewCount !== 1 ? "ões" : ""}`,
+        `${questionLogCount} registro${questionLogCount !== 1 ? "s" : ""} de questões`,
+        "serão removidos. Essa ação não pode ser desfeita.",
+      ].join(" "),
+      confirmLabel: "Excluir matéria",
+      onConfirm: () => confirmDeleteSubject(subjectId),
+    });
+  }
+
+  function confirmDeleteSubject(subjectId: string) {
+    const subject = subjects.find((s) => s.id === subjectId);
     const topicsInSubject = topics.filter((t) => t.materiaId === subjectId);
     const topicIds = new Set(topicsInSubject.map((t) => t.id));
     const label = subject?.nome ?? "matéria";
-    const confirmed = window.confirm(
-      `Excluir "${label}"? ${topicsInSubject.length > 0 ? `${topicsInSubject.length} tópico${topicsInSubject.length !== 1 ? "s" : ""} e suas revisões serão removidos. ` : ""}Essa ação não pode ser desfeita.`,
-    );
-    if (!confirmed) return;
-
     const remainingSubjects = subjects.filter((s) => s.id !== subjectId);
     const remainingTopics = topics.filter((t) => t.materiaId !== subjectId);
 
@@ -1379,6 +1481,16 @@ export default function Home() {
         onPasswordChange={setArchivePassword}
         onSubmit={confirmArchiveAll}
         onClose={closeArchiveModal}
+      />
+
+      <ConfirmDialog
+        open={Boolean(confirmDialog)}
+        title={confirmDialog?.title ?? ""}
+        description={confirmDialog?.description ?? ""}
+        details={confirmDialog?.details}
+        confirmLabel={confirmDialog?.confirmLabel}
+        onConfirm={confirmPendingAction}
+        onClose={closeConfirmDialog}
       />
 
       {/* Desktop sidebar */}
