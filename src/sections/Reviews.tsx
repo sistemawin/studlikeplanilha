@@ -43,10 +43,19 @@ const REVIEW_TYPE_LABEL: Record<string, string> = {
 export function Reviews({ reviews, topics, subjects, todayIso, activeSection, onComplete, onReschedule }: Props) {
   const [reschedulingId, setReschedulingId] = useState<string | null>(null);
   const [showUpcoming, setShowUpcoming] = useState(false);
+  const [subjectFilter, setSubjectFilter] = useState<string>("all");
 
   const pendingToday = reviews.filter((r) => !r.concluida && r.dataAgendada <= todayIso);
   const totalPending = reviews.filter((r) => !r.concluida).length;
   const totalCompleted = reviews.filter((r) => r.concluida).length;
+
+  const todaySubjectIds = [...new Set(
+    pendingToday.map((r) => topics[r.topicoId]?.materiaId).filter(Boolean) as string[],
+  )];
+  const todaySubjects = todaySubjectIds.map((id) => subjects[id]).filter(Boolean);
+  const filteredToday = subjectFilter === "all"
+    ? pendingToday
+    : pendingToday.filter((r) => topics[r.topicoId]?.materiaId === subjectFilter);
 
   const upcomingReviews = reviews
     .filter((r) => !r.concluida && r.dataAgendada > todayIso)
@@ -84,6 +93,39 @@ export function Reviews({ reviews, topics, subjects, todayIso, activeSection, on
         </div>
       </div>
 
+      {todaySubjects.length > 1 && (
+        <div className="mb-3 flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setSubjectFilter("all")}
+            className={`rounded-xl px-3 py-1.5 text-xs font-bold transition ${
+              subjectFilter === "all"
+                ? "bg-[#1877F2] text-white shadow-sm"
+                : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+            }`}
+          >
+            Todas ({pendingToday.length})
+          </button>
+          {todaySubjects.map((subject) => {
+            const count = pendingToday.filter((r) => topics[r.topicoId]?.materiaId === subject.id).length;
+            return (
+              <button
+                key={subject.id}
+                type="button"
+                onClick={() => setSubjectFilter(subject.id)}
+                className={`rounded-xl px-3 py-1.5 text-xs font-bold transition ${
+                  subjectFilter === subject.id
+                    ? "bg-[#1877F2] text-white shadow-sm"
+                    : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                }`}
+              >
+                {subject.nome.replace("Direito ", "")} ({count})
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       <div className="space-y-3">
         {pendingToday.length === 0 ? (
           <div className="rounded-xl bg-emerald-50 px-4 py-5 text-center ring-1 ring-emerald-100">
@@ -91,7 +133,7 @@ export function Reviews({ reviews, topics, subjects, todayIso, activeSection, on
           </div>
         ) : (
           <AnimatePresence initial={false}>
-            {pendingToday.map((review, index) => {
+            {filteredToday.map((review, index) => {
               const topic = topics[review.topicoId];
               if (!topic) return null;
               const overdueDays = daysOverdue(review.dataAgendada, todayIso);

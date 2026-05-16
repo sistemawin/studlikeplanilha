@@ -8,7 +8,7 @@ import { SessionHistoryModal } from "@/components/SessionHistoryModal";
 type Props = {
   topics: Topic[];
   subjects: Subject[];
-  reviews: { pendingCount: number; overdueCount: number };
+  reviews: { pendingCount: number; overdueCount: number; totalCompleted: number };
   questionGoal: Goal;
   avgExam: number;
   generalProgress: number;
@@ -362,6 +362,38 @@ export function Dashboard({
           onDelete={onDeleteSession}
           onClose={() => setHistoryOpen(false)}
         />
+      )}
+
+      {/* Achievements strip */}
+      {(studySessions.length > 0 || reviews.totalCompleted > 0) && (
+        <div className={`${isVisible ? "grid" : "hidden"} xl:grid grid-cols-3 gap-3`}>
+          {[
+            {
+              label: "Horas estudadas",
+              value: `${Math.round(studySessions.reduce((s, ss) => s + ss.durationSeconds, 0) / 3600 * 10) / 10}h`,
+              accent: "#1877F2",
+            },
+            {
+              label: "Tópicos estudados",
+              value: String(topics.filter((t) => t.status !== "Não Estudado").length),
+              accent: "#10b981",
+            },
+            {
+              label: "Revisões feitas",
+              value: String(reviews.totalCompleted),
+              accent: "#f59e0b",
+            },
+          ].map((item) => (
+            <div
+              key={item.label}
+              className="rounded-2xl border border-white bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.06)] ring-1 ring-slate-900/5"
+              style={{ background: `linear-gradient(135deg,#ffffff 0%,${item.accent}08 100%)` }}
+            >
+              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400">{item.label}</p>
+              <p className="mt-2 text-3xl font-black text-slate-950">{item.value}</p>
+            </div>
+          ))}
+        </div>
       )}
 
       <section className={`${isVisible ? "block" : "hidden"} rounded-2xl border border-white bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.07)] ring-1 ring-slate-900/5 sm:p-5 xl:block`}>

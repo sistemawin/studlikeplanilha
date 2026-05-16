@@ -2080,7 +2080,7 @@ export default function Home() {
                 <Dashboard
                   topics={topics}
                   subjects={subjects}
-                  reviews={{ pendingCount: pendingToday.length, overdueCount }}
+                  reviews={{ pendingCount: pendingToday.length, overdueCount, totalCompleted: reviews.filter((r) => r.concluida).length }}
                   questionGoal={questionGoal}
                   avgExam={avgExam}
                   generalProgress={generalProgress}
