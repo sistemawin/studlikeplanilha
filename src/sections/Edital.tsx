@@ -38,6 +38,7 @@ type Props = {
   onDifficultyChange: (topicId: string, difficulty: Difficulty) => void;
   onAddTopics: () => void;
   onDeleteTopic: (topicId: string) => void;
+  onEditTopic: (topicId: string, newTitle: string) => void;
   onAddSubject: () => void;
   onEditSubject: (subject: Subject) => void;
   onDeleteSubject: (subjectId: string) => void;
@@ -229,6 +230,7 @@ export function Edital({
   onDifficultyChange,
   onAddTopics,
   onDeleteTopic,
+  onEditTopic,
   onAddSubject,
   onEditSubject,
   onDeleteSubject,
@@ -238,6 +240,18 @@ export function Edital({
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("todos");
   const [difficultyFilter, setDifficultyFilter] = useState<DifficultyFilter>("todas");
+  const [editingTopicId, setEditingTopicId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState("");
+
+  function startEditTopic(topic: Topic) {
+    setEditingTopicId(topic.id);
+    setEditingTitle(topic.titulo);
+  }
+
+  function saveEditTopic(topicId: string) {
+    if (editingTitle.trim()) onEditTopic(topicId, editingTitle.trim());
+    setEditingTopicId(null);
+  }
   const isVisible = activeSection === "edital";
   const normalizedSearch = normalizeSearch(search);
 
@@ -362,7 +376,22 @@ export function Edital({
                     className="group flex items-center gap-3 rounded-xl border border-slate-100 bg-white px-4 py-3 shadow-sm shadow-slate-900/5 transition hover:-translate-y-0.5 hover:shadow-md"
                   >
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold leading-snug text-slate-950">{topic.titulo}</p>
+                      {editingTopicId === topic.id ? (
+                        <input
+                          autoFocus
+                          value={editingTitle}
+                          onChange={(e) => setEditingTitle(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") saveEditTopic(topic.id);
+                            if (e.key === "Escape") setEditingTopicId(null);
+                          }}
+                          onBlur={() => saveEditTopic(topic.id)}
+                          className="w-full rounded-lg border border-blue-300 bg-blue-50 px-2 py-1 text-sm font-semibold text-slate-950 outline-none focus:ring-2 focus:ring-blue-200"
+                          aria-label="Renomear tópico"
+                        />
+                      ) : (
+                        <p className="text-sm font-semibold leading-snug text-slate-950">{topic.titulo}</p>
+                      )}
                       <div className="mt-2 flex flex-wrap gap-1.5">
                         <button
                           onClick={cycleStatus}
@@ -382,13 +411,24 @@ export function Edital({
                         </button>
                       </div>
                     </div>
-                    <button
-                      onClick={() => onDeleteTopic(topic.id)}
-                      aria-label={`Excluir tópico ${topic.titulo}`}
-                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-slate-400 transition hover:bg-red-50 hover:text-red-500"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
-                    </button>
+                    <div className="flex shrink-0 items-center gap-1">
+                      {editingTopicId !== topic.id && (
+                        <button
+                          onClick={() => startEditTopic(topic)}
+                          aria-label={`Renomear tópico ${topic.titulo}`}
+                          className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-400 transition hover:bg-blue-50 hover:text-blue-600"
+                        >
+                          <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
+                        </button>
+                      )}
+                      <button
+                        onClick={() => onDeleteTopic(topic.id)}
+                        aria-label={`Excluir tópico ${topic.titulo}`}
+                        className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-400 transition hover:bg-red-50 hover:text-red-500"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                      </button>
+                    </div>
                   </motion.div>
                 );
               })

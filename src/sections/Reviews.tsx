@@ -32,6 +32,8 @@ const REVIEW_TYPE_LABEL: Record<string, string> = {
 export function Reviews({ reviews, topics, subjects, todayIso, activeSection, onComplete, onReschedule }: Props) {
   const [reschedulingId, setReschedulingId] = useState<string | null>(null);
   const pendingToday = reviews.filter((r) => !r.concluida && r.dataAgendada <= todayIso);
+  const totalPending = reviews.filter((r) => !r.concluida).length;
+  const totalCompleted = reviews.filter((r) => r.concluida).length;
   const isVisible = activeSection === "revisoes";
 
   return (
@@ -41,13 +43,21 @@ export function Reviews({ reviews, topics, subjects, todayIso, activeSection, on
         isVisible ? "block" : "hidden"
       } scroll-mt-24 rounded-2xl border border-white bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.08)] ring-1 ring-slate-900/5 sm:p-5 xl:block`}
     >
-      <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
-        <h2 className="text-lg font-bold text-slate-950">Para revisar hoje</h2>
-        {pendingToday.length > 0 && (
-          <span className="w-fit rounded-xl bg-amber-50 px-3 py-1 text-sm font-bold text-amber-700 ring-1 ring-amber-100">
-            {pendingToday.length} pendente{pendingToday.length !== 1 ? "s" : ""}
-          </span>
-        )}
+      <h2 className="mb-4 text-lg font-bold text-slate-950">Para revisar hoje</h2>
+
+      <div className="mb-4 grid grid-cols-3 gap-2">
+        <div className="rounded-xl bg-amber-50 p-3 ring-1 ring-amber-100">
+          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-amber-500">Hoje</p>
+          <p className="mt-1 text-2xl font-black text-amber-700">{pendingToday.length}</p>
+        </div>
+        <div className="rounded-xl bg-slate-50 p-3 ring-1 ring-slate-100">
+          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">Pendentes</p>
+          <p className="mt-1 text-2xl font-black text-slate-700">{totalPending}</p>
+        </div>
+        <div className="rounded-xl bg-emerald-50 p-3 ring-1 ring-emerald-100">
+          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-emerald-500">Concluídas</p>
+          <p className="mt-1 text-2xl font-black text-emerald-700">{totalCompleted}</p>
+        </div>
       </div>
 
       <div className="space-y-3">

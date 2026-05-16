@@ -699,6 +699,16 @@ export default function Home() {
     ]);
   }
 
+  function editTopicTitle(topicId: string, newTitle: string) {
+    if (preventReadOnlyAction()) return;
+    const trimmed = newTitle.trim();
+    if (!trimmed) return;
+    const topic = topics.find((t) => t.id === topicId);
+    if (!topic || topic.titulo === trimmed) return;
+    setTopics((ts) => ts.map((t) => (t.id === topicId ? { ...t, titulo: trimmed } : t)));
+    setNotice(`Tópico renomeado.`);
+  }
+
   function updateTopicStatus(topicId: string, status: TopicStatus, options?: { silent?: boolean }) {
     if (preventReadOnlyAction()) return;
     const current = topics.find((t) => t.id === topicId);
@@ -2088,6 +2098,7 @@ export default function Home() {
                   onDifficultyChange={updateTopicDifficulty}
                   onAddTopics={addTopicsFromText}
                   onDeleteTopic={deleteTopic}
+                  onEditTopic={editTopicTitle}
                   onAddSubject={() => {
                     if (preventReadOnlyAction()) return;
                     setSubjectModal({ open: true });
