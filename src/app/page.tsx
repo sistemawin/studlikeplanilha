@@ -2047,6 +2047,7 @@ export default function Home() {
                     onDeleteQuestionLog={deleteQuestionLog}
                     reviews={reviews}
                     todayIso={todayIso}
+                    studySessions={studySessions}
                   />
                 </ErrorBoundary>
               </section>

@@ -1,9 +1,9 @@
-import { AlertCircle, BarChart3 as BarChart3Icon, CheckCircle2, Clock, ListChecks, Pencil, Save, Trash2, X } from "lucide-react";
+import { AlertCircle, BarChart3 as BarChart3Icon, CheckCircle2, Clock, ListChecks, Pencil, Save, Timer, Trash2, TrendingUp, X } from "lucide-react";
 import { useState } from "react";
-import type { Exam, Goal, NavTarget, QuestionLog, Review, Subject, Topic } from "@/types";
+import type { Exam, Goal, NavTarget, QuestionLog, Review, StudySession, Subject, Topic } from "@/types";
 import { PieChart } from "@/components/PieChart";
 import { ProgressBar } from "@/components/ProgressBar";
-import { corToAccent, pct, topicScore } from "@/lib/utils";
+import { corToAccent, isoDate, pct, topicScore } from "@/lib/utils";
 
 type ExamDraft = { nome: string; acertos: number; total: number };
 
@@ -28,6 +28,7 @@ type Props = {
   onDeleteQuestionLog: (logId: string) => void;
   reviews: Review[];
   todayIso: string;
+  studySessions: StudySession[];
 };
 
 function GoalCard({
@@ -126,6 +127,7 @@ export function Exams({
   onDeleteQuestionLog,
   reviews,
   todayIso,
+  studySessions,
 }: Props) {
   const isVisible = activeSection === "simulados";
   const today = new Date().toISOString().slice(0, 10);
@@ -234,6 +236,30 @@ export function Exams({
 
   const hasAnyGap = notStudiedGaps.length > 0 || lowAccuracyGaps.length > 0 || overdueGaps.length > 0;
   const showDiagnosis = topics.length > 0 && subjects.length > 0;
+
+  // ── Temporal charts ────────────────────────────────────────────────────────
+  const examsByDate = [...exams]
+    .sort((a, b) => a.data.localeCompare(b.data))
+    .slice(-12)
+    .map((e) => ({ ...e, percent: pct(e.acertos, e.total) }));
+
+  const weeklyHoursData = Array.from({ length: 8 }, (_, i) => {
+    const endDate = new Date(todayIso + "T12:00:00");
+    endDate.setDate(endDate.getDate() - i * 7);
+    const startDate = new Date(endDate);
+    startDate.setDate(startDate.getDate() - 6);
+    const startIso = isoDate(startDate);
+    const endIso = isoDate(endDate);
+    const secs = studySessions
+      .filter((s) => s.data >= startIso && s.data <= endIso)
+      .reduce((sum, s) => sum + s.durationSeconds, 0);
+    return {
+      label: `${startDate.getDate()}/${startDate.getMonth() + 1}`,
+      hours: Math.round((secs / 3600) * 10) / 10,
+    };
+  }).reverse();
+
+  const maxWeeklyHours = Math.max(...weeklyHoursData.map((w) => w.hours), 0.1);
 
   const selectedQuestionSubjectId = questionSubjectId || subjects[0]?.id || "";
   const questionTopics = topics.filter((topic) => topic.materiaId === selectedQuestionSubjectId);
@@ -396,6 +422,79 @@ export function Exams({
           </div>
         </section>
       )}
+
+      {/* Temporal evolution charts */}
+      <section className={`${isVisible ? "grid" : "hidden"} gap-6 xl:grid 2xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]`}>
+        {/* Simulados ao longo do tempo */}
+        <div className="w-full max-w-full overflow-hidden rounded-2xl border border-white bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.08)] ring-1 ring-slate-900/5 sm:p-5">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-blue-400">Evolução</p>
+              <h2 className="mt-1 break-words text-xl font-bold text-slate-950">Simulados ao longo do tempo</h2>
+              <p className="mt-1 break-words text-sm leading-6 text-slate-500">Percentual de acerto por simulado em ordem cronológica.</p>
+            </div>
+            <TrendingUp className="h-5 w-5 shrink-0 text-blue-500" aria-hidden="true" />
+          </div>
+
+          <div
+            role="img"
+            aria-label="Gráfico de evolução dos simulados"
+            className="mt-6 flex h-48 max-w-full items-end gap-2 overflow-hidden rounded-xl bg-[#F0F2F5] px-3 py-5 sm:h-52 sm:gap-3 sm:px-4"
+          >
+            {examsByDate.length === 0 ? (
+              <p className="self-center text-sm font-medium text-slate-500">Nenhum simulado registrado ainda.</p>
+            ) : (
+              examsByDate.map((exam) => (
+                <div key={exam.id} className="flex min-w-0 flex-1 flex-col items-center gap-1">
+                  <div className="flex h-36 w-full items-end rounded-lg bg-white shadow-inner">
+                    <div
+                      className="w-full rounded-lg bg-gradient-to-t from-blue-600 to-cyan-400 transition-[height] duration-500"
+                      style={{ height: `${Math.max(exam.percent, 4)}%` }}
+                    />
+                  </div>
+                  <span className="text-xs font-bold text-slate-950">{exam.percent}%</span>
+                  <span className="max-w-full truncate text-[10px] font-medium text-slate-400">{exam.data.slice(5).replace("-", "/")}</span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Horas estudadas por semana */}
+        <div className="w-full max-w-full overflow-hidden rounded-2xl border border-white bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.08)] ring-1 ring-slate-900/5 sm:p-5">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-emerald-400">Horas</p>
+              <h2 className="mt-1 break-words text-xl font-bold text-slate-950">Horas estudadas por semana</h2>
+              <p className="mt-1 break-words text-sm leading-6 text-slate-500">Tempo acumulado nas últimas 8 semanas.</p>
+            </div>
+            <Timer className="h-5 w-5 shrink-0 text-emerald-500" aria-hidden="true" />
+          </div>
+
+          <div
+            role="img"
+            aria-label="Gráfico de horas estudadas por semana"
+            className="mt-6 flex h-48 max-w-full items-end gap-2 overflow-hidden rounded-xl bg-[#F0F2F5] px-3 py-5 sm:h-52 sm:gap-3 sm:px-4"
+          >
+            {weeklyHoursData.every((w) => w.hours === 0) ? (
+              <p className="self-center text-sm font-medium text-slate-500">Nenhuma sessão registrada ainda.</p>
+            ) : (
+              weeklyHoursData.map((week, i) => (
+                <div key={i} className="flex min-w-0 flex-1 flex-col items-center gap-1">
+                  <div className="flex h-36 w-full items-end rounded-lg bg-white shadow-inner">
+                    <div
+                      className="w-full rounded-lg bg-gradient-to-t from-emerald-600 to-teal-400 transition-[height] duration-500"
+                      style={{ height: `${Math.max((week.hours / maxWeeklyHours) * 100, week.hours > 0 ? 4 : 0)}%` }}
+                    />
+                  </div>
+                  <span className="text-xs font-bold text-slate-950">{week.hours > 0 ? `${week.hours}h` : "—"}</span>
+                  <span className="max-w-full truncate text-[10px] font-medium text-slate-400">{week.label}</span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </section>
 
       {/* Performance bar chart + ranking */}
       <section className={`${isVisible ? "grid" : "hidden"} gap-5 xl:grid 2xl:grid-cols-[minmax(0,1.1fr)_minmax(360px,0.9fr)]`}>
