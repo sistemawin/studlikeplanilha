@@ -24,6 +24,7 @@ import { loadRemoteState, saveRemoteState, serializeAppState, validateSchedule }
 import { addDays, formatTimer, isoDate, pct } from "@/lib/utils";
 import { useScrollLock } from "@/hooks/useScrollLock";
 import { defaultGoals, defaultSchedule } from "@/lib/seed";
+import type { ReadyEdital } from "@/lib/readyEditals";
 import type {
   AppState,
   AuthMode,
@@ -1070,6 +1071,38 @@ export default function Home() {
     setNotice(`Matéria "${data.nome}" criada${topMsg}.`);
   }
 
+  function importReadyEdital(edital: ReadyEdital) {
+    if (preventReadOnlyAction()) return;
+
+    const importedSubjects: Subject[] = edital.subjects.map((subject) => ({
+      id: crypto.randomUUID(),
+      nome: subject.nome,
+      peso: subject.peso,
+      cor: subject.cor,
+    }));
+    const importedTopics: Topic[] = importedSubjects.flatMap((subject, subjectIndex) =>
+      edital.subjects[subjectIndex].topicos.map((titulo) => ({
+        id: crypto.randomUUID(),
+        materiaId: subject.id,
+        titulo,
+        status: "Não Estudado" as TopicStatus,
+        dificuldade: edital.subjects[subjectIndex].dificuldade ?? ("Médio" as Difficulty),
+      })),
+    );
+
+    setSubjects((items) => [...items, ...importedSubjects]);
+    setTopics((items) => [...items, ...importedTopics]);
+    setSelectedSubject(importedSubjects[0]?.id ?? "");
+    setSelectedManualTopic(importedTopics[0]?.id ?? "");
+    setSchedule((current) => ({
+      ...current,
+      ciclos: [...current.ciclos, ...importedSubjects.map((subject) => subject.id)],
+    }));
+    setNotice(
+      `${edital.title} importado com ${importedSubjects.length} matéria${importedSubjects.length !== 1 ? "s" : ""} e ${importedTopics.length} tópico${importedTopics.length !== 1 ? "s" : ""}.`,
+    );
+  }
+
   function updateSubject(id: string, data: { nome: string; peso: number; cor: string; topicos: string[] }) {
     if (preventReadOnlyAction()) return;
     setSubjects((ss) => ss.map((s) => (s.id === id ? { ...s, ...data } : s)));
@@ -1777,6 +1810,7 @@ export default function Home() {
                     setSubjectModal({ open: true, subject });
                   }}
                   onDeleteSubject={deleteSubject}
+                  onImportReadyEdital={importReadyEdital}
                 />
               </ErrorBoundary>
 
