@@ -210,6 +210,10 @@ export default function Home() {
   const [refreshingApp, setRefreshingApp] = useState(false);
   const currentAppVersionRef = useRef("");
 
+  // ── Reminder state ────────────────────────────────────────────────────────
+  const [reminderEnabled, setReminderEnabled] = useState(false);
+  const [reminderTime, setReminderTime] = useState("20:00");
+
   // ── Sync status ───────────────────────────────────────────────────────────
   const [syncStatus, setSyncStatus] = useState<SyncStatus>("idle");
   const savedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -234,6 +238,56 @@ export default function Home() {
   const closeFeedback = useCallback(() => {
     setFeedback(null);
   }, []);
+
+  // ── Load reminder prefs from localStorage ────────────────────────────────
+  useEffect(() => {
+    setReminderEnabled(localStorage.getItem("studlike_reminder_enabled") === "true");
+    setReminderTime(localStorage.getItem("studlike_reminder_time") || "20:00");
+  }, []);
+
+  // ── Fire reminder notification ────────────────────────────────────────────
+  useEffect(() => {
+    if (!reminderEnabled || !remoteReady || typeof Notification === "undefined") return;
+    const lastShown = localStorage.getItem("studlike_reminder_last_date");
+    if (lastShown === todayIso) return;
+    const now = new Date();
+    const [h, m] = reminderTime.split(":").map(Number);
+    const target = new Date(now);
+    target.setHours(h, m, 0, 0);
+    if (now < target) return;
+    const pendingCount = reviews.filter((r) => !r.concluida && r.dataAgendada <= todayIso).length;
+    if (pendingCount === 0) return;
+
+    function showNotification() {
+      new Notification("Studlike — Revisões pendentes", {
+        body: `Você tem ${pendingCount} revisão${pendingCount !== 1 ? "ões" : ""} pendente${pendingCount !== 1 ? "s" : ""} para hoje.`,
+        icon: "/icon-192.png",
+        tag: "studlike-review-reminder",
+      });
+      localStorage.setItem("studlike_reminder_last_date", todayIso);
+    }
+
+    if (Notification.permission === "granted") {
+      showNotification();
+    } else if (Notification.permission === "default") {
+      void Notification.requestPermission().then((permission) => {
+        if (permission === "granted") showNotification();
+      });
+    }
+  }, [reminderEnabled, reminderTime, reviews, remoteReady, todayIso]);
+
+  function updateReminderEnabled(value: boolean) {
+    setReminderEnabled(value);
+    localStorage.setItem("studlike_reminder_enabled", String(value));
+    if (value && typeof Notification !== "undefined" && Notification.permission === "default") {
+      void Notification.requestPermission();
+    }
+  }
+
+  function updateReminderTime(value: string) {
+    setReminderTime(value);
+    localStorage.setItem("studlike_reminder_time", value);
+  }
 
   // ── Timer tick ────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -2086,6 +2140,10 @@ export default function Home() {
                     onAddExamDate={addExamDate}
                     onDeleteExamDate={deleteExamDate}
                     onAutoOrganizeCiclo={autoOrganizeCiclo}
+                    reminderEnabled={reminderEnabled}
+                    reminderTime={reminderTime}
+                    onReminderEnabledChange={updateReminderEnabled}
+                    onReminderTimeChange={updateReminderTime}
                   />
                 </ErrorBoundary>
 

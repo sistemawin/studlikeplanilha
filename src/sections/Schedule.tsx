@@ -1,4 +1,4 @@
-import { Clock3, Plus, Trash2, Wand2, X } from "lucide-react";
+import { Bell, BellOff, Clock3, Plus, Trash2, Wand2, X } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import type { NavTarget, PlanningMode, ScheduleConfig, Subject } from "@/types";
@@ -17,6 +17,10 @@ type Props = {
   onAddExamDate: (nome: string, data: string) => void;
   onDeleteExamDate: (id: string) => void;
   onAutoOrganizeCiclo: () => void;
+  reminderEnabled: boolean;
+  reminderTime: string;
+  onReminderEnabledChange: (value: boolean) => void;
+  onReminderTimeChange: (value: string) => void;
 };
 
 export function Schedule({
@@ -30,6 +34,10 @@ export function Schedule({
   onAddExamDate,
   onDeleteExamDate,
   onAutoOrganizeCiclo,
+  reminderEnabled,
+  reminderTime,
+  onReminderEnabledChange,
+  onReminderTimeChange,
 }: Props) {
   const [pickerDay, setPickerDay] = useState<string | null>(null);
   const [examName, setExamName] = useState("");
@@ -315,6 +323,54 @@ export function Schedule({
                 </div>
               );
             })}
+          </div>
+        )}
+      </div>
+
+      {/* Daily reminder */}
+      <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50/70 p-4">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <span className={`flex h-9 w-9 items-center justify-center rounded-xl ${reminderEnabled ? "bg-[#1877F2]/10" : "bg-slate-100"}`}>
+              {reminderEnabled
+                ? <Bell className="h-4 w-4 text-[#1877F2]" aria-hidden="true" />
+                : <BellOff className="h-4 w-4 text-slate-400" aria-hidden="true" />
+              }
+            </span>
+            <div>
+              <p className="font-semibold text-slate-950">Lembrete diário</p>
+              <p className="text-xs font-medium text-slate-500">Notificação quando houver revisões pendentes.</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={reminderEnabled}
+            onClick={() => onReminderEnabledChange(!reminderEnabled)}
+            className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${reminderEnabled ? "bg-[#1877F2]" : "bg-slate-200"}`}
+          >
+            <span
+              className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all duration-200 ${reminderEnabled ? "left-5" : "left-0.5"}`}
+            />
+            <span className="sr-only">{reminderEnabled ? "Desativar" : "Ativar"} lembrete diário</span>
+          </button>
+        </div>
+
+        {reminderEnabled && (
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <label className="text-sm font-semibold text-slate-600" htmlFor="reminder-time">
+              Horário do lembrete
+            </label>
+            <input
+              id="reminder-time"
+              type="time"
+              value={reminderTime}
+              onChange={(e) => onReminderTimeChange(e.target.value)}
+              className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-950 outline-none focus:border-[#1877F2] focus:ring-2 focus:ring-blue-100"
+            />
+            <p className="text-xs font-medium text-slate-400">
+              Funciona enquanto o app estiver aberto no navegador.
+            </p>
           </div>
         )}
       </div>
