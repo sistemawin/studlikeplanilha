@@ -536,6 +536,19 @@ export default function Home() {
     .filter((p) => p.data >= todayIso)
     .sort((a, b) => a.data.localeCompare(b.data))[0];
 
+  const DAY_KEYS = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
+  const todayDayKey = DAY_KEYS[(new Date().getDay() + 6) % 7];
+  const todayPlan: Subject[] =
+    schedule.modo === "semanal"
+      ? ((schedule.semanal[todayDayKey] ?? []).map((id) => subjectById[id]).filter(Boolean) as Subject[])
+      : (() => {
+          if (schedule.ciclos.length === 0) return [];
+          const distinctDays = new Set(studySessions.map((s) => s.data)).size;
+          const pos = distinctDays % schedule.ciclos.length;
+          const subject = subjectById[schedule.ciclos[pos]];
+          return subject ? [subject] : [];
+        })();
+
   const sectionTitle: Record<NavTarget, string> = {
     dashboard: "Hoje",
     edital: "Edital",
@@ -1997,6 +2010,7 @@ export default function Home() {
                   onDeleteSession={deleteStudySession}
                   onAddManualSession={addManualSession}
                   nextExam={nextExam}
+                  todayPlan={todayPlan}
                 />
               </ErrorBoundary>
 
