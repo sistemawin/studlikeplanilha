@@ -1400,7 +1400,7 @@ export default function Home() {
   // ── Loading & auth gates ──────────────────────────────────────────────────
   if (!authReady) {
     return (
-      <main className="flex min-h-dvh w-full items-center justify-center bg-slate-50 text-blue-600">
+      <main className="flex min-h-dvh w-full items-center justify-center bg-[#F0F2F5] text-[#1877F2]">
         <Loader2 className="h-7 w-7 animate-spin" aria-label="Carregando" />
       </main>
     );
@@ -1446,7 +1446,7 @@ export default function Home() {
 
   if (!remoteReady || remoteLoading) {
     return (
-      <main className="flex min-h-dvh w-full items-center justify-center bg-slate-50 text-slate-950">
+      <main className="flex min-h-dvh w-full items-center justify-center bg-[#F0F2F5] text-slate-950">
         <div className="flex flex-col items-center gap-3">
           <Loader2 className="h-7 w-7 animate-spin" aria-label="Carregando dados" />
           <p className="text-sm font-semibold text-slate-500">Carregando seus dados</p>
@@ -1469,7 +1469,7 @@ export default function Home() {
   ];
 
   return (
-    <main className="min-h-dvh w-full max-w-full bg-slate-50 text-slate-950">
+    <main className="min-h-dvh w-full max-w-full bg-[#F0F2F5] text-[#111827]">
       {subjectModal.open && (
         <SubjectModal
           subject={subjectModal.subject}
@@ -1539,12 +1539,12 @@ export default function Home() {
       />
 
       {/* Desktop sidebar */}
-      <aside className="fixed left-0 top-0 hidden h-screen w-64 border-r border-slate-900 bg-[#050505] p-3 text-white shadow-xl shadow-slate-900/10 xl:block">
+      <aside className="fixed left-0 top-0 hidden h-screen w-64 border-r border-white/10 bg-[linear-gradient(180deg,#0F172A_0%,#102A5C_58%,#1877F2_140%)] p-3 text-white shadow-2xl shadow-blue-950/20 xl:block">
         <div className="mb-8 flex items-center gap-3 px-2 py-3">
-          <StudlikeLogo size={40} className="rounded-lg shadow-sm" />
+          <StudlikeLogo size={40} className="rounded-xl shadow-lg shadow-blue-950/25 ring-1 ring-white/15" />
           <div>
-            <p className="text-sm font-semibold">Studlike</p>
-            <p className="text-xs text-slate-400">Plano de estudos</p>
+            <p className="text-sm font-bold">Studlike</p>
+            <p className="text-xs font-medium text-blue-100/60">Plano de estudos</p>
           </div>
         </div>
         <nav aria-label="Navegação principal">
@@ -1558,7 +1558,7 @@ export default function Home() {
           type="button"
           onClick={openArchiveModal}
           aria-label="Arquivar edital atual"
-          className="absolute bottom-4 left-3 right-3 flex items-center justify-center gap-2 rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-sm font-semibold text-white hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+          className="absolute bottom-4 left-3 right-3 flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/10 px-3 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-950/20 hover:bg-white/[0.16] focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
         >
           <Archive className="h-4 w-4" aria-hidden="true" />
           <span className="hidden xl:inline">Arquivar edital</span>
@@ -1585,13 +1585,13 @@ export default function Home() {
             </div>
           </div>
         )}
-        <header className="sticky top-0 z-20 w-full border-b border-slate-200 bg-slate-50/95 px-4 py-3 shadow-sm shadow-slate-900/5 backdrop-blur-xl md:px-6 md:py-4 xl:px-8">
+        <header className="sticky top-0 z-20 w-full border-b border-white/70 bg-white/[0.82] px-4 py-3 shadow-sm shadow-slate-900/5 backdrop-blur-xl md:px-6 md:py-4 xl:px-8">
           <div className="mx-auto flex max-w-[1600px] flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
             <div className="min-w-0">
               <div className="flex items-center gap-3">
                 <StudlikeLogo size={40} className="shrink-0 rounded-xl xl:hidden" />
                 <div className="min-w-0">
-                  <p className="bg-gradient-to-r from-blue-700 via-sky-500 to-cyan-400 bg-clip-text text-[11px] font-bold uppercase tracking-[0.14em] text-transparent">
+                  <p className="bg-gradient-to-r from-[#1877F2] via-[#1B74E4] to-[#0F172A] bg-clip-text text-[11px] font-bold uppercase tracking-[0.14em] text-transparent">
                     {adminView ? "Admin" : readOnlyUser ? "Modo leitura" : sectionTitle[activeSection]}
                   </p>
                   <h1 className="mt-0.5 truncate text-xl font-semibold tracking-normal text-slate-950 sm:text-2xl md:text-3xl">
@@ -1613,10 +1613,10 @@ export default function Home() {
                   aria-live="polite"
                   className={`flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-semibold transition ${
                     syncStatus === "saving" || syncStatus === "pending"
-                      ? "bg-amber-500/15 text-amber-300"
+                      ? "bg-amber-50 text-amber-700 ring-1 ring-amber-100"
                       : syncStatus === "saved"
-                      ? "bg-emerald-500/15 text-emerald-300"
-                      : "bg-rose-500/15 text-rose-300"
+                      ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100"
+                      : "bg-rose-50 text-rose-700 ring-1 ring-rose-100"
                   }`}
                 >
                   {(syncStatus === "saving" || syncStatus === "pending") && (
@@ -1631,7 +1631,7 @@ export default function Home() {
                 type="button"
                 onClick={() => setSuggestionOpen(true)}
                 disabled={Boolean(readOnlyUser)}
-                className="flex h-11 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-700 via-sky-600 to-cyan-500 px-4 text-sm font-semibold text-white shadow-sm shadow-blue-700/20 hover:from-blue-800 hover:via-sky-700 hover:to-cyan-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex h-11 items-center justify-center gap-2 rounded-xl bg-[#1877F2] px-4 text-sm font-bold text-white shadow-lg shadow-blue-600/20 hover:bg-[#1B74E4] focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <MessageSquarePlus className="h-4 w-4" aria-hidden="true" />
                 <span className="truncate">Sugerir melhoria</span>
@@ -1663,7 +1663,7 @@ export default function Home() {
                 type="button"
                 onClick={openFocusTimer}
                 aria-label="Abrir modo foco"
-                className="hidden h-11 items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 text-sm font-semibold text-white shadow-sm shadow-slate-900/15 hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500 sm:flex"
+                className="hidden h-11 items-center justify-center gap-2 rounded-xl bg-[#0F172A] px-4 text-sm font-bold text-white shadow-lg shadow-slate-900/15 hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500 sm:flex"
               >
                 <Maximize2 className="h-4 w-4" aria-hidden="true" />
                 <span className="truncate">
@@ -1847,7 +1847,7 @@ export default function Home() {
       {/* Mobile bottom nav */}
       <nav
         aria-label="Navegação mobile"
-        className={`${adminView || timerFocusOpen || subjectModal.open ? "hidden" : "grid"} mobile-bottom-nav grid-cols-5 overflow-hidden border-t border-slate-800 bg-slate-950 px-2 pb-[calc(0.45rem+env(safe-area-inset-bottom))] pt-2 shadow-[0_-10px_30px_rgba(15,23,42,0.24)] xl:hidden`}
+        className={`${adminView || timerFocusOpen || subjectModal.open ? "hidden" : "grid"} mobile-bottom-nav grid-cols-5 overflow-hidden border-t border-white/70 bg-white/[0.92] px-2 pb-[calc(0.45rem+env(safe-area-inset-bottom))] pt-2 shadow-[0_-14px_34px_rgba(15,23,42,0.14)] backdrop-blur-xl xl:hidden`}
       >
         {mobileNavItems.map((item) => {
           const Icon = item.icon;
@@ -1859,8 +1859,8 @@ export default function Home() {
               aria-current={active ? "page" : undefined}
               className={`flex min-h-14 flex-col items-center justify-center gap-1 rounded-2xl px-1.5 py-1 text-[10px] font-bold transition sm:text-[11px] ${
                 active
-                  ? "bg-white/10 text-white shadow-sm"
-                  : "text-white/40 hover:bg-white/8 hover:text-white"
+                  ? "bg-blue-50 text-[#1877F2] shadow-sm ring-1 ring-blue-100"
+                  : "text-slate-500 hover:bg-slate-100 hover:text-[#1877F2]"
               }`}
             >
               <Icon className="h-5 w-5" aria-hidden="true" />

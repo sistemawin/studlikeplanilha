@@ -77,14 +77,14 @@ export function AdminPanel({
 
   return (
     <section className="space-y-5">
-      <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5 sm:p-5">
+      <div className="rounded-2xl border border-white bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.07)] ring-1 ring-slate-900/5 sm:p-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
-            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-950 text-white">
+            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#1877F2] text-white shadow-lg shadow-blue-600/20">
               <ShieldCheck className="h-5 w-5" aria-hidden="true" />
             </span>
             <div>
-              <p className="bg-gradient-to-r from-blue-700 via-sky-500 to-cyan-400 bg-clip-text text-[11px] font-bold uppercase tracking-[0.16em] text-transparent">Admin</p>
+              <p className="bg-gradient-to-r from-[#1877F2] via-[#1B74E4] to-[#0F172A] bg-clip-text text-[11px] font-bold uppercase tracking-[0.16em] text-transparent">Admin</p>
               <h2 className="text-xl font-semibold text-slate-950">Painel geral</h2>
               <p className="text-sm text-slate-500">
                 {usersTotal} usuário{usersTotal !== 1 ? "s" : ""} · {suggestions.length} sugest{suggestions.length === 1 ? "ão" : "ões"}
@@ -101,7 +101,7 @@ export function AdminPanel({
             </button>
             <button
               onClick={onBack}
-              className="flex h-10 items-center justify-center gap-2 rounded-xl bg-slate-950 px-3 text-sm font-semibold text-white hover:bg-slate-800"
+              className="flex h-10 items-center justify-center gap-2 rounded-xl bg-[#1877F2] px-3 text-sm font-bold text-white hover:bg-[#1B74E4]"
             >
               <ArrowLeft className="h-4 w-4" aria-hidden="true" />
               App
@@ -185,7 +185,7 @@ export function AdminPanel({
                 <button
                   type="button"
                   onClick={() => onUsersSearchChange(searchDraft)}
-                  className="flex h-11 items-center justify-center rounded-xl bg-slate-950 px-4 text-sm font-bold text-white hover:bg-slate-800"
+                  className="flex h-11 items-center justify-center rounded-xl bg-[#1877F2] px-4 text-sm font-bold text-white hover:bg-[#1B74E4]"
                 >
                   Pesquisar
                 </button>

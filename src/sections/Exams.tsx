@@ -76,7 +76,7 @@ function GoalCard({
             onKeyDown={(e) => { if (e.key === "Enter") save(); if (e.key === "Escape") setEditing(false); }}
             className="h-9 w-24 rounded-lg border border-slate-300 bg-white px-2 text-sm outline-none focus:border-blue-500"
           />
-          <button onClick={save} className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-950 text-white hover:bg-slate-800">
+          <button onClick={save} className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#1877F2] text-white hover:bg-[#1B74E4]">
             <Save className="h-4 w-4" aria-hidden="true" />
           </button>
           <button onClick={() => setEditing(false)} className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50">
@@ -226,17 +226,17 @@ export function Exams({
 
       {/* Performance bar chart + ranking */}
       <section className={`${isVisible ? "grid" : "hidden"} gap-5 xl:grid 2xl:grid-cols-[minmax(0,1.1fr)_minmax(360px,0.9fr)]`}>
-        {/* Bar chart — dark */}
-        <div className="w-full max-w-full overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 p-4 shadow-lg sm:p-5">
+        {/* Bar chart */}
+        <div className="w-full max-w-full overflow-hidden rounded-2xl border border-white bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.08)] ring-1 ring-slate-900/5 sm:p-5">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0">
               <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-blue-400">Acertos</p>
-              <h2 className="mt-1 break-words text-xl font-bold text-white">Desempenho em simulados</h2>
-              <p className="mt-1 break-words text-sm leading-6 text-white/40">
+              <h2 className="mt-1 break-words text-xl font-bold text-slate-950">Desempenho em simulados</h2>
+              <p className="mt-1 break-words text-sm leading-6 text-slate-500">
                 Evolução dos percentuais de acerto registrados.
               </p>
             </div>
-            <span className="w-fit shrink-0 rounded-xl bg-blue-500/15 px-3 py-2 text-sm font-bold text-blue-300 ring-1 ring-blue-500/20">
+            <span className="w-fit shrink-0 rounded-xl bg-blue-50 px-3 py-2 text-sm font-bold text-[#1877F2] ring-1 ring-blue-100">
               média {Number.isFinite(avgExam) ? avgExam : 0}%
             </span>
           </div>
@@ -244,41 +244,41 @@ export function Exams({
           <div
             role="img"
             aria-label="Gráfico de barras de desempenho em simulados"
-            className="mt-6 flex h-48 max-w-full items-end gap-2 overflow-hidden rounded-xl bg-slate-900 px-3 py-5 sm:h-52 sm:gap-3 sm:px-4"
+            className="mt-6 flex h-48 max-w-full items-end gap-2 overflow-hidden rounded-xl bg-[#F0F2F5] px-3 py-5 sm:h-52 sm:gap-3 sm:px-4"
           >
             {examTrend.length === 0 ? (
-              <p className="self-center text-sm text-white/30">Nenhum simulado registrado.</p>
+              <p className="self-center text-sm font-medium text-slate-500">Nenhum simulado registrado.</p>
             ) : (
               examTrend.map((exam) => (
                 <div key={exam.id} className="flex min-w-0 flex-1 flex-col items-center gap-2">
-                  <div className="flex h-36 w-full items-end rounded-lg bg-slate-800">
+                  <div className="flex h-36 w-full items-end rounded-lg bg-white shadow-inner">
                     <div
                       className="w-full rounded-lg bg-gradient-to-t from-blue-600 to-cyan-400 transition-[height] duration-500"
                       style={{ height: `${Math.max(exam.percent, 4)}%` }}
                     />
                   </div>
-                  <span className="text-sm font-bold text-white">{exam.percent}%</span>
-                  <span className="max-w-full truncate text-xs font-medium text-white/40">{exam.nome}</span>
+                  <span className="text-sm font-bold text-slate-950">{exam.percent}%</span>
+                  <span className="max-w-full truncate text-xs font-medium text-slate-500">{exam.nome}</span>
                 </div>
               ))
             )}
           </div>
         </div>
 
-        {/* Ranking — dark */}
-        <div className="w-full max-w-full overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 p-4 shadow-lg sm:p-5">
-          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-white/30">Ranking</p>
-          <h2 className="mt-1 text-xl font-bold text-white">Top matérias e tópicos</h2>
+        {/* Ranking */}
+        <div className="w-full max-w-full overflow-hidden rounded-2xl border border-white bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.08)] ring-1 ring-slate-900/5 sm:p-5">
+          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#1877F2]">Ranking</p>
+          <h2 className="mt-1 text-xl font-bold text-slate-950">Top matérias e tópicos</h2>
           <div className="mt-5 space-y-4">
             {bestSubjects.slice(0, 3).map((item, index) => (
               <div key={item.subject.id} className="min-w-0">
                 <div className="mb-2 flex items-center justify-between gap-3">
-                  <span className="min-w-0 break-words text-sm font-semibold leading-5 text-white/70">
+                  <span className="min-w-0 break-words text-sm font-semibold leading-5 text-slate-700">
                     {index + 1}. {item.subject.nome}
                   </span>
-                  <span className="shrink-0 text-sm font-bold text-white">{item.score}%</span>
+                  <span className="shrink-0 text-sm font-bold text-slate-950">{item.score}%</span>
                 </div>
-                <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
                   <div
                     className="h-1.5 rounded-full transition-[width] duration-500"
                     style={{ width: `${item.score}%`, backgroundColor: item.accent.chart }}
@@ -291,14 +291,14 @@ export function Exams({
             {bestTopics.slice(0, 3).map((item) => (
               <div
                 key={item.topic.id}
-                className="min-w-0 overflow-hidden rounded-xl p-3"
-                style={{ background: `linear-gradient(135deg, #131b27 0%, ${item.accent.chart}15 100%)` }}
+                className="min-w-0 overflow-hidden rounded-xl border border-slate-100 p-3"
+                style={{ background: `linear-gradient(135deg, #ffffff 0%, ${item.accent.chart}12 100%)` }}
               >
                 <div className="flex items-center justify-between gap-3">
-                  <p className="min-w-0 break-words text-sm font-bold leading-5 text-white">{item.topic.titulo}</p>
+                  <p className="min-w-0 break-words text-sm font-bold leading-5 text-slate-950">{item.topic.titulo}</p>
                   <span className="shrink-0 text-sm font-bold" style={{ color: item.accent.chart }}>{item.score}%</span>
                 </div>
-                <p className="mt-1 break-words text-xs font-medium leading-5 text-white/40">
+                <p className="mt-1 break-words text-xs font-medium leading-5 text-slate-500">
                   {item.subject?.nome ?? "Sem matéria"} · {item.topic.status}
                 </p>
               </div>
@@ -312,14 +312,14 @@ export function Exams({
         id="simulados"
         className={`${
           isVisible ? "block" : "hidden"
-        } w-full max-w-full overflow-hidden scroll-mt-24 rounded-xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5 sm:p-5 xl:block`}
+        } w-full max-w-full overflow-hidden scroll-mt-24 rounded-2xl border border-white bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.07)] ring-1 ring-slate-900/5 sm:p-5 xl:block`}
       >
         <h2 className="break-words text-lg font-semibold">Questões, metas, simulados e revisão manual</h2>
 
         {/* Question registration */}
         <div className="mt-4 min-w-0 rounded-xl border border-slate-200 bg-slate-50/70 p-4">
           <div className="flex items-center gap-2">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-950 text-white">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#1877F2] text-white">
               <ListChecks className="h-4 w-4" aria-hidden="true" />
             </span>
             <div>
@@ -401,7 +401,7 @@ export function Exams({
 
                 <button
                   onClick={submitQuestionLog}
-                  className="flex h-11 items-center justify-center gap-2 rounded-xl bg-slate-950 px-3 text-sm font-semibold text-white hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500 md:h-10"
+                  className="flex h-11 items-center justify-center gap-2 rounded-xl bg-[#1877F2] px-3 text-sm font-bold text-white hover:bg-[#1B74E4] focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500 md:h-10"
                 >
                   <Save className="h-4 w-4" aria-hidden="true" />
                   Salvar
@@ -489,7 +489,7 @@ export function Exams({
             />
             <button
               onClick={onAddExam}
-              className="flex h-11 items-center justify-center gap-2 rounded-xl bg-slate-950 px-3 text-sm font-semibold text-white hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500 md:h-10"
+              className="flex h-11 items-center justify-center gap-2 rounded-xl bg-[#1877F2] px-3 text-sm font-bold text-white hover:bg-[#1B74E4] focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500 md:h-10"
             >
               <Save className="h-4 w-4" aria-hidden="true" />
               Salvar
@@ -547,7 +547,7 @@ export function Exams({
 
             <button
               onClick={onAddManualReview}
-              className="h-11 w-full min-w-0 rounded-xl bg-slate-950 px-3 text-sm font-semibold text-white hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500 md:h-10"
+              className="h-11 w-full min-w-0 rounded-xl bg-[#1877F2] px-3 text-sm font-bold text-white hover:bg-[#1B74E4] focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500 md:h-10"
             >
               Agendar
             </button>

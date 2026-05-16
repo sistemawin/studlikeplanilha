@@ -348,10 +348,10 @@ export function Edital({
                     initial={{ opacity: 0, y: 6 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, x: 30, transition: { duration: 0.18 } }}
-                    className="group flex items-center gap-3 rounded-xl border border-slate-800 bg-slate-950 px-4 py-3 shadow-sm shadow-slate-900/10 transition hover:bg-slate-900"
+                    className="group flex items-center gap-3 rounded-xl border border-slate-100 bg-white px-4 py-3 shadow-sm shadow-slate-900/5 transition hover:-translate-y-0.5 hover:shadow-md"
                   >
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold leading-snug text-white">{topic.titulo}</p>
+                      <p className="text-sm font-semibold leading-snug text-slate-950">{topic.titulo}</p>
                       <div className="mt-2 flex flex-wrap gap-1.5">
                         <button
                           onClick={cycleStatus}
@@ -374,7 +374,7 @@ export function Edital({
                     <button
                       onClick={() => onDeleteTopic(topic.id)}
                       aria-label={`Excluir tópico ${topic.titulo}`}
-                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white/35 transition hover:bg-red-500/20 hover:text-red-400"
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-slate-400 transition hover:bg-red-50 hover:text-red-500"
                     >
                       <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
                     </button>
@@ -386,23 +386,23 @@ export function Edital({
         </div>
 
         {/* Add topics form */}
-        <div className="mt-5 rounded-2xl border border-slate-800 bg-slate-950 p-4 shadow-sm shadow-slate-900/10">
-          <p className="mb-2 text-sm font-semibold text-white/50">Adicionar tópicos</p>
+        <div className="mt-5 rounded-2xl border border-white bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.07)] ring-1 ring-slate-900/5">
+          <p className="mb-2 text-sm font-semibold text-slate-700">Adicionar tópicos</p>
           <textarea
             value={newTopicText}
             onChange={(e) => onTopicTextChange(e.target.value)}
             placeholder="Cole os tópicos aqui, um por linha…"
             rows={4}
-            className="w-full resize-none rounded-xl border border-white/10 bg-white/5 p-3 text-sm text-white placeholder:text-white/25 outline-none focus:border-blue-400/50 focus:ring-2 focus:ring-blue-400/15"
+            className="w-full resize-none rounded-xl border border-slate-200 bg-[#F7F8FA] p-3 text-sm text-slate-950 placeholder:text-slate-400 outline-none focus:border-[#1877F2] focus:bg-white focus:ring-2 focus:ring-blue-100"
           />
           <div className="mt-2 flex items-center justify-between">
-            <span className="text-xs text-white/30">
+            <span className="text-xs font-semibold text-slate-500">
               {lineCount} linha{lineCount !== 1 ? "s" : ""}
             </span>
             <button
               onClick={onAddTopics}
               disabled={!newTopicText.trim()}
-              className="flex h-9 items-center gap-2 rounded-xl bg-blue-600 px-4 text-sm font-bold text-white transition hover:bg-blue-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-400 disabled:cursor-not-allowed disabled:opacity-40"
+              className="flex h-9 items-center gap-2 rounded-xl bg-[#1877F2] px-4 text-sm font-bold text-white transition hover:bg-[#1B74E4] focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-400 disabled:cursor-not-allowed disabled:opacity-40"
             >
               <Plus className="h-4 w-4" aria-hidden="true" />
               Adicionar

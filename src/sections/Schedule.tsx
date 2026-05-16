@@ -42,18 +42,18 @@ export function Schedule({
       id="cronograma"
       className={`${
         activeSection === "cronograma" ? "block" : "hidden"
-      } scroll-mt-24 rounded-2xl border border-slate-800 bg-slate-950 p-4 shadow-lg sm:p-5 xl:block`}
+      } scroll-mt-24 rounded-2xl border border-white bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.08)] ring-1 ring-slate-900/5 sm:p-5 xl:block`}
     >
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-lg font-bold text-white">Planejamento flexível</h2>
-          <p className="text-sm text-white/40">Escolha grade semanal ou ciclo rotativo.</p>
+          <h2 className="text-lg font-bold text-slate-950">Planejamento flexível</h2>
+          <p className="text-sm font-medium text-slate-500">Escolha grade semanal ou ciclo rotativo.</p>
         </div>
         <div
           role="group"
           aria-label="Modo de planejamento"
-          className="grid grid-cols-2 rounded-xl bg-white/5 p-1 sm:flex"
+          className="grid grid-cols-2 rounded-xl bg-[#F0F2F5] p-1 sm:flex"
         >
           {(["semanal", "ciclos"] as PlanningMode[]).map((mode) => (
             <button
@@ -62,8 +62,8 @@ export function Schedule({
               aria-pressed={schedule.modo === mode}
               className={`rounded-lg px-3 py-2 text-sm font-semibold transition ${
                 schedule.modo === mode
-                  ? "bg-white text-slate-950 shadow-sm"
-                  : "text-white/50 hover:text-white"
+                  ? "bg-white text-[#1877F2] shadow-sm"
+                  : "text-slate-500 hover:text-slate-950"
               }`}
             >
               {mode === "semanal" ? "Semanal" : "Ciclos"}
@@ -74,7 +74,7 @@ export function Schedule({
 
       {/* Hours input */}
       <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
-        <label className="text-sm font-medium text-white/60" htmlFor="horas-dia">
+        <label className="text-sm font-semibold text-slate-600" htmlFor="horas-dia">
           Meta de horas por dia
         </label>
         <input
@@ -84,12 +84,12 @@ export function Schedule({
           max={24}
           value={schedule.horasDia}
           onChange={(e) => onHorasChange(Number(e.target.value))}
-          className="h-10 w-24 rounded-xl border border-white/10 bg-white/5 px-3 text-sm font-semibold text-white outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20"
+          className="h-10 w-24 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-950 outline-none focus:border-[#1877F2] focus:ring-2 focus:ring-blue-100"
         />
       </div>
 
       {schedule.modo === "semanal" && subjects.length === 0 && (
-        <p className="mt-4 rounded-xl bg-amber-500/10 px-3 py-2 text-sm font-medium text-amber-300 ring-1 ring-amber-500/20">
+        <p className="mt-4 rounded-xl bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-700 ring-1 ring-amber-100">
           Crie matérias na aba Edital para montar a grade semanal.
         </p>
       )}
@@ -105,12 +105,11 @@ export function Schedule({
               <motion.div
                 key={day}
                 whileHover={{ y: -1, transition: { duration: 0.12 } }}
-                className="relative overflow-hidden rounded-xl p-4 shadow-md"
-                style={{ background: "linear-gradient(135deg, #0d1117 0%, #131b27 100%)" }}
+                className="relative overflow-hidden rounded-xl border border-slate-100 bg-[#F7F8FA] p-4 shadow-sm"
               >
                 <div className="mb-3 flex items-center justify-between">
-                  <p className="font-bold text-white">{day}</p>
-                  <span className="flex items-center gap-1 text-xs font-semibold text-blue-400">
+                  <p className="font-bold text-slate-950">{day}</p>
+                  <span className="flex items-center gap-1 rounded-full bg-blue-50 px-2 py-1 text-xs font-semibold text-[#1877F2]">
                     <Clock3 className="h-3 w-3" aria-hidden="true" />
                     {schedule.horasDia}h
                   </span>
@@ -118,7 +117,7 @@ export function Schedule({
                 <div className="flex flex-wrap gap-2">
                   {id && (
                     <span
-                      className="rounded-lg px-2.5 py-1 text-xs font-semibold text-white"
+                      className="rounded-lg px-2.5 py-1 text-xs font-bold text-slate-800"
                       style={{
                         backgroundColor: `${accent.chart}30`,
                         border: `1px solid ${accent.chart}45`,
@@ -140,12 +139,11 @@ export function Schedule({
             <motion.div
               key={day}
               whileHover={{ y: -1, transition: { duration: 0.12 } }}
-              className="relative overflow-hidden rounded-xl p-4 shadow-md"
-              style={{ background: "linear-gradient(135deg, #0d1117 0%, #131b27 100%)" }}
+              className="relative overflow-hidden rounded-xl border border-slate-100 bg-[#F7F8FA] p-4 shadow-sm"
             >
               <div className="mb-3 flex items-center justify-between">
-                <p className="font-bold text-white">{day}</p>
-                <span className="flex items-center gap-1 text-xs font-semibold text-blue-400">
+                <p className="font-bold text-slate-950">{day}</p>
+                <span className="flex items-center gap-1 rounded-full bg-blue-50 px-2 py-1 text-xs font-semibold text-[#1877F2]">
                   <Clock3 className="h-3 w-3" aria-hidden="true" />
                   {schedule.horasDia}h
                 </span>
@@ -158,7 +156,7 @@ export function Schedule({
                   return (
                     <span
                       key={`${day}-${id}`}
-                      className="flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-semibold text-white"
+                      className="flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-bold text-slate-800"
                       style={{
                         backgroundColor: `${accent.chart}30`,
                         border: `1px solid ${accent.chart}45`,
@@ -168,7 +166,7 @@ export function Schedule({
                       <button
                         onClick={() => removeFromDay(day, id)}
                         aria-label={`Remover ${subject?.nome ?? id} de ${day}`}
-                        className="ml-0.5 flex h-7 w-7 items-center justify-center rounded-full text-white/60 hover:bg-white/10 hover:text-white"
+                        className="ml-0.5 flex h-7 w-7 items-center justify-center rounded-full text-slate-500 hover:bg-white hover:text-slate-950"
                       >
                         <X className="h-3 w-3" aria-hidden="true" />
                       </button>
@@ -181,7 +179,7 @@ export function Schedule({
                     <button
                       onClick={() => setPickerDay(pickerDay === day ? null : day)}
                       aria-label={`Adicionar matéria em ${day}`}
-                      className="flex h-10 w-10 items-center justify-center rounded-full border border-dashed border-white/25 text-white/45 hover:border-white/60 hover:text-white/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-400"
+                      className="flex h-10 w-10 items-center justify-center rounded-full border border-dashed border-slate-300 bg-white text-slate-500 hover:border-[#1877F2] hover:text-[#1877F2] focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-400"
                     >
                       <Plus className="h-3 w-3" aria-hidden="true" />
                     </button>

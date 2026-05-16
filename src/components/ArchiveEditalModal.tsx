@@ -47,12 +47,12 @@ export function ArchiveEditalModal({
       role="dialog"
       aria-modal="true"
       aria-labelledby="archive-edital-title"
-      className="fixed inset-0 z-50 flex items-end justify-center overflow-hidden bg-black/45 p-0 backdrop-blur-sm sm:items-center sm:p-4"
+      className="fixed inset-0 z-50 flex items-end justify-center overflow-hidden bg-slate-950/45 p-0 backdrop-blur-md sm:items-center sm:p-4"
     >
-      <div className="max-h-[92dvh] w-full max-w-lg overflow-y-auto rounded-t-3xl border border-slate-200 bg-white p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-2xl shadow-slate-950/20 sm:rounded-2xl sm:p-6">
+      <div className="max-h-[92dvh] w-full max-w-lg overflow-y-auto rounded-t-3xl border border-white bg-white p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-2xl shadow-slate-950/20 ring-1 ring-slate-900/5 sm:rounded-2xl sm:p-6">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3">
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-slate-950 text-white">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#1877F2] text-white shadow-lg shadow-blue-600/20">
               <Archive className="h-5 w-5" aria-hidden="true" />
             </span>
             <div>
@@ -132,7 +132,7 @@ export function ArchiveEditalModal({
             type="button"
             onClick={onSubmit}
             disabled={loading || !password.trim()}
-            className="flex h-11 items-center justify-center gap-2 rounded-xl bg-slate-950 text-sm font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex h-11 items-center justify-center gap-2 rounded-xl bg-[#1877F2] text-sm font-bold text-white hover:bg-[#1B74E4] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {loading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Archive className="h-4 w-4" aria-hidden="true" />}
             Confirmar e resetar

@@ -142,37 +142,41 @@ export function Dashboard({
               aria-label={card.ariaLabel}
               whileHover={{ y: -3, transition: { duration: 0.15 } }}
               whileTap={{ scale: 0.96 }}
-              className="relative overflow-hidden rounded-2xl p-4 text-left shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-white/50 sm:p-5"
+              className="relative overflow-hidden rounded-2xl border border-white bg-white p-4 text-left shadow-[0_18px_45px_rgba(15,23,42,0.08)] ring-1 ring-slate-900/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#1877F2] sm:p-5"
               style={{
-                background: `linear-gradient(135deg, #0f172a 0%, #172032 55%, ${card.accent}22 100%)`,
+                background: `linear-gradient(135deg, #ffffff 0%, #ffffff 62%, ${card.accent}12 100%)`,
               }}
             >
+              <div
+                className="pointer-events-none absolute inset-x-0 top-0 h-1"
+                style={{ backgroundColor: card.accent }}
+              />
               {/* Label + icon */}
               <div className="flex items-center justify-between gap-2">
-                <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-white/40">
+                <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">
                   {card.label}
                 </span>
                 <div
                   className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl"
-                  style={{ backgroundColor: `${card.accent}22` }}
+                  style={{ backgroundColor: `${card.accent}14` }}
                 >
                   <Icon className="h-4 w-4" style={{ color: card.accent }} aria-hidden="true" />
                 </div>
               </div>
 
               {/* Value */}
-              <p className="mt-3 text-3xl font-black text-white sm:text-4xl">{card.value}</p>
+              <p className="mt-3 text-3xl font-black text-slate-950 sm:text-4xl">{card.value}</p>
 
               {/* Progress bar */}
-              <div className="mt-3 h-1 w-full overflow-hidden rounded-full bg-white/10">
+              <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
                 <div
-                  className="h-1 rounded-full transition-[width] duration-700 ease-out"
+                  className="h-1.5 rounded-full transition-[width] duration-700 ease-out"
                   style={{ width: `${card.progress}%`, backgroundColor: card.accent }}
                 />
               </div>
 
               {/* Subtitle */}
-              <p className="mt-2 text-xs leading-5 text-white/40">{card.subtitle}</p>
+              <p className="mt-2 text-xs font-medium leading-5 text-slate-500">{card.subtitle}</p>
             </motion.button>
           );
         })}
@@ -185,7 +189,7 @@ export function Dashboard({
             <button
               onClick={onOpenFocusTimer}
               aria-label="Abrir modo foco"
-              className="flex w-[150px] shrink-0 items-center gap-3 rounded-2xl bg-[#050505] p-3 text-left shadow-lg shadow-slate-900/20"
+              className="flex w-[150px] shrink-0 items-center gap-3 rounded-2xl bg-[#1877F2] p-3 text-left shadow-lg shadow-blue-600/20"
             >
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10">
                 <Timer className="h-5 w-5 text-white" aria-hidden="true" />
@@ -202,19 +206,19 @@ export function Dashboard({
               <button
                 key={item.subject.id}
                 onClick={() => onNavigate("edital")}
-                className="w-[126px] shrink-0 overflow-hidden rounded-2xl p-3 text-left shadow-lg"
+                className="w-[126px] shrink-0 overflow-hidden rounded-2xl border border-white p-3 text-left shadow-lg shadow-slate-900/10"
                 style={{
-                  background: `linear-gradient(135deg, #0f172a 0%, ${item.accent.chart}25 100%)`,
+                  background: `linear-gradient(135deg, #ffffff 0%, ${item.accent.chart}18 100%)`,
                 }}
               >
                 <span
                   className="mb-3 block h-1.5 w-8 rounded-full"
                   style={{ backgroundColor: item.accent.chart }}
                 />
-                <span className="block truncate text-sm font-bold text-white">
+                <span className="block truncate text-sm font-bold text-slate-950">
                   {item.subject.nome.replace("Direito ", "")}
                 </span>
-                <span className="mt-1 block text-xs font-medium text-white/40">
+                <span className="mt-1 block text-xs font-medium text-slate-500">
                   {item.score}% pronto
                 </span>
               </button>
@@ -227,12 +231,12 @@ export function Dashboard({
       <p
         role="status"
         aria-live="polite"
-        className={`${isVisible ? "block" : "hidden"} rounded-2xl bg-slate-900 px-5 py-3.5 text-sm font-medium text-white/55 shadow-sm xl:block`}
+        className={`${isVisible ? "block" : "hidden"} rounded-2xl border border-blue-100 bg-white px-5 py-3.5 text-sm font-semibold text-slate-600 shadow-sm shadow-slate-900/5 xl:block`}
       >
         {notice}
       </p>
 
-      <section className={`${isVisible ? "block" : "hidden"} rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5 sm:p-5 xl:block`}>
+      <section className={`${isVisible ? "block" : "hidden"} rounded-2xl border border-white bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.07)] ring-1 ring-slate-900/5 sm:p-5 xl:block`}>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400">
@@ -241,7 +245,7 @@ export function Dashboard({
             <h2 className="mt-1 text-lg font-bold text-slate-950">Sessões de estudo</h2>
           </div>
           <div className="grid grid-cols-2 gap-2 sm:w-auto">
-            <div className="rounded-xl bg-slate-950 px-4 py-3 text-white">
+            <div className="rounded-xl bg-[#0F172A] px-4 py-3 text-white shadow-sm shadow-slate-900/15">
               <p className="text-xs font-semibold text-white/45">Hoje</p>
               <p className="mt-1 font-mono text-lg font-bold">{formatTimer(todaySeconds)}</p>
             </div>
@@ -261,7 +265,7 @@ export function Dashboard({
             {recentSessions.map((session) => (
               <div
                 key={session.id}
-                className="flex min-w-0 items-center justify-between gap-3 rounded-xl bg-slate-50 p-3 ring-1 ring-slate-100"
+                className="flex min-w-0 items-center justify-between gap-3 rounded-xl bg-[#F7F8FA] p-3 ring-1 ring-slate-100"
               >
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold text-slate-950">

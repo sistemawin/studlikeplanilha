@@ -45,27 +45,27 @@ export function AuthScreen({
   const submitLabel = isSignup ? "Criar conta" : isForgot ? "Enviar link de recuperação" : isReset ? "Salvar nova senha" : "Entrar";
 
   return (
-    <main className="flex min-h-dvh w-full max-w-full items-center justify-center overflow-x-hidden bg-slate-50 px-4 py-6 text-slate-950 sm:py-10">
-      <section className="grid w-full max-w-5xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-900/8 lg:grid-cols-[0.92fr_1.08fr]">
-        <div className="flex min-h-0 flex-col justify-between bg-slate-950 p-5 text-white sm:p-8 lg:min-h-[560px] lg:p-10">
+    <main className="flex min-h-dvh w-full max-w-full items-center justify-center overflow-x-hidden bg-[#F0F2F5] px-4 py-6 text-slate-950 sm:py-10">
+      <section className="grid w-full max-w-5xl overflow-hidden rounded-2xl border border-white bg-white shadow-[0_24px_70px_rgba(15,23,42,0.14)] ring-1 ring-slate-900/5 lg:grid-cols-[0.92fr_1.08fr]">
+        <div className="flex min-h-0 flex-col justify-between bg-[linear-gradient(150deg,#0F172A_0%,#153A77_52%,#1877F2_118%)] p-5 text-white sm:p-8 lg:min-h-[560px] lg:p-10">
           <div>
-            <StudlikeLogo size={44} className="rounded-xl shadow-sm" />
-            <p className="mt-5 text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400 lg:mt-8">
+            <StudlikeLogo size={44} className="rounded-xl shadow-lg shadow-blue-950/25 ring-1 ring-white/15" />
+            <p className="mt-5 text-[11px] font-bold uppercase tracking-[0.16em] text-blue-100/60 lg:mt-8">
               Studlike
             </p>
             <h1 className="mt-2 max-w-md text-2xl font-semibold tracking-normal sm:mt-3 sm:text-4xl lg:text-5xl">
               Controle real do seu plano de estudos.
             </h1>
-            <p className="mt-3 max-w-md text-sm leading-6 text-slate-300 sm:mt-4 sm:text-base sm:leading-7">
+            <p className="mt-3 max-w-md text-sm leading-6 text-blue-50/75 sm:mt-4 sm:text-base sm:leading-7">
               Login seguro para salvar matérias, tópicos, revisões e simulados por usuário.
             </p>
           </div>
 
-          <div className="mt-6 hidden gap-3 text-sm text-slate-300 sm:grid lg:mt-0">
+          <div className="mt-6 hidden gap-3 text-sm text-blue-50/75 sm:grid lg:mt-0">
             {["Dados protegidos por usuário", "Dashboard com gráficos", "Revisões e simulados salvos"].map(
               (item) => (
                 <div key={item} className="flex items-center gap-3">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/10">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/[0.12] ring-1 ring-white/10">
                     <ShieldCheck className="h-4 w-4" aria-hidden="true" />
                   </span>
                   <span className="font-medium">{item}</span>
@@ -89,7 +89,7 @@ export function AuthScreen({
               {isSignup && (
                 <label className="block">
                   <span className="text-sm font-semibold text-slate-700">Nome</span>
-                  <div className="mt-2 flex h-12 items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100">
+                  <div className="mt-2 flex h-12 items-center gap-3 rounded-xl border border-slate-200 bg-[#F7F8FA] px-3 focus-within:border-[#1877F2] focus-within:bg-white focus-within:ring-2 focus-within:ring-blue-100">
                     <UserPlus className="h-4 w-4 text-slate-400" aria-hidden="true" />
                     <input
                       value={name}
@@ -105,7 +105,7 @@ export function AuthScreen({
               {!isReset && (
                 <label className="block">
                   <span className="text-sm font-semibold text-slate-700">E-mail</span>
-                  <div className="mt-2 flex h-12 items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100">
+                  <div className="mt-2 flex h-12 items-center gap-3 rounded-xl border border-slate-200 bg-[#F7F8FA] px-3 focus-within:border-[#1877F2] focus-within:bg-white focus-within:ring-2 focus-within:ring-blue-100">
                     <Mail className="h-4 w-4 text-slate-400" aria-hidden="true" />
                     <input
                       type="email"
@@ -123,7 +123,7 @@ export function AuthScreen({
               {!isForgot && (
                 <label className="block">
                   <span className="text-sm font-semibold text-slate-700">{isReset ? "Nova senha" : "Senha"}</span>
-                  <div className="mt-2 flex h-12 items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100">
+                  <div className="mt-2 flex h-12 items-center gap-3 rounded-xl border border-slate-200 bg-[#F7F8FA] px-3 focus-within:border-[#1877F2] focus-within:bg-white focus-within:ring-2 focus-within:ring-blue-100">
                     <LockKeyhole className="h-4 w-4 text-slate-400" aria-hidden="true" />
                     <input
                       type="password"
@@ -162,7 +162,7 @@ export function AuthScreen({
               <button
                 onClick={onSubmit}
                 disabled={loading}
-                className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-slate-950 text-sm font-bold text-white shadow-lg shadow-slate-900/15 transition hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500 disabled:cursor-not-allowed disabled:opacity-70"
+                className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#1877F2] text-sm font-bold text-white shadow-lg shadow-blue-600/25 transition hover:bg-[#1B74E4] focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500 disabled:cursor-not-allowed disabled:opacity-70"
               >
                 {loading && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
                 {submitLabel}
@@ -171,7 +171,7 @@ export function AuthScreen({
 
             <button
               onClick={() => onModeChange(isSignup || isForgot || isReset ? "login" : "signup")}
-              className="mt-6 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
+              className="mt-6 w-full rounded-xl border border-slate-200 bg-[#F7F8FA] px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
             >
               {isSignup || isForgot || isReset ? "Voltar para login" : "Criar uma nova conta"}
             </button>

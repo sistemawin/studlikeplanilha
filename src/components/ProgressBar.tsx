@@ -4,7 +4,7 @@ type Props = {
   label?: string;
 };
 
-export function ProgressBar({ value, tone = "bg-zinc-950", label }: Props) {
+export function ProgressBar({ value, tone = "bg-[#1877F2]", label }: Props) {
   const clamped = Math.min(Math.max(value, 0), 100);
   return (
     <div
@@ -13,9 +13,9 @@ export function ProgressBar({ value, tone = "bg-zinc-950", label }: Props) {
       aria-valuemin={0}
       aria-valuemax={100}
       aria-label={label}
-      className="h-2 w-full overflow-hidden rounded-full bg-slate-200"
+      className="h-2 w-full overflow-hidden rounded-full bg-slate-100"
     >
-      <div className={`h-2 rounded-full ${tone}`} style={{ width: `${clamped}%` }} />
+      <div className={`h-2 rounded-full shadow-sm ${tone}`} style={{ width: `${clamped}%` }} />
     </div>
   );
 }

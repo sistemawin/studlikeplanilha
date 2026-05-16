@@ -13,10 +13,10 @@ export function PieChart({ title, subtitle, slices, centerLabel }: Props) {
   const total = slices.reduce((sum, slice) => sum + slice.value, 0);
 
   return (
-    <div className="w-full max-w-full overflow-hidden rounded-xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-900/5 sm:p-5">
+    <div className="w-full max-w-full overflow-hidden rounded-2xl border border-white bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.07)] ring-1 ring-slate-900/5 sm:p-5">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400">Analytics</p>
+          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#1877F2]">Analytics</p>
           <h2 className="mt-1 break-words text-xl font-semibold text-slate-950">{title}</h2>
           <p className="mt-1 break-words text-sm leading-6 text-slate-500">{subtitle}</p>
         </div>

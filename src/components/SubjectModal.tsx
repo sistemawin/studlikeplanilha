@@ -52,7 +52,7 @@ export function SubjectModal({ subject, onSave, onClose }: Props) {
     >
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        className="absolute inset-0 bg-slate-950/45 backdrop-blur-md"
         onClick={onClose}
         aria-hidden="true"
       />
@@ -62,7 +62,7 @@ export function SubjectModal({ subject, onSave, onClose }: Props) {
           event.preventDefault();
           handleSave();
         }}
-        className="relative z-10 flex h-[100svh] max-h-[100svh] w-full max-w-sm flex-col overflow-hidden bg-white shadow-2xl sm:h-auto sm:max-h-[calc(100svh-2rem)] sm:rounded-2xl"
+        className="relative z-10 flex h-[100svh] max-h-[100svh] w-full max-w-sm flex-col overflow-hidden bg-white shadow-2xl shadow-slate-950/20 ring-1 ring-slate-900/5 sm:h-auto sm:max-h-[calc(100svh-2rem)] sm:rounded-2xl"
       >
         {/* Header */}
         <div className="sticky top-0 z-20 flex shrink-0 items-center justify-between border-b border-slate-100 bg-white px-5 py-4">
@@ -110,7 +110,7 @@ export function SubjectModal({ subject, onSave, onClose }: Props) {
                     aria-pressed={peso === p}
                     className={`h-11 rounded-xl text-sm font-semibold transition ${
                       peso === p
-                        ? "bg-slate-950 text-white shadow-sm"
+                        ? "bg-[#1877F2] text-white shadow-sm"
                         : "border border-slate-200 text-slate-600 hover:bg-slate-50"
                     }`}
                   >
@@ -185,7 +185,7 @@ export function SubjectModal({ subject, onSave, onClose }: Props) {
             </button>
             <button
               type="submit"
-              className="h-11 rounded-xl bg-slate-950 text-sm font-semibold text-white transition hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
+              className="h-11 rounded-xl bg-[#1877F2] text-sm font-bold text-white transition hover:bg-[#1B74E4] focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
             >
               Salvar
             </button>

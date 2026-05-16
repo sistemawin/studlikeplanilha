@@ -1,8 +1,14 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f7f7f8;
+  --background: #f0f2f5;
   --foreground: #111827;
+  --studlike-blue: #1877f2;
+  --studlike-blue-2: #1b74e4;
+  --studlike-ink: #0f172a;
+  --studlike-card: #ffffff;
+  --studlike-border: rgba(15, 23, 42, 0.09);
+  --studlike-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
 }
 
 @theme inline {
@@ -26,13 +32,16 @@ html {
   overscroll-behavior-x: none;
   overscroll-behavior-y: auto;
   background: var(--background);
+  scroll-behavior: smooth;
 }
 
 body {
   width: 100%;
   max-width: 100%;
   min-height: 100dvh;
-  background: var(--background);
+  background:
+    radial-gradient(circle at top left, rgba(24, 119, 242, 0.1), transparent 34rem),
+    linear-gradient(180deg, #f7f9fc 0%, var(--background) 20rem);
   color: var(--foreground);
   font-family:
     -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
@@ -51,6 +60,51 @@ body {
   overscroll-behavior-y: auto;
 }
 
+body::selection {
+  background: var(--studlike-blue);
+  color: #ffffff;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    color 180ms ease,
+    opacity 180ms ease,
+    transform 180ms ease;
+}
+
+button:active {
+  transform: translateY(1px);
+}
+
+input,
+select,
+textarea {
+  background-color: #ffffff;
+}
+
+::-webkit-scrollbar {
+  height: 10px;
+  width: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(15, 23, 42, 0.16);
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
 .mobile-bottom-nav {
   position: fixed !important;
   top: auto !important;
@@ -61,11 +115,6 @@ body {
   width: 100%;
   min-height: calc(4.75rem + env(safe-area-inset-bottom));
   transform: none !important;
-}
-
-::selection {
-  background: #1877f2;
-  color: #ffffff;
 }
 
 button,
