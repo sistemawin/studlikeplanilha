@@ -532,6 +532,10 @@ export default function Home() {
     exams.reduce((sum, e) => sum + (e.acertos / e.total) * 100, 0) / exams.length,
   );
 
+  const nextExam = [...(schedule.provas ?? [])]
+    .filter((p) => p.data >= todayIso)
+    .sort((a, b) => a.data.localeCompare(b.data))[0];
+
   const sectionTitle: Record<NavTarget, string> = {
     dashboard: "Hoje",
     edital: "Edital",
@@ -809,6 +813,24 @@ export default function Home() {
       return gs.map((g) => (g.tipo === tipo ? { ...g, valorObjetivo: value } : g));
     });
     setNotice(`Meta de ${tipo} atualizada para ${value}.`);
+  }
+
+  function addExamDate(nome: string, data: string) {
+    if (preventReadOnlyAction()) return;
+    setSchedule((s) => ({
+      ...s,
+      provas: [...(s.provas ?? []), { id: crypto.randomUUID(), nome, data }],
+    }));
+    setNotice(`Prova "${nome}" adicionada.`);
+  }
+
+  function deleteExamDate(id: string) {
+    if (preventReadOnlyAction()) return;
+    setSchedule((s) => ({
+      ...s,
+      provas: (s.provas ?? []).filter((p) => p.id !== id),
+    }));
+    setNotice("Prova removida.");
   }
 
   function updateSemanal(day: string, ids: string[]) {
@@ -1932,6 +1954,7 @@ export default function Home() {
                   onOpenFocusTimer={openFocusTimer}
                   onNavigate={navigateFromDashboard}
                   onDeleteSession={deleteStudySession}
+                  nextExam={nextExam}
                 />
               </ErrorBoundary>
 
@@ -1997,6 +2020,8 @@ export default function Home() {
                       setNotice(`Meta diária atualizada para ${h} hora${h !== 1 ? "s" : ""}.`);
                     }}
                     onUpdateSemanal={updateSemanal}
+                    onAddExamDate={addExamDate}
+                    onDeleteExamDate={deleteExamDate}
                   />
                 </ErrorBoundary>
 

@@ -40,6 +40,7 @@ export function validateSchedule(value: unknown, fallback: ScheduleConfig): Sche
     horasDia: Number(candidate.horasDia) || fallback.horasDia,
     semanal: candidate.semanal ?? fallback.semanal,
     ciclos: candidate.ciclos ?? fallback.ciclos,
+    provas: Array.isArray(candidate.provas) ? candidate.provas : [],
   };
 }
 

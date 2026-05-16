@@ -8,6 +8,12 @@ export type Difficulty = "Fácil" | "Médio" | "Difícil";
 export type ReviewType = "1" | "7" | "21" | "30" | "manual" | "dificuldade";
 export type PlanningMode = "semanal" | "ciclos";
 export type NavTarget = "dashboard" | "edital" | "revisoes" | "cronograma" | "simulados";
+
+export type ExamDate = {
+  id: string;
+  nome: string;
+  data: string;
+};
 export type AuthMode = "login" | "signup" | "forgot" | "reset";
 
 export type Subject = {
@@ -39,6 +45,7 @@ export type ScheduleConfig = {
   horasDia: number;
   semanal: Record<string, string[]>;
   ciclos: string[];
+  provas: ExamDate[];
 };
 
 export type Goal = {

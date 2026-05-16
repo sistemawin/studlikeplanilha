@@ -5,6 +5,7 @@ export const defaultSchedule: ScheduleConfig = {
   horasDia: 0,
   semanal: {},
   ciclos: [],
+  provas: [],
 };
 
 export function defaultGoals(): Goal[] {

@@ -1,4 +1,4 @@
-import { BarChart3, ChevronRight, Flame, RotateCcw, Target, Timer, Zap } from "lucide-react";
+import { BarChart3, ChevronRight, Flag, Flame, RotateCcw, Target, Timer, Zap } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import type { Goal, NavTarget, StudySession, Subject, Topic } from "@/types";
@@ -20,6 +20,7 @@ type Props = {
   onOpenFocusTimer: () => void;
   onNavigate: (target: NavTarget) => void;
   onDeleteSession: (id: string) => void;
+  nextExam: { nome: string; data: string } | undefined;
 };
 
 export function Dashboard({
@@ -37,6 +38,7 @@ export function Dashboard({
   onOpenFocusTimer,
   onNavigate,
   onDeleteSession,
+  nextExam,
 }: Props) {
   const [historyOpen, setHistoryOpen] = useState(false);
   const completedTopics = topics.filter((t) => t.status === "Revisado").length;
@@ -76,6 +78,12 @@ export function Dashboard({
   const weekSeconds = weekSessions.reduce((sum, session) => sum + session.durationSeconds, 0);
   const streak = computeStreak(studySessions, todayIso);
   const recentSessions = studySessions.slice(0, 5);
+  const daysUntilExam = nextExam
+    ? Math.ceil(
+        (new Date(nextExam.data + "T12:00:00").getTime() - new Date(todayIso + "T12:00:00").getTime()) /
+          (1000 * 60 * 60 * 24),
+      )
+    : 0;
 
   const kpiCards = [
     {
@@ -241,6 +249,30 @@ export function Dashboard({
       >
         {notice}
       </p>
+
+      {nextExam && (
+        <div
+          className={`${isVisible ? "flex" : "hidden"} xl:flex items-center justify-between gap-4 rounded-2xl border border-blue-100 bg-gradient-to-r from-blue-50 to-white p-4 shadow-sm shadow-slate-900/5 sm:p-5`}
+        >
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#1877F2]/10">
+              <Flag className="h-5 w-5 text-[#1877F2]" aria-hidden="true" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-blue-400">Próxima prova</p>
+              <p className="truncate text-sm font-bold text-slate-950">{nextExam.nome}</p>
+            </div>
+          </div>
+          <div className="shrink-0 text-right">
+            <p className="text-2xl font-black text-[#1877F2]">
+              {daysUntilExam === 0 ? "Hoje!" : daysUntilExam === 1 ? "Amanhã" : `${daysUntilExam}`}
+            </p>
+            {daysUntilExam > 1 && (
+              <p className="text-xs font-semibold text-slate-500">dias restantes</p>
+            )}
+          </div>
+        </div>
+      )}
 
       {historyOpen && (
         <SessionHistoryModal

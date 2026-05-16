@@ -1,8 +1,8 @@
-import { Clock3, Plus, X } from "lucide-react";
+import { Clock3, Plus, Trash2, X } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import type { NavTarget, PlanningMode, ScheduleConfig, Subject } from "@/types";
-import { corToAccent } from "@/lib/utils";
+import { corToAccent, isoDate } from "@/lib/utils";
 
 const CALENDAR_DAYS = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
 
@@ -14,6 +14,8 @@ type Props = {
   onModeChange: (mode: PlanningMode) => void;
   onHorasChange: (horas: number) => void;
   onUpdateSemanal: (day: string, ids: string[]) => void;
+  onAddExamDate: (nome: string, data: string) => void;
+  onDeleteExamDate: (id: string) => void;
 };
 
 export function Schedule({
@@ -24,8 +26,22 @@ export function Schedule({
   onModeChange,
   onHorasChange,
   onUpdateSemanal,
+  onAddExamDate,
+  onDeleteExamDate,
 }: Props) {
   const [pickerDay, setPickerDay] = useState<string | null>(null);
+  const [examName, setExamName] = useState("");
+  const [examDate, setExamDate] = useState("");
+
+  const todayIso = isoDate(new Date());
+  const sortedProvas = [...(schedule.provas ?? [])].sort((a, b) => a.data.localeCompare(b.data));
+
+  function handleAddExamDate() {
+    if (!examName.trim() || !examDate) return;
+    onAddExamDate(examName.trim(), examDate);
+    setExamName("");
+    setExamDate("");
+  }
 
   function removeFromDay(day: string, subjectId: string) {
     onUpdateSemanal(day, (schedule.semanal[day] ?? []).filter((id) => id !== subjectId));
@@ -206,6 +222,87 @@ export function Schedule({
             </motion.div>
           );
         })}
+      </div>
+
+      {/* Exam dates */}
+      <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50/70 p-4">
+        <p className="font-semibold text-slate-950">Próximas provas</p>
+        <p className="mt-0.5 text-sm text-slate-500">A contagem regressiva aparece na tela inicial.</p>
+
+        <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+          <label className="sr-only" htmlFor="exam-date-name">Nome da prova</label>
+          <input
+            id="exam-date-name"
+            type="text"
+            value={examName}
+            onChange={(e) => setExamName(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") handleAddExamDate(); }}
+            placeholder="Nome da prova ou concurso"
+            className="h-10 flex-1 rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-[#1877F2] focus:ring-2 focus:ring-blue-100"
+          />
+          <label className="sr-only" htmlFor="exam-date-date">Data da prova</label>
+          <input
+            id="exam-date-date"
+            type="date"
+            value={examDate}
+            onChange={(e) => setExamDate(e.target.value)}
+            min={todayIso}
+            className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-[#1877F2] focus:ring-2 focus:ring-blue-100"
+          />
+          <button
+            type="button"
+            onClick={handleAddExamDate}
+            disabled={!examName.trim() || !examDate}
+            className="flex h-10 items-center justify-center gap-2 rounded-xl bg-[#1877F2] px-4 text-sm font-bold text-white hover:bg-[#1B74E4] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
+          >
+            <Plus className="h-4 w-4" aria-hidden="true" />
+            Adicionar
+          </button>
+        </div>
+
+        {sortedProvas.length > 0 && (
+          <div className="mt-3 space-y-2">
+            {sortedProvas.map((prova) => {
+              const daysUntil = Math.ceil(
+                (new Date(prova.data + "T12:00:00").getTime() - new Date(todayIso + "T12:00:00").getTime()) /
+                  (1000 * 60 * 60 * 24),
+              );
+              const isPast = daysUntil < 0;
+              return (
+                <div
+                  key={prova.id}
+                  className="flex items-center justify-between gap-3 rounded-xl bg-white p-3 ring-1 ring-slate-100"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-slate-950">{prova.nome}</p>
+                    <p className="text-xs font-medium text-slate-500">{prova.data}</p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <span
+                      className={`rounded-lg px-2.5 py-1 text-xs font-bold ${
+                        isPast
+                          ? "bg-slate-100 text-slate-500"
+                          : daysUntil === 0
+                          ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100"
+                          : "bg-blue-50 text-[#1877F2] ring-1 ring-blue-100"
+                      }`}
+                    >
+                      {isPast ? "Encerrada" : daysUntil === 0 ? "Hoje!" : daysUntil === 1 ? "Amanhã" : `${daysUntil} dias`}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => onDeleteExamDate(prova.id)}
+                      aria-label={`Remover prova ${prova.nome}`}
+                      className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-rose-50 hover:text-rose-600"
+                    >
+                      <Trash2 className="h-4 w-4" aria-hidden="true" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {pickerDay && (
