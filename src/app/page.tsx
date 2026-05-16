@@ -17,7 +17,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { StudlikeLogo } from "@/components/StudlikeLogo";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { Session } from "@supabase/supabase-js";
 import { getSupabaseBrowserClient, getSupabasePasswordVerifierClient } from "@/lib/supabase";
@@ -62,6 +62,7 @@ import { SuggestionModal } from "@/components/SuggestionModal";
 import { ArchiveEditalModal } from "@/components/ArchiveEditalModal";
 import { AdminPanel } from "@/sections/AdminPanel";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { AppFeedbackToast, type AppFeedback, type FeedbackTone } from "@/components/AppFeedbackToast";
 
 const SYNC_DEBOUNCE_MS = 700;
 const ADMIN_USERS_PAGE_SIZE = 20;
@@ -74,6 +75,29 @@ type ConfirmDialogState = {
   confirmLabel?: string;
   onConfirm: () => void;
 };
+
+function feedbackToneFromMessage(message: string): FeedbackTone {
+  const normalized = message.toLocaleLowerCase("pt-BR");
+  const errorWords = [
+    "não foi possível",
+    "erro",
+    "inválid",
+    "preencha",
+    "digite",
+    "informe",
+    "escolha",
+    "selecione",
+    "maior que",
+    "expirou",
+    "bloqueado",
+  ];
+
+  if (errorWords.some((word) => normalized.includes(word))) {
+    return "error";
+  }
+
+  return "success";
+}
 
 function normalizeAdminAppState(value: unknown): AppState {
   if (!value || typeof value !== "object") {
@@ -138,7 +162,8 @@ export default function Home() {
   const [activeSection, setActiveSection] = useState<NavTarget>("dashboard");
   const [adminView, setAdminView] = useState(false);
   const [readOnlyUser, setReadOnlyUser] = useState<ReadOnlyUser | null>(null);
-  const [notice, setNotice] = useState("Pronto para estudar.");
+  const [notice, setNoticeState] = useState("Pronto para estudar.");
+  const [feedback, setFeedback] = useState<AppFeedback | null>(null);
   const [mobileNavPortalReady, setMobileNavPortalReady] = useState(false);
 
   // ── Timer state ───────────────────────────────────────────────────────────
@@ -188,6 +213,7 @@ export default function Home() {
   // ── Sync status ───────────────────────────────────────────────────────────
   const [syncStatus, setSyncStatus] = useState<SyncStatus>("idle");
   const savedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const feedbackIdRef = useRef(0);
 
   // ── Remote sync state ─────────────────────────────────────────────────────
   const [remoteReady, setRemoteReady] = useState(false);
@@ -198,6 +224,16 @@ export default function Home() {
   const latestSerializedStateRef = useRef("");
   const pendingSyncRef = useRef(false);
   const syncInFlightRef = useRef(false);
+
+  function setNotice(message: string, tone: FeedbackTone = feedbackToneFromMessage(message)) {
+    setNoticeState(message);
+    feedbackIdRef.current += 1;
+    setFeedback({ id: feedbackIdRef.current, message, tone });
+  }
+
+  const closeFeedback = useCallback(() => {
+    setFeedback(null);
+  }, []);
 
   // ── Timer tick ────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -592,18 +628,23 @@ export default function Home() {
     ]);
   }
 
-  function updateTopicStatus(topicId: string, status: TopicStatus) {
+  function updateTopicStatus(topicId: string, status: TopicStatus, options?: { silent?: boolean }) {
     if (preventReadOnlyAction()) return;
     const current = topics.find((t) => t.id === topicId);
     if (!current) return;
     const next = { ...current, status, estudadoEm: status === "Não Estudado" ? undefined : todayIso };
     setTopics((ts) => ts.map((t) => (t.id === topicId ? next : t)));
     if (status === "Questões Feitas" || status === "Revisado") scheduleReviews(next);
+    if (!options?.silent) {
+      setNotice(`Status de "${current.titulo}" atualizado para ${status}.`);
+    }
   }
 
   function updateTopicDifficulty(topicId: string, difficulty: Difficulty) {
     if (preventReadOnlyAction()) return;
+    const topic = topics.find((t) => t.id === topicId);
     setTopics((ts) => ts.map((t) => (t.id === topicId ? { ...t, dificuldade: difficulty } : t)));
+    setNotice(`Dificuldade${topic ? ` de "${topic.titulo}"` : ""} atualizada para ${difficulty}.`);
   }
 
   function addTopicsFromText() {
@@ -755,11 +796,13 @@ export default function Home() {
       }
       return gs.map((g) => (g.tipo === tipo ? { ...g, valorObjetivo: value } : g));
     });
+    setNotice(`Meta de ${tipo} atualizada para ${value}.`);
   }
 
   function updateSemanal(day: string, ids: string[]) {
     if (preventReadOnlyAction()) return;
     setSchedule((sc) => ({ ...sc, semanal: { ...sc.semanal, [day]: ids } }));
+    setNotice("Cronograma semanal atualizado.");
   }
 
   function addQuestionLog(data: { materiaId: string; topicoId: string; quantidade: number; acertos: number | null; data: string }) {
@@ -815,7 +858,7 @@ export default function Home() {
     }
 
     if (topic.status === "Não Estudado" || topic.status === "Teoria Lida") {
-      updateTopicStatus(topic.id, "Questões Feitas");
+      updateTopicStatus(topic.id, "Questões Feitas", { silent: true });
     }
 
     setNotice(`${data.quantidade} questão${data.quantidade !== 1 ? "ões" : ""} registrada${data.quantidade !== 1 ? "s" : ""} em ${subject.nome}.`);
@@ -1008,8 +1051,10 @@ export default function Home() {
       const supabase = getSupabaseBrowserClient();
       const { error } = await supabase.from("sugestoes").update({ status }).eq("id", id);
       if (error) throw error;
+      setNotice("Status da sugestão atualizado.");
     } catch (err) {
       setAdminError(err instanceof Error ? err.message : "Não foi possível atualizar o status.");
+      setNotice(err instanceof Error ? err.message : "Não foi possível atualizar o status.");
       void loadAdminSuggestions();
     }
   }
@@ -1024,6 +1069,7 @@ export default function Home() {
   function refreshAdminData() {
     void loadAdminSuggestions();
     void loadAdminUsers(adminUsersPage, adminUsersSearch);
+    setNotice("Atualizando dados administrativos.", "info");
   }
 
   async function refreshAppVersion() {
@@ -1436,50 +1482,59 @@ export default function Home() {
     openMobileSection(target);
   }
 
+  const feedbackToast = <AppFeedbackToast feedback={feedback} onClose={closeFeedback} />;
+
   // ── Loading & auth gates ──────────────────────────────────────────────────
   if (!authReady) {
     return (
       <main className="flex min-h-dvh w-full items-center justify-center bg-[#F0F2F5] text-[#1877F2]">
         <Loader2 className="h-7 w-7 animate-spin" aria-label="Carregando" />
+        {feedbackToast}
       </main>
     );
   }
 
   if (authMode === "reset") {
     return (
-      <AuthScreen
-        mode={authMode}
-        email={authEmail}
-        password={authPassword}
-        name={authName}
-        loading={authLoading}
-        error={authError}
-        message={authMessage}
-        onModeChange={changeAuthMode}
-        onEmailChange={setAuthEmail}
-        onPasswordChange={setAuthPassword}
-        onNameChange={setAuthName}
-        onSubmit={submitAuth}
-      />
+      <>
+        <AuthScreen
+          mode={authMode}
+          email={authEmail}
+          password={authPassword}
+          name={authName}
+          loading={authLoading}
+          error={authError}
+          message={authMessage}
+          onModeChange={changeAuthMode}
+          onEmailChange={setAuthEmail}
+          onPasswordChange={setAuthPassword}
+          onNameChange={setAuthName}
+          onSubmit={submitAuth}
+        />
+        {feedbackToast}
+      </>
     );
   }
 
   if (!session) {
     return (
-      <AuthScreen
-        mode={authMode}
-        email={authEmail}
-        password={authPassword}
-        name={authName}
-        loading={authLoading}
-        error={authError}
-        message={authMessage}
-        onModeChange={changeAuthMode}
-        onEmailChange={setAuthEmail}
-        onPasswordChange={setAuthPassword}
-        onNameChange={setAuthName}
-        onSubmit={submitAuth}
-      />
+      <>
+        <AuthScreen
+          mode={authMode}
+          email={authEmail}
+          password={authPassword}
+          name={authName}
+          loading={authLoading}
+          error={authError}
+          message={authMessage}
+          onModeChange={changeAuthMode}
+          onEmailChange={setAuthEmail}
+          onPasswordChange={setAuthPassword}
+          onNameChange={setAuthName}
+          onSubmit={submitAuth}
+        />
+        {feedbackToast}
+      </>
     );
   }
 
@@ -1495,6 +1550,7 @@ export default function Home() {
             </p>
           )}
         </div>
+        {feedbackToast}
       </main>
     );
   }
@@ -1576,6 +1632,8 @@ export default function Home() {
           onFinishSession={finishSession}
         />
       )}
+
+      {feedbackToast}
 
       <SuggestionModal
         open={suggestionOpen}
@@ -1885,10 +1943,12 @@ export default function Home() {
                     onModeChange={(mode: PlanningMode) => {
                       if (preventReadOnlyAction()) return;
                       setSchedule((s) => ({ ...s, modo: mode }));
+                      setNotice(`Planejamento alterado para ${mode === "semanal" ? "semanal" : "ciclos"}.`);
                     }}
                     onHorasChange={(h: number) => {
                       if (preventReadOnlyAction()) return;
                       setSchedule((s) => ({ ...s, horasDia: h }));
+                      setNotice(`Meta diária atualizada para ${h} hora${h !== 1 ? "s" : ""}.`);
                     }}
                     onUpdateSemanal={updateSemanal}
                   />
