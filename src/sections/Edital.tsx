@@ -65,7 +65,7 @@ function SubjectCard({
     <motion.div
       whileHover={{ y: -2, transition: { duration: 0.15 } }}
       onClick={onOpen}
-      className="relative cursor-pointer overflow-hidden rounded-2xl border border-white/20 p-5 shadow-lg shadow-blue-900/15 ring-1 ring-blue-950/5 select-none"
+      className="relative min-h-[142px] cursor-pointer overflow-hidden rounded-2xl border border-white/20 p-5 shadow-lg shadow-blue-900/15 ring-1 ring-blue-950/5 select-none"
       style={{
         background: `linear-gradient(135deg, #1877F2 0%, #1B74E4 52%, ${accent.chart}78 118%)`,
       }}
@@ -82,42 +82,44 @@ function SubjectCard({
         {subject.nome}
       </span>
 
-      <div className="relative z-10">
+      <div className="absolute top-3 right-3 z-20 flex shrink-0 gap-1 rounded-2xl border border-white/15 bg-white/10 p-1 shadow-sm shadow-blue-950/10 backdrop-blur">
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit();
+          }}
+          aria-label={`Editar ${subject.nome}`}
+          className="flex h-9 w-9 items-center justify-center rounded-xl text-white/80 transition hover:bg-white/18 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+        >
+          <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
+        </button>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete();
+          }}
+          aria-label={`Excluir ${subject.nome}`}
+          className="flex h-9 w-9 items-center justify-center rounded-xl text-white/80 transition hover:bg-red-500/25 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+        >
+          <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+        </button>
+      </div>
+
+      <div className="relative z-10 flex min-h-[102px] flex-col justify-between">
         <span
           className="mb-3 block h-1.5 w-10 rounded-full"
           style={{ backgroundColor: accent.chart }}
         />
 
-        <div className="flex items-start justify-between gap-2">
+        <div className="pr-24">
           <div className="min-w-0">
             <p className="truncate text-base font-bold text-white">{subject.nome}</p>
             <p className="mt-0.5 text-xs font-semibold text-blue-50/75">
               {topics.length} tópico{topics.length !== 1 ? "s" : ""}
               {topics.length > 0 && ` · ${progress}% pronto`}
             </p>
-          </div>
-
-          <div className="flex shrink-0 gap-1">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onEdit();
-              }}
-              aria-label={`Editar ${subject.nome}`}
-              className="flex h-10 w-10 items-center justify-center rounded-xl text-white/70 transition hover:bg-white/15 hover:text-white"
-            >
-              <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
-            </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete();
-              }}
-              aria-label={`Excluir ${subject.nome}`}
-              className="flex h-10 w-10 items-center justify-center rounded-xl text-white/70 transition hover:bg-white/15 hover:text-white"
-            >
-              <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
-            </button>
           </div>
         </div>
 
