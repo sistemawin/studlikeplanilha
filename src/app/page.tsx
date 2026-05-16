@@ -898,6 +898,47 @@ export default function Home() {
     setNotice(`${data.quantidade} questão${data.quantidade !== 1 ? "ões" : ""} registrada${data.quantidade !== 1 ? "s" : ""} em ${subject.nome}.`);
   }
 
+  function addManualSession(data: {
+    tipo: import("@/types").StudySessionType;
+    materiaId?: string;
+    materiaNome?: string;
+    topicoId?: string;
+    topicoTitulo?: string;
+    durationSeconds: number;
+    data: string;
+  }) {
+    if (preventReadOnlyAction()) return;
+    if (data.durationSeconds <= 0) {
+      setNotice("Informe uma duração maior que zero.");
+      return;
+    }
+    const sessionHours = Math.round((data.durationSeconds / 3600) * 100) / 100;
+    setStudySessions((ss) => [
+      {
+        id: crypto.randomUUID(),
+        tipo: data.tipo,
+        data: data.data || todayIso,
+        endedAt: new Date().toISOString(),
+        durationSeconds: data.durationSeconds,
+        materiaId: data.materiaId,
+        materiaNome: data.materiaNome,
+        topicoId: data.topicoId,
+        topicoTitulo: data.topicoTitulo,
+      },
+      ...ss,
+    ]);
+    if (data.data === todayIso) {
+      setGoals((gs) =>
+        gs.map((g) =>
+          g.tipo === "horas"
+            ? { ...g, valorAtual: Math.round((g.valorAtual + sessionHours) * 100) / 100 }
+            : g,
+        ),
+      );
+    }
+    setNotice(`Sessão de ${formatTimer(data.durationSeconds)} registrada.`);
+  }
+
   function deleteStudySession(sessionId: string) {
     if (preventReadOnlyAction()) return;
     const target = studySessions.find((s) => s.id === sessionId);
@@ -1954,6 +1995,7 @@ export default function Home() {
                   onOpenFocusTimer={openFocusTimer}
                   onNavigate={navigateFromDashboard}
                   onDeleteSession={deleteStudySession}
+                  onAddManualSession={addManualSession}
                   nextExam={nextExam}
                 />
               </ErrorBoundary>

@@ -261,6 +261,22 @@ export function Exams({
 
   const maxWeeklyHours = Math.max(...weeklyHoursData.map((w) => w.hours), 0.1);
 
+  // ── Time distribution by subject ───────────────────────────────────────────
+  const timeBySubjectMap = new Map<string, { nome: string; cor: string; seconds: number }>();
+  for (const session of studySessions) {
+    if (!session.materiaId || !session.materiaNome) continue;
+    const subject = subjects.find((s) => s.id === session.materiaId);
+    const prev = timeBySubjectMap.get(session.materiaId) ?? { nome: session.materiaNome, cor: subject?.cor ?? "", seconds: 0 };
+    timeBySubjectMap.set(session.materiaId, { ...prev, seconds: prev.seconds + session.durationSeconds });
+  }
+  const timeBySubjectData = [...timeBySubjectMap.values()].sort((a, b) => b.seconds - a.seconds);
+  const timePieSlices = timeBySubjectData.map((item) => ({
+    label: item.nome.replace("Direito ", ""),
+    value: Math.round((item.seconds / 3600) * 10) / 10,
+    color: corToAccent(item.cor).chart,
+  }));
+  const totalStudyHours = Math.round((studySessions.reduce((sum, s) => sum + s.durationSeconds, 0) / 3600) * 10) / 10;
+
   const selectedQuestionSubjectId = questionSubjectId || subjects[0]?.id || "";
   const questionTopics = topics.filter((topic) => topic.materiaId === selectedQuestionSubjectId);
   const selectedQuestionTopicId =
@@ -494,6 +510,24 @@ export function Exams({
             )}
           </div>
         </div>
+      </section>
+
+      {/* Time distribution by subject */}
+      <section className={`${isVisible ? "block" : "hidden"} xl:block`}>
+        {timePieSlices.length === 0 ? (
+          <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-white bg-white p-10 text-center shadow-[0_18px_45px_rgba(15,23,42,0.07)] ring-1 ring-slate-900/5">
+            <Timer className="h-8 w-8 text-slate-300" aria-hidden="true" />
+            <p className="text-sm font-semibold text-slate-500">Nenhuma sessão com matéria registrada ainda.</p>
+            <p className="text-sm text-slate-400">Use o modo foco e selecione uma matéria para ver a distribuição.</p>
+          </div>
+        ) : (
+          <PieChart
+            title="Distribuição de tempo por matéria"
+            subtitle="Percentual do tempo total de estudo dedicado a cada matéria."
+            slices={timePieSlices}
+            centerLabel={`${totalStudyHours}h`}
+          />
+        )}
       </section>
 
       {/* Performance bar chart + ranking */}
