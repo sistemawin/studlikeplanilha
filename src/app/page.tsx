@@ -689,6 +689,18 @@ export default function Home() {
     setNotice("Revisão manual agendada.");
   }
 
+  function rescheduleReview(reviewId: string, days: number) {
+    if (preventReadOnlyAction()) return;
+    setReviews((rs) =>
+      rs.map((r) => {
+        if (r.id !== reviewId) return r;
+        const baseIso = r.dataAgendada < todayIso ? todayIso : r.dataAgendada;
+        return { ...r, dataAgendada: addDays(new Date(baseIso + "T12:00:00"), days) };
+      }),
+    );
+    setNotice(`Revisão adiada em ${days} dia${days !== 1 ? "s" : ""}.`);
+  }
+
   function completeReview(reviewId: string) {
     if (preventReadOnlyAction()) return;
     setReviews((rs) => rs.map((r) => (r.id === reviewId ? { ...r, concluida: true } : r)));
@@ -1958,6 +1970,7 @@ export default function Home() {
                     todayIso={todayIso}
                     activeSection={activeSection}
                     onComplete={completeReview}
+                    onReschedule={rescheduleReview}
                   />
                 </ErrorBoundary>
               )}

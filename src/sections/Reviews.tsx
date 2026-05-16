@@ -1,5 +1,6 @@
-import { CheckCircle2 } from "lucide-react";
+import { CalendarClock, CheckCircle2 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
+import { useState } from "react";
 import type { NavTarget, Review, Subject, Topic } from "@/types";
 
 type Props = {
@@ -9,7 +10,10 @@ type Props = {
   todayIso: string;
   activeSection: NavTarget;
   onComplete: (reviewId: string) => void;
+  onReschedule: (reviewId: string, days: number) => void;
 };
+
+const RESCHEDULE_OPTIONS = [1, 3, 7, 14];
 
 function daysOverdue(reviewDate: string, todayIso: string): number {
   const diff = new Date(todayIso).getTime() - new Date(reviewDate).getTime();
@@ -25,7 +29,8 @@ const REVIEW_TYPE_LABEL: Record<string, string> = {
   dificuldade: "dificuldade",
 };
 
-export function Reviews({ reviews, topics, subjects, todayIso, activeSection, onComplete }: Props) {
+export function Reviews({ reviews, topics, subjects, todayIso, activeSection, onComplete, onReschedule }: Props) {
+  const [reschedulingId, setReschedulingId] = useState<string | null>(null);
   const pendingToday = reviews.filter((r) => !r.concluida && r.dataAgendada <= todayIso);
   const isVisible = activeSection === "revisoes";
 
@@ -95,15 +100,53 @@ export function Reviews({ reviews, topics, subjects, todayIso, activeSection, on
                     </span>
                   </div>
 
-                  <motion.button
-                    onClick={() => onComplete(review.id)}
-                    whileHover={{ scale: 1.01 }}
-                    whileTap={{ scale: 0.97 }}
-                    className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#1877F2] text-sm font-bold text-white shadow-lg shadow-blue-600/20 transition hover:bg-[#1B74E4] focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
-                  >
-                    <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
-                    Concluir revisão
-                  </motion.button>
+                  <div className="mt-4">
+                    {reschedulingId === review.id ? (
+                      <div className="flex flex-wrap gap-2">
+                        {RESCHEDULE_OPTIONS.map((days) => (
+                          <button
+                            key={days}
+                            type="button"
+                            onClick={() => {
+                              onReschedule(review.id, days);
+                              setReschedulingId(null);
+                            }}
+                            className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-700 hover:bg-amber-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-400"
+                          >
+                            +{days} dia{days !== 1 ? "s" : ""}
+                          </button>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={() => setReschedulingId(null)}
+                          className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-slate-400"
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-[1fr_auto] gap-2">
+                        <motion.button
+                          onClick={() => onComplete(review.id)}
+                          whileHover={{ scale: 1.01 }}
+                          whileTap={{ scale: 0.97 }}
+                          className="flex h-11 items-center justify-center gap-2 rounded-xl bg-[#1877F2] text-sm font-bold text-white shadow-lg shadow-blue-600/20 transition hover:bg-[#1B74E4] focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
+                        >
+                          <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
+                          Concluir revisão
+                        </motion.button>
+                        <button
+                          type="button"
+                          onClick={() => setReschedulingId(review.id)}
+                          aria-label="Adiar revisão"
+                          className="flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
+                        >
+                          <CalendarClock className="h-4 w-4" aria-hidden="true" />
+                          Adiar
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </motion.article>
               );
             })}
