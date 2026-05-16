@@ -1506,12 +1506,19 @@ export default function Home() {
     { icon: CalendarDays, label: "Plano", target: "cronograma" as NavTarget, action: () => openMobileSection("cronograma") },
     { icon: BarChart3, label: "Dados", target: "simulados" as NavTarget, action: () => openMobileSection("simulados") },
   ];
+  const hideMobileBottomNav =
+    adminView ||
+    timerFocusOpen ||
+    subjectModal.open ||
+    suggestionOpen ||
+    archiveModalOpen ||
+    Boolean(confirmDialog);
 
   const mobileBottomNav = mobileNavPortalReady
     ? createPortal(
         <nav
           aria-label="Navegação mobile"
-          className={`${adminView || timerFocusOpen || subjectModal.open ? "hidden" : "grid"} mobile-bottom-nav grid-cols-5 overflow-hidden border-t border-white/70 bg-white/[0.92] px-2 pb-[calc(0.45rem+env(safe-area-inset-bottom))] pt-2 shadow-[0_-14px_34px_rgba(15,23,42,0.14)] backdrop-blur-xl xl:hidden`}
+          className={`${hideMobileBottomNav ? "hidden" : "grid"} mobile-bottom-nav grid-cols-5 overflow-hidden border-t border-white/70 bg-white/[0.92] px-2 pb-[calc(0.45rem+env(safe-area-inset-bottom))] pt-2 shadow-[0_-14px_34px_rgba(15,23,42,0.14)] backdrop-blur-xl xl:hidden`}
         >
           {mobileNavItems.map((item) => {
             const Icon = item.icon;
