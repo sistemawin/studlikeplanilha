@@ -129,7 +129,7 @@ export function difficultyDays(difficulty: Difficulty) {
 
 export function topicScore(status: TopicStatus, difficulty: Difficulty) {
   const statusPoints: Record<TopicStatus, number> = {
-    "Não Estudado": 8,
+    "Não Estudado": 0,
     "Teoria Lida": 42,
     "Questões Feitas": 76,
     Revisado: 94,

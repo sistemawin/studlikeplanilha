@@ -1,4 +1,4 @@
-import { ListChecks, Pencil, Save, Trash2, X } from "lucide-react";
+import { BarChart3 as BarChart3Icon, ListChecks, Pencil, Save, Trash2, X } from "lucide-react";
 import { useState } from "react";
 import type { Exam, Goal, NavTarget, QuestionLog, Subject, Topic } from "@/types";
 import { PieChart } from "@/components/PieChart";
@@ -160,18 +160,23 @@ export function Exams({
       const subject = subjects.find((s) => s.id === t.materiaId);
       return { topic: t, score: topicScore(t.status, t.dificuldade), subject, accent: corToAccent(subject?.cor ?? "") };
     })
+    .filter((item) => item.score > 0)
     .sort((a, b) => b.score - a.score)
     .slice(0, 5);
 
-  const subjectPieSlices = subjectPerformance.map((item) => ({
-    label: item.subject.nome.replace("Direito ", ""),
-    value: Math.max(item.score, 1),
-    color: item.accent.chart,
-  }));
+  const hasStudyData = subjectPerformance.some((item) => item.score > 0);
+
+  const subjectPieSlices = subjectPerformance
+    .filter((item) => item.score > 0)
+    .map((item) => ({
+      label: item.subject.nome.replace("Direito ", ""),
+      value: item.score,
+      color: item.accent.chart,
+    }));
 
   const topicPieSlices = bestTopics.slice(0, 4).map((item) => ({
     label: item.topic.titulo,
-    value: Math.max(item.score, 1),
+    value: item.score,
     color: item.accent.chart,
   }));
 
@@ -210,18 +215,28 @@ export function Exams({
     <>
       {/* Analytics charts */}
       <section className={`${isVisible ? "grid" : "hidden"} gap-6 xl:grid 2xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]`}>
-        <PieChart
-          title="Melhores matérias"
-          subtitle="Ranking calculado pelo avanço dos tópicos, dificuldade e status atual."
-          slices={subjectPieSlices}
-          centerLabel={`${bestSubjects[0]?.score ?? 0}%`}
-        />
-        <PieChart
-          title="Melhores tópicos"
-          subtitle="Distribuição dos tópicos com maior desempenho e maior prontidão para revisão."
-          slices={topicPieSlices}
-          centerLabel={`${bestTopics[0]?.score ?? 0}%`}
-        />
+        {hasStudyData ? (
+          <>
+            <PieChart
+              title="Melhores matérias"
+              subtitle="Ranking calculado pelo avanço dos tópicos, dificuldade e status atual."
+              slices={subjectPieSlices}
+              centerLabel={`${bestSubjects[0]?.score ?? 0}%`}
+            />
+            <PieChart
+              title="Melhores tópicos"
+              subtitle="Distribuição dos tópicos com maior desempenho e maior prontidão para revisão."
+              slices={topicPieSlices}
+              centerLabel={`${bestTopics[0]?.score ?? 0}%`}
+            />
+          </>
+        ) : (
+          <div className="2xl:col-span-2 flex flex-col items-center justify-center gap-3 rounded-2xl border border-white bg-white p-10 text-center shadow-[0_18px_45px_rgba(15,23,42,0.07)] ring-1 ring-slate-900/5">
+            <BarChart3Icon className="h-8 w-8 text-slate-300" aria-hidden="true" />
+            <p className="text-sm font-semibold text-slate-500">Nenhum dado para exibir ainda.</p>
+            <p className="text-sm text-slate-400">Estude tópicos do edital para ver suas estatísticas aqui.</p>
+          </div>
+        )}
       </section>
 
       {/* Performance bar chart + ranking */}
@@ -269,41 +284,49 @@ export function Exams({
         <div className="w-full max-w-full overflow-hidden rounded-2xl border border-white bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.08)] ring-1 ring-slate-900/5 sm:p-5">
           <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#1877F2]">Ranking</p>
           <h2 className="mt-1 text-xl font-bold text-slate-950">Top matérias e tópicos</h2>
-          <div className="mt-5 space-y-4">
-            {bestSubjects.slice(0, 3).map((item, index) => (
-              <div key={item.subject.id} className="min-w-0">
-                <div className="mb-2 flex items-center justify-between gap-3">
-                  <span className="min-w-0 break-words text-sm font-semibold leading-5 text-slate-700">
-                    {index + 1}. {item.subject.nome}
-                  </span>
-                  <span className="shrink-0 text-sm font-bold text-slate-950">{item.score}%</span>
-                </div>
-                <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+          {hasStudyData ? (
+            <>
+              <div className="mt-5 space-y-4">
+                {bestSubjects.filter((item) => item.score > 0).slice(0, 3).map((item, index) => (
+                  <div key={item.subject.id} className="min-w-0">
+                    <div className="mb-2 flex items-center justify-between gap-3">
+                      <span className="min-w-0 break-words text-sm font-semibold leading-5 text-slate-700">
+                        {index + 1}. {item.subject.nome}
+                      </span>
+                      <span className="shrink-0 text-sm font-bold text-slate-950">{item.score}%</span>
+                    </div>
+                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+                      <div
+                        className="h-1.5 rounded-full transition-[width] duration-500"
+                        style={{ width: `${item.score}%`, backgroundColor: item.accent.chart }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-6 space-y-3">
+                {bestTopics.slice(0, 3).map((item) => (
                   <div
-                    className="h-1.5 rounded-full transition-[width] duration-500"
-                    style={{ width: `${item.score}%`, backgroundColor: item.accent.chart }}
-                  />
-                </div>
+                    key={item.topic.id}
+                    className="min-w-0 overflow-hidden rounded-xl border border-slate-100 p-3"
+                    style={{ background: `linear-gradient(135deg, #ffffff 0%, ${item.accent.chart}12 100%)` }}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="min-w-0 break-words text-sm font-bold leading-5 text-slate-950">{item.topic.titulo}</p>
+                      <span className="shrink-0 text-sm font-bold" style={{ color: item.accent.chart }}>{item.score}%</span>
+                    </div>
+                    <p className="mt-1 break-words text-xs font-medium leading-5 text-slate-500">
+                      {item.subject?.nome ?? "Sem matéria"} · {item.topic.status}
+                    </p>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-          <div className="mt-6 space-y-3">
-            {bestTopics.slice(0, 3).map((item) => (
-              <div
-                key={item.topic.id}
-                className="min-w-0 overflow-hidden rounded-xl border border-slate-100 p-3"
-                style={{ background: `linear-gradient(135deg, #ffffff 0%, ${item.accent.chart}12 100%)` }}
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <p className="min-w-0 break-words text-sm font-bold leading-5 text-slate-950">{item.topic.titulo}</p>
-                  <span className="shrink-0 text-sm font-bold" style={{ color: item.accent.chart }}>{item.score}%</span>
-                </div>
-                <p className="mt-1 break-words text-xs font-medium leading-5 text-slate-500">
-                  {item.subject?.nome ?? "Sem matéria"} · {item.topic.status}
-                </p>
-              </div>
-            ))}
-          </div>
+            </>
+          ) : (
+            <p className="mt-6 text-sm font-medium text-slate-400">
+              Nenhum tópico estudado ainda. Marque tópicos como estudados para ver o ranking.
+            </p>
+          )}
         </div>
       </section>
 
