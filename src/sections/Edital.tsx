@@ -25,6 +25,7 @@ const STATUS_CYCLE: TopicStatus[] = ["Não Estudado", "Teoria Lida", "Questões 
 const DIFFICULTY_CYCLE: Difficulty[] = ["Fácil", "Médio", "Difícil"];
 type StatusFilter = TopicStatus | "todos";
 type DifficultyFilter = Difficulty | "todas";
+type SortMode = "default" | "nome" | "peso" | "progresso";
 
 type Props = {
   subjects: Subject[];
@@ -242,6 +243,7 @@ export function Edital({
   const [difficultyFilter, setDifficultyFilter] = useState<DifficultyFilter>("todas");
   const [editingTopicId, setEditingTopicId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
+  const [sortMode, setSortMode] = useState<SortMode>("default");
 
   function startEditTopic(topic: Topic) {
     setEditingTopicId(topic.id);
@@ -290,6 +292,20 @@ export function Edital({
 
   const detailSubject = subjects.find((s) => s.id === activeSubjectId);
   const filteredSubjects = subjects.filter(subjectMatchesFilters);
+  const sortedSubjects = (() => {
+    if (sortMode === "nome") return [...filteredSubjects].sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+    if (sortMode === "peso") return [...filteredSubjects].sort((a, b) => b.peso - a.peso);
+    if (sortMode === "progresso") {
+      return [...filteredSubjects].sort((a, b) => {
+        const prog = (s: Subject) => {
+          const ts = topics.filter((t) => t.materiaId === s.id);
+          return ts.length === 0 ? -1 : ts.filter((t) => t.status === "Revisado").length / ts.length;
+        };
+        return prog(b) - prog(a);
+      });
+    }
+    return filteredSubjects;
+  })();
 
   // ── Detail view ──────────────────────────────────────────────────────────
   if (activeSubjectId && detailSubject) {
@@ -470,7 +486,7 @@ export function Edital({
       id="edital"
       className={`${isVisible ? "block" : "hidden"} scroll-mt-24 xl:block`}
     >
-      <div className="mb-4 flex items-center justify-between gap-3">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-lg font-bold text-slate-950">Edital verticalizado</h2>
           <p className="text-sm text-slate-500">
@@ -479,13 +495,31 @@ export function Edital({
               : "Clique em uma matéria para ver os tópicos."}
           </p>
         </div>
-        <button
-          onClick={onAddSubject}
-          className="flex h-10 items-center gap-2 rounded-xl bg-blue-600 px-4 text-sm font-bold text-white transition hover:bg-blue-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-400"
-        >
-          <Plus className="h-4 w-4" aria-hidden="true" />
-          <span className="hidden sm:inline">Nova matéria</span>
-        </button>
+        <div className="flex items-center gap-2">
+          {subjects.length > 1 && (
+            <>
+              <label className="sr-only" htmlFor="edital-sort">Ordenar matérias</label>
+              <select
+                id="edital-sort"
+                value={sortMode}
+                onChange={(e) => setSortMode(e.target.value as SortMode)}
+                className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              >
+                <option value="default">Padrão</option>
+                <option value="nome">A–Z</option>
+                <option value="peso">Maior peso</option>
+                <option value="progresso">Maior progresso</option>
+              </select>
+            </>
+          )}
+          <button
+            onClick={onAddSubject}
+            className="flex h-10 items-center gap-2 rounded-xl bg-blue-600 px-4 text-sm font-bold text-white transition hover:bg-blue-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-400"
+          >
+            <Plus className="h-4 w-4" aria-hidden="true" />
+            <span className="hidden sm:inline">Nova matéria</span>
+          </button>
+        </div>
       </div>
 
       <section className="mb-4 overflow-hidden rounded-2xl border border-white bg-white shadow-[0_18px_45px_rgba(15,23,42,0.07)] ring-1 ring-slate-900/5">
@@ -574,7 +608,7 @@ export function Edital({
       ) : (
         <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-3 sm:grid-cols-2 2xl:grid-cols-3">
           <AnimatePresence initial={false}>
-            {filteredSubjects.map((subject) => {
+            {sortedSubjects.map((subject) => {
               const subjectTopics = topics.filter((t) => t.materiaId === subject.id);
               return (
                 <motion.div

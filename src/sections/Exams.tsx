@@ -290,6 +290,30 @@ export function Exams({
   }));
   const totalStudyHours = Math.round((studySessions.reduce((sum, s) => sum + s.durationSeconds, 0) / 3600) * 10) / 10;
 
+  // ── Activity heatmap (last 12 weeks, Mon-aligned) ──────────────────────────
+  const heatmapMinutesByDate = new Map<string, number>();
+  for (const session of studySessions) {
+    heatmapMinutesByDate.set(session.data, (heatmapMinutesByDate.get(session.data) ?? 0) + session.durationSeconds / 60);
+  }
+  const heatmapStart = (() => {
+    const d = new Date(todayIso + "T12:00:00");
+    const dayOfWeek = (d.getDay() + 6) % 7; // 0=Mon…6=Sun
+    d.setDate(d.getDate() - dayOfWeek - 7 * 11);
+    return d;
+  })();
+  const heatmapDays: string[] = [];
+  const heatCursor = new Date(heatmapStart);
+  while (isoDate(heatCursor) <= todayIso) {
+    heatmapDays.push(isoDate(heatCursor));
+    heatCursor.setDate(heatCursor.getDate() + 1);
+  }
+  function heatColor(minutes: number) {
+    if (minutes === 0) return "bg-slate-100";
+    if (minutes < 30) return "bg-blue-200";
+    if (minutes < 90) return "bg-blue-400";
+    return "bg-[#1877F2]";
+  }
+
   const selectedQuestionSubjectId = questionSubjectId || subjects[0]?.id || "";
   const questionTopics = topics.filter((topic) => topic.materiaId === selectedQuestionSubjectId);
   const selectedQuestionTopicId =
@@ -542,6 +566,52 @@ export function Exams({
           />
         )}
       </section>
+
+      {/* Activity heatmap */}
+      {studySessions.length > 0 && (
+        <section className={`${isVisible ? "block" : "hidden"} xl:block`}>
+          <div className="overflow-hidden rounded-2xl border border-white bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.08)] ring-1 ring-slate-900/5 sm:p-5">
+            <div className="mb-4 flex items-start justify-between gap-3">
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#1877F2]">Atividade</p>
+                <h2 className="mt-1 text-xl font-bold text-slate-950">Heatmap de estudo</h2>
+                <p className="mt-1 text-sm leading-6 text-slate-500">Intensidade diária nas últimas 12 semanas.</p>
+              </div>
+              <div className="flex shrink-0 items-center gap-1.5 text-[10px] font-semibold text-slate-400">
+                <span>Menos</span>
+                {["bg-slate-100", "bg-blue-200", "bg-blue-400", "bg-[#1877F2]"].map((c) => (
+                  <span key={c} className={`h-3 w-3 rounded-sm ${c}`} aria-hidden="true" />
+                ))}
+                <span>Mais</span>
+              </div>
+            </div>
+
+            <div className="flex gap-1 overflow-x-auto pb-1">
+              <div className="grid shrink-0 gap-0.5 pr-1" style={{ gridTemplateRows: "repeat(7, 12px)" }}>
+                {["S", "T", "Q", "Q", "S", "S", "D"].map((l, i) => (
+                  <span key={i} className="flex h-3 items-center text-[9px] font-bold text-slate-300">{l}</span>
+                ))}
+              </div>
+              <div
+                className="grid gap-0.5"
+                style={{ gridTemplateRows: "repeat(7, 12px)", gridAutoFlow: "column", gridAutoColumns: "12px" }}
+              >
+                {heatmapDays.map((day) => {
+                  const mins = heatmapMinutesByDate.get(day) ?? 0;
+                  const isToday = day === todayIso;
+                  return (
+                    <div
+                      key={day}
+                      title={`${day}${mins > 0 ? ` · ${Math.round(mins)}min` : ""}`}
+                      className={`h-3 w-3 rounded-sm ${heatColor(mins)} ${isToday ? "ring-1 ring-offset-1 ring-[#1877F2]" : ""}`}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Performance bar chart + ranking */}
       <section className={`${isVisible ? "grid" : "hidden"} gap-5 xl:grid 2xl:grid-cols-[minmax(0,1.1fr)_minmax(360px,0.9fr)]`}>
