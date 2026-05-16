@@ -65,7 +65,7 @@ function SubjectCard({
     <motion.div
       whileHover={{ y: -2, transition: { duration: 0.15 } }}
       onClick={onOpen}
-      className="relative min-h-[142px] cursor-pointer overflow-hidden rounded-2xl border border-white/20 p-5 shadow-lg shadow-blue-900/15 ring-1 ring-blue-950/5 select-none"
+      className="relative min-h-[136px] cursor-pointer overflow-hidden rounded-2xl border border-white/20 p-4 shadow-lg shadow-blue-900/15 ring-1 ring-blue-950/5 select-none sm:p-5"
       style={{
         background: `linear-gradient(135deg, #1877F2 0%, #1B74E4 52%, ${accent.chart}78 118%)`,
       }}
@@ -82,45 +82,47 @@ function SubjectCard({
         {subject.nome}
       </span>
 
-      <div className="absolute top-3 right-3 z-20 flex shrink-0 gap-1 rounded-2xl border border-white/15 bg-white/10 p-1 shadow-sm shadow-blue-950/10 backdrop-blur">
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            onEdit();
-          }}
-          aria-label={`Editar ${subject.nome}`}
-          className="flex h-9 w-9 items-center justify-center rounded-xl text-white/80 transition hover:bg-white/18 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
-        >
-          <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
-        </button>
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete();
-          }}
-          aria-label={`Excluir ${subject.nome}`}
-          className="flex h-9 w-9 items-center justify-center rounded-xl text-white/80 transition hover:bg-red-500/25 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
-        >
-          <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
-        </button>
-      </div>
+      <div className="relative z-10 flex min-h-[104px] min-w-0 flex-col justify-between gap-3">
+        <div className="flex min-w-0 items-start justify-between gap-3">
+          <span
+            className="mt-2 block h-1.5 w-10 shrink-0 rounded-full"
+            style={{ backgroundColor: accent.chart }}
+          />
 
-      <div className="relative z-10 flex min-h-[102px] flex-col justify-between">
-        <span
-          className="mb-3 block h-1.5 w-10 rounded-full"
-          style={{ backgroundColor: accent.chart }}
-        />
-
-        <div className="pr-24">
-          <div className="min-w-0">
-            <p className="truncate text-base font-bold text-white">{subject.nome}</p>
-            <p className="mt-0.5 text-xs font-semibold text-blue-50/75">
-              {topics.length} tópico{topics.length !== 1 ? "s" : ""}
-              {topics.length > 0 && ` · ${progress}% pronto`}
-            </p>
+          <div className="flex shrink-0 gap-1 rounded-2xl border border-white/15 bg-white/10 p-1 shadow-sm shadow-blue-950/10 backdrop-blur">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit();
+              }}
+              aria-label={`Editar ${subject.nome}`}
+              className="flex h-9 w-9 items-center justify-center rounded-xl text-white/80 transition hover:bg-white/18 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+            >
+              <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete();
+              }}
+              aria-label={`Excluir ${subject.nome}`}
+              className="flex h-9 w-9 items-center justify-center rounded-xl text-white/80 transition hover:bg-red-500/25 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+            >
+              <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+            </button>
           </div>
+        </div>
+
+        <div className="min-w-0">
+          <p className="overflow-hidden text-base font-bold leading-snug text-white [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]">
+            {subject.nome}
+          </p>
+          <p className="mt-1 text-xs font-semibold text-blue-50/75">
+            {topics.length} tópico{topics.length !== 1 ? "s" : ""}
+            {topics.length > 0 && ` · ${progress}% pronto`}
+          </p>
         </div>
 
         {topics.length > 0 && (
@@ -530,7 +532,7 @@ export function Edital({
           </p>
         </div>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-3">
+        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-3 sm:grid-cols-2 2xl:grid-cols-3">
           <AnimatePresence initial={false}>
             {filteredSubjects.map((subject) => {
               const subjectTopics = topics.filter((t) => t.materiaId === subject.id);
@@ -538,6 +540,7 @@ export function Edital({
                 <motion.div
                   key={subject.id}
                   layout
+                  className="min-w-0"
                   initial={{ opacity: 0, scale: 0.96 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.92, transition: { duration: 0.18 } }}

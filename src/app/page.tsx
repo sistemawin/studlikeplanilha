@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { StudlikeLogo } from "@/components/StudlikeLogo";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import type { Session } from "@supabase/supabase-js";
 import { getSupabaseBrowserClient, getSupabasePasswordVerifierClient } from "@/lib/supabase";
 import { loadRemoteState, saveRemoteState, serializeAppState, validateSchedule } from "@/lib/sync";
@@ -138,6 +139,7 @@ export default function Home() {
   const [adminView, setAdminView] = useState(false);
   const [readOnlyUser, setReadOnlyUser] = useState<ReadOnlyUser | null>(null);
   const [notice, setNotice] = useState("Pronto para estudar.");
+  const [mobileNavPortalReady, setMobileNavPortalReady] = useState(false);
 
   // ── Timer state ───────────────────────────────────────────────────────────
   const [timerRunning, setTimerRunning] = useState(false);
@@ -205,6 +207,10 @@ export default function Home() {
   }, [timerRunning]);
 
   useScrollLock(timerFocusOpen);
+
+  useEffect(() => {
+    setMobileNavPortalReady(true);
+  }, []);
 
   // ── App update detection ─────────────────────────────────────────────────
   useEffect(() => {
@@ -1501,6 +1507,37 @@ export default function Home() {
     { icon: BarChart3, label: "Dados", target: "simulados" as NavTarget, action: () => openMobileSection("simulados") },
   ];
 
+  const mobileBottomNav = mobileNavPortalReady
+    ? createPortal(
+        <nav
+          aria-label="Navegação mobile"
+          className={`${adminView || timerFocusOpen || subjectModal.open ? "hidden" : "grid"} mobile-bottom-nav grid-cols-5 overflow-hidden border-t border-white/70 bg-white/[0.92] px-2 pb-[calc(0.45rem+env(safe-area-inset-bottom))] pt-2 shadow-[0_-14px_34px_rgba(15,23,42,0.14)] backdrop-blur-xl xl:hidden`}
+        >
+          {mobileNavItems.map((item) => {
+            const Icon = item.icon;
+            const active = activeSection === item.target;
+            return (
+              <button
+                key={item.label}
+                type="button"
+                onClick={item.action}
+                aria-current={active ? "page" : undefined}
+                className={`flex min-h-14 flex-col items-center justify-center gap-1 rounded-2xl px-1.5 py-1 text-[10px] font-bold transition sm:text-[11px] ${
+                  active
+                    ? "bg-blue-50 text-[#1877F2] shadow-sm ring-1 ring-blue-100"
+                    : "text-slate-500 hover:bg-slate-100 hover:text-[#1877F2]"
+                }`}
+              >
+                <Icon className="h-5 w-5" aria-hidden="true" />
+                {item.label}
+              </button>
+            );
+          })}
+        </nav>,
+        document.body,
+      )
+    : null;
+
   return (
     <main className="min-h-dvh w-full max-w-full bg-[#F0F2F5] text-[#111827]">
       {subjectModal.open && (
@@ -1878,31 +1915,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Mobile bottom nav */}
-      <nav
-        aria-label="Navegação mobile"
-        className={`${adminView || timerFocusOpen || subjectModal.open ? "hidden" : "grid"} mobile-bottom-nav grid-cols-5 overflow-hidden border-t border-white/70 bg-white/[0.92] px-2 pb-[calc(0.45rem+env(safe-area-inset-bottom))] pt-2 shadow-[0_-14px_34px_rgba(15,23,42,0.14)] backdrop-blur-xl xl:hidden`}
-      >
-        {mobileNavItems.map((item) => {
-          const Icon = item.icon;
-          const active = activeSection === item.target;
-          return (
-            <button
-              key={item.label}
-              onClick={item.action}
-              aria-current={active ? "page" : undefined}
-              className={`flex min-h-14 flex-col items-center justify-center gap-1 rounded-2xl px-1.5 py-1 text-[10px] font-bold transition sm:text-[11px] ${
-                active
-                  ? "bg-blue-50 text-[#1877F2] shadow-sm ring-1 ring-blue-100"
-                  : "text-slate-500 hover:bg-slate-100 hover:text-[#1877F2]"
-              }`}
-            >
-              <Icon className="h-5 w-5" aria-hidden="true" />
-              {item.label}
-            </button>
-          );
-        })}
-      </nav>
+      {mobileBottomNav}
     </main>
   );
 }
