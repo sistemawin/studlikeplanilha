@@ -2045,6 +2045,8 @@ export default function Home() {
                     onUpdateGoalObjective={updateGoalObjective}
                     onAddQuestionLog={addQuestionLog}
                     onDeleteQuestionLog={deleteQuestionLog}
+                    reviews={reviews}
+                    todayIso={todayIso}
                   />
                 </ErrorBoundary>
               </section>

@@ -1,6 +1,6 @@
-import { BarChart3 as BarChart3Icon, ListChecks, Pencil, Save, Trash2, X } from "lucide-react";
+import { AlertCircle, BarChart3 as BarChart3Icon, CheckCircle2, Clock, ListChecks, Pencil, Save, Trash2, X } from "lucide-react";
 import { useState } from "react";
-import type { Exam, Goal, NavTarget, QuestionLog, Subject, Topic } from "@/types";
+import type { Exam, Goal, NavTarget, QuestionLog, Review, Subject, Topic } from "@/types";
 import { PieChart } from "@/components/PieChart";
 import { ProgressBar } from "@/components/ProgressBar";
 import { corToAccent, pct, topicScore } from "@/lib/utils";
@@ -26,6 +26,8 @@ type Props = {
   onUpdateGoalObjective: (tipo: "questões" | "horas", value: number) => void;
   onAddQuestionLog: (data: { materiaId: string; topicoId: string; quantidade: number; acertos: number | null; data: string }) => void;
   onDeleteQuestionLog: (logId: string) => void;
+  reviews: Review[];
+  todayIso: string;
 };
 
 function GoalCard({
@@ -122,6 +124,8 @@ export function Exams({
   onUpdateGoalObjective,
   onAddQuestionLog,
   onDeleteQuestionLog,
+  reviews,
+  todayIso,
 }: Props) {
   const isVisible = activeSection === "simulados";
   const today = new Date().toISOString().slice(0, 10);
@@ -179,6 +183,57 @@ export function Exams({
     value: item.score,
     color: item.accent.chart,
   }));
+
+  // ── Diagnosis ──────────────────────────────────────────────────────────────
+  const notStudiedGaps = hasStudyData
+    ? topics
+        .filter((t) => t.status === "Não Estudado")
+        .map((t) => ({ topic: t, subject: subjects.find((s) => s.id === t.materiaId) }))
+        .filter((item) => item.subject)
+        .sort((a, b) => (b.subject!.peso - a.subject!.peso) || a.topic.titulo.localeCompare(b.topic.titulo))
+        .slice(0, 4)
+    : [];
+
+  const accuracyByTopic = new Map<string, { acertos: number; quantidade: number }>();
+  for (const log of questionLogs) {
+    const prev = accuracyByTopic.get(log.topicoId) ?? { acertos: 0, quantidade: 0 };
+    accuracyByTopic.set(log.topicoId, {
+      acertos: prev.acertos + (log.acertos ?? 0),
+      quantidade: prev.quantidade + log.quantidade,
+    });
+  }
+  const lowAccuracyGaps = [...accuracyByTopic.entries()]
+    .map(([topicoId, stats]) => ({
+      topic: topics.find((t) => t.id === topicoId),
+      subject: subjects.find((s) => s.id === topics.find((t) => t.id === topicoId)?.materiaId),
+      accuracy: stats.quantidade > 0 ? stats.acertos / stats.quantidade : 0,
+      quantidade: stats.quantidade,
+    }))
+    .filter((item) => item.topic && item.quantidade >= 5 && item.accuracy < 0.6)
+    .sort((a, b) => a.accuracy - b.accuracy)
+    .slice(0, 4);
+
+  const overdueByTopic = new Map<string, number>();
+  for (const review of reviews) {
+    if (!review.concluida && review.dataAgendada < todayIso) {
+      const days = Math.floor(
+        (new Date(todayIso).getTime() - new Date(review.dataAgendada).getTime()) / (1000 * 60 * 60 * 24),
+      );
+      overdueByTopic.set(review.topicoId, Math.max(overdueByTopic.get(review.topicoId) ?? 0, days));
+    }
+  }
+  const overdueGaps = [...overdueByTopic.entries()]
+    .map(([topicoId, days]) => ({
+      topic: topics.find((t) => t.id === topicoId),
+      subject: subjects.find((s) => s.id === topics.find((t) => t.id === topicoId)?.materiaId),
+      days,
+    }))
+    .filter((item) => item.topic)
+    .sort((a, b) => b.days - a.days)
+    .slice(0, 4);
+
+  const hasAnyGap = notStudiedGaps.length > 0 || lowAccuracyGaps.length > 0 || overdueGaps.length > 0;
+  const showDiagnosis = topics.length > 0 && subjects.length > 0;
 
   const selectedQuestionSubjectId = questionSubjectId || subjects[0]?.id || "";
   const questionTopics = topics.filter((topic) => topic.materiaId === selectedQuestionSubjectId);
@@ -238,6 +293,109 @@ export function Exams({
           </div>
         )}
       </section>
+
+      {/* Diagnosis */}
+      {showDiagnosis && (
+        <section className={`${isVisible ? "block" : "hidden"} xl:block`}>
+          <div className="w-full overflow-hidden rounded-2xl border border-white bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.08)] ring-1 ring-slate-900/5 sm:p-5">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-rose-400">Diagnóstico</p>
+                <h2 className="mt-1 text-xl font-bold text-slate-950">Lacunas e pontos fracos</h2>
+                <p className="mt-1 text-sm leading-6 text-slate-500">
+                  O que exige atenção agora com base no seu progresso.
+                </p>
+              </div>
+              <AlertCircle className="h-5 w-5 shrink-0 text-rose-400" aria-hidden="true" />
+            </div>
+
+            {!hasAnyGap ? (
+              <div className="mt-5 flex items-center gap-3 rounded-xl bg-emerald-50 px-4 py-4 ring-1 ring-emerald-100">
+                <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600" aria-hidden="true" />
+                <p className="text-sm font-semibold text-emerald-700">
+                  Nenhuma lacuna detectada. Continue assim!
+                </p>
+              </div>
+            ) : (
+              <div className="mt-5 grid gap-4 lg:grid-cols-3">
+                {/* Not studied gaps */}
+                <div className="rounded-xl border border-rose-100 bg-rose-50/50 p-3">
+                  <p className="mb-2 text-xs font-bold uppercase tracking-[0.12em] text-rose-500">
+                    Não estudados (prioridade alta)
+                  </p>
+                  {notStudiedGaps.length === 0 ? (
+                    <p className="text-xs font-medium text-slate-400">Nenhum pendente.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {notStudiedGaps.map((item) => (
+                        <div key={item.topic.id} className="rounded-lg bg-white p-2.5 ring-1 ring-rose-100">
+                          <p className="truncate text-xs font-semibold text-slate-950">{item.topic.titulo}</p>
+                          <p className="mt-0.5 truncate text-[11px] font-medium text-slate-500">
+                            {item.subject!.nome} · peso {item.subject!.peso}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Low accuracy gaps */}
+                <div className="rounded-xl border border-amber-100 bg-amber-50/50 p-3">
+                  <p className="mb-2 text-xs font-bold uppercase tracking-[0.12em] text-amber-600">
+                    Baixo aproveitamento em questões
+                  </p>
+                  {lowAccuracyGaps.length === 0 ? (
+                    <p className="text-xs font-medium text-slate-400">Nenhum abaixo de 60%.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {lowAccuracyGaps.map((item) => (
+                        <div key={item.topic!.id} className="rounded-lg bg-white p-2.5 ring-1 ring-amber-100">
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="truncate text-xs font-semibold text-slate-950">{item.topic!.titulo}</p>
+                            <span className="shrink-0 text-xs font-bold text-amber-600">
+                              {Math.round(item.accuracy * 100)}%
+                            </span>
+                          </div>
+                          <p className="mt-0.5 truncate text-[11px] font-medium text-slate-500">
+                            {item.subject?.nome ?? "—"} · {item.quantidade} questões
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Overdue gaps */}
+                <div className="rounded-xl border border-orange-100 bg-orange-50/50 p-3">
+                  <p className="mb-2 flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.12em] text-orange-500">
+                    <Clock className="h-3 w-3" aria-hidden="true" />
+                    Revisões em atraso
+                  </p>
+                  {overdueGaps.length === 0 ? (
+                    <p className="text-xs font-medium text-slate-400">Nenhuma em atraso.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {overdueGaps.map((item) => (
+                        <div key={item.topic!.id} className="rounded-lg bg-white p-2.5 ring-1 ring-orange-100">
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="truncate text-xs font-semibold text-slate-950">{item.topic!.titulo}</p>
+                            <span className="shrink-0 text-xs font-bold text-orange-500">
+                              {item.days}d
+                            </span>
+                          </div>
+                          <p className="mt-0.5 truncate text-[11px] font-medium text-slate-500">
+                            {item.subject?.nome ?? "—"}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
 
       {/* Performance bar chart + ranking */}
       <section className={`${isVisible ? "grid" : "hidden"} gap-5 xl:grid 2xl:grid-cols-[minmax(0,1.1fr)_minmax(360px,0.9fr)]`}>
