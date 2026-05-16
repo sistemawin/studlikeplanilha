@@ -1,4 +1,4 @@
-import { Clock3, Plus, Trash2, X } from "lucide-react";
+import { Clock3, Plus, Trash2, Wand2, X } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import type { NavTarget, PlanningMode, ScheduleConfig, Subject } from "@/types";
@@ -16,6 +16,7 @@ type Props = {
   onUpdateSemanal: (day: string, ids: string[]) => void;
   onAddExamDate: (nome: string, data: string) => void;
   onDeleteExamDate: (id: string) => void;
+  onAutoOrganizeCiclo: () => void;
 };
 
 export function Schedule({
@@ -28,6 +29,7 @@ export function Schedule({
   onUpdateSemanal,
   onAddExamDate,
   onDeleteExamDate,
+  onAutoOrganizeCiclo,
 }: Props) {
   const [pickerDay, setPickerDay] = useState<string | null>(null);
   const [examName, setExamName] = useState("");
@@ -66,25 +68,37 @@ export function Schedule({
           <h2 className="text-lg font-bold text-slate-950">Planejamento flexível</h2>
           <p className="text-sm font-medium text-slate-500">Escolha grade semanal ou ciclo rotativo.</p>
         </div>
-        <div
-          role="group"
-          aria-label="Modo de planejamento"
-          className="grid grid-cols-2 rounded-xl bg-[#F0F2F5] p-1 sm:flex"
-        >
-          {(["semanal", "ciclos"] as PlanningMode[]).map((mode) => (
+        <div className="flex flex-wrap items-center gap-2">
+          {schedule.modo === "ciclos" && subjects.length > 0 && (
             <button
-              key={mode}
-              onClick={() => onModeChange(mode)}
-              aria-pressed={schedule.modo === mode}
-              className={`rounded-lg px-3 py-2 text-sm font-semibold transition ${
-                schedule.modo === mode
-                  ? "bg-white text-[#1877F2] shadow-sm"
-                  : "text-slate-500 hover:text-slate-950"
-              }`}
+              type="button"
+              onClick={onAutoOrganizeCiclo}
+              className="flex h-9 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 shadow-sm hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
             >
-              {mode === "semanal" ? "Semanal" : "Ciclos"}
+              <Wand2 className="h-4 w-4 text-[#1877F2]" aria-hidden="true" />
+              Auto-organizar por peso
             </button>
-          ))}
+          )}
+          <div
+            role="group"
+            aria-label="Modo de planejamento"
+            className="grid grid-cols-2 rounded-xl bg-[#F0F2F5] p-1 sm:flex"
+          >
+            {(["semanal", "ciclos"] as PlanningMode[]).map((mode) => (
+              <button
+                key={mode}
+                onClick={() => onModeChange(mode)}
+                aria-pressed={schedule.modo === mode}
+                className={`rounded-lg px-3 py-2 text-sm font-semibold transition ${
+                  schedule.modo === mode
+                    ? "bg-white text-[#1877F2] shadow-sm"
+                    : "text-slate-500 hover:text-slate-950"
+                }`}
+              >
+                {mode === "semanal" ? "Semanal" : "Ciclos"}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 

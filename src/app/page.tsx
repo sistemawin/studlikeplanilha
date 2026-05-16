@@ -828,6 +828,13 @@ export default function Home() {
     setNotice(`Meta de ${tipo} atualizada para ${value}.`);
   }
 
+  function autoOrganizeCiclo() {
+    if (preventReadOnlyAction()) return;
+    const sorted = [...subjects].sort((a, b) => b.peso - a.peso);
+    setSchedule((s) => ({ ...s, ciclos: sorted.map((sub) => sub.id) }));
+    setNotice("Ciclo organizado por peso das matérias.");
+  }
+
   function addExamDate(nome: string, data: string) {
     if (preventReadOnlyAction()) return;
     setSchedule((s) => ({
@@ -2078,6 +2085,7 @@ export default function Home() {
                     onUpdateSemanal={updateSemanal}
                     onAddExamDate={addExamDate}
                     onDeleteExamDate={deleteExamDate}
+                    onAutoOrganizeCiclo={autoOrganizeCiclo}
                   />
                 </ErrorBoundary>
 
