@@ -1,7 +1,18 @@
-import { CalendarClock, CheckCircle2 } from "lucide-react";
+import { CalendarClock, CheckCircle2, ChevronDown, ChevronUp } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
 import type { NavTarget, Review, Subject, Topic } from "@/types";
+
+const DAY_SHORT = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+
+function upcomingDateLabel(dateStr: string, todayIso: string): string {
+  const d = new Date(dateStr + "T12:00:00");
+  const t = new Date(todayIso + "T12:00:00");
+  const diffDays = Math.round((d.getTime() - t.getTime()) / (1000 * 60 * 60 * 24));
+  if (diffDays === 1) return `Amanhã · ${dateStr.slice(8)}/${dateStr.slice(5, 7)}`;
+  if (diffDays === 2) return `Depois de amanhã · ${dateStr.slice(8)}/${dateStr.slice(5, 7)}`;
+  return `${DAY_SHORT[d.getDay()]} · ${dateStr.slice(8)}/${dateStr.slice(5, 7)}`;
+}
 
 type Props = {
   reviews: Review[];
@@ -31,9 +42,22 @@ const REVIEW_TYPE_LABEL: Record<string, string> = {
 
 export function Reviews({ reviews, topics, subjects, todayIso, activeSection, onComplete, onReschedule }: Props) {
   const [reschedulingId, setReschedulingId] = useState<string | null>(null);
+  const [showUpcoming, setShowUpcoming] = useState(false);
+
   const pendingToday = reviews.filter((r) => !r.concluida && r.dataAgendada <= todayIso);
   const totalPending = reviews.filter((r) => !r.concluida).length;
   const totalCompleted = reviews.filter((r) => r.concluida).length;
+
+  const upcomingReviews = reviews
+    .filter((r) => !r.concluida && r.dataAgendada > todayIso)
+    .sort((a, b) => a.dataAgendada.localeCompare(b.dataAgendada));
+
+  const upcomingByDate: Record<string, Review[]> = {};
+  for (const review of upcomingReviews) {
+    if (!upcomingByDate[review.dataAgendada]) upcomingByDate[review.dataAgendada] = [];
+    upcomingByDate[review.dataAgendada].push(review);
+  }
+  const upcomingDates = Object.keys(upcomingByDate).sort();
   const isVisible = activeSection === "revisoes";
 
   return (
@@ -163,6 +187,65 @@ export function Reviews({ reviews, topics, subjects, todayIso, activeSection, on
           </AnimatePresence>
         )}
       </div>
+
+      {/* Upcoming reviews */}
+      {upcomingDates.length > 0 && (
+        <div className="mt-4">
+          <button
+            type="button"
+            onClick={() => setShowUpcoming((v) => !v)}
+            className="flex w-full items-center justify-between gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
+          >
+            <span className="flex items-center gap-2">
+              <CalendarClock className="h-4 w-4 text-[#1877F2]" aria-hidden="true" />
+              Próximas revisões
+              <span className="rounded-lg bg-[#1877F2]/10 px-2 py-0.5 text-xs font-bold text-[#1877F2]">
+                {upcomingReviews.length}
+              </span>
+            </span>
+            {showUpcoming
+              ? <ChevronUp className="h-4 w-4 text-slate-400" aria-hidden="true" />
+              : <ChevronDown className="h-4 w-4 text-slate-400" aria-hidden="true" />
+            }
+          </button>
+
+          {showUpcoming && (
+            <div className="mt-3 space-y-4">
+              {upcomingDates.map((date) => (
+                <div key={date}>
+                  <p className="mb-2 text-xs font-bold uppercase tracking-[0.12em] text-slate-400">
+                    {upcomingDateLabel(date, todayIso)}
+                    <span className="ml-2 font-semibold normal-case tracking-normal text-slate-300">
+                      · {upcomingByDate[date].length} revisão{upcomingByDate[date].length !== 1 ? "ões" : ""}
+                    </span>
+                  </p>
+                  <div className="space-y-2">
+                    {upcomingByDate[date].map((review) => {
+                      const topic = topics[review.topicoId];
+                      if (!topic) return null;
+                      return (
+                        <div
+                          key={review.id}
+                          className="flex min-w-0 items-center justify-between gap-3 rounded-xl border border-slate-100 bg-white px-4 py-3 shadow-sm"
+                        >
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-semibold text-slate-950">{topic.titulo}</p>
+                            <p className="mt-0.5 text-xs font-medium text-slate-500">
+                              {subjects[topic.materiaId]?.nome}
+                              <span className="mx-1.5 text-slate-300">·</span>
+                              {REVIEW_TYPE_LABEL[review.tipo] ?? review.tipo}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

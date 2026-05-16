@@ -590,6 +590,11 @@ export default function Home() {
     .filter((p) => p.data >= todayIso)
     .sort((a, b) => a.data.localeCompare(b.data))[0];
 
+  const next7DaysIso = addDays(new Date(), 7);
+  const upcomingReviewCount = reviews.filter(
+    (r) => !r.concluida && r.dataAgendada > todayIso && r.dataAgendada <= next7DaysIso,
+  ).length;
+
   const DAY_KEYS = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
   const todayDayKey = DAY_KEYS[(new Date().getDay() + 6) % 7];
   const todayPlan: Subject[] =
@@ -602,6 +607,14 @@ export default function Home() {
           const subject = subjectById[schedule.ciclos[pos]];
           return subject ? [subject] : [];
         })();
+
+  const homeNotice = (() => {
+    if (overdueCount > 0) return `${overdueCount} revisão${overdueCount !== 1 ? "ões" : ""} atrasada${overdueCount !== 1 ? "s" : ""} — prioridade máxima.`;
+    if (pendingToday.length > 0) return `${pendingToday.length} revisão${pendingToday.length !== 1 ? "ões" : ""} para hoje.`;
+    if (upcomingReviewCount > 0) return `${upcomingReviewCount} revisão${upcomingReviewCount !== 1 ? "ões" : ""} nos próximos 7 dias.`;
+    if (todayPlan.length > 0) return `Plano de hoje: ${todayPlan.map((s) => s.nome).join(", ")}.`;
+    return notice;
+  })();
 
   const sectionTitle: Record<NavTarget, string> = {
     dashboard: "Hoje",
@@ -2074,7 +2087,7 @@ export default function Home() {
                   timerRunning={timerRunning}
                   timerLabel={formatTimer(timerSeconds)}
                   studySessions={studySessions}
-                  notice={notice}
+                  notice={homeNotice}
                   activeSection={activeSection}
                   onOpenFocusTimer={openFocusTimer}
                   onNavigate={navigateFromDashboard}
