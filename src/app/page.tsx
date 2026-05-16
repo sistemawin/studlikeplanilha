@@ -864,6 +864,38 @@ export default function Home() {
     setNotice(`${data.quantidade} questão${data.quantidade !== 1 ? "ões" : ""} registrada${data.quantidade !== 1 ? "s" : ""} em ${subject.nome}.`);
   }
 
+  function deleteStudySession(sessionId: string) {
+    if (preventReadOnlyAction()) return;
+    const target = studySessions.find((s) => s.id === sessionId);
+    if (!target) return;
+    setConfirmDialog({
+      title: "Excluir sessão?",
+      description: `Sessão de ${formatTimer(target.durationSeconds)} registrada em ${target.data}.`,
+      details: target.data === todayIso
+        ? "O tempo acumulado na meta diária de horas será ajustado. Essa ação não pode ser desfeita."
+        : "Essa ação não pode ser desfeita.",
+      confirmLabel: "Excluir sessão",
+      onConfirm: () => confirmDeleteStudySession(sessionId),
+    });
+  }
+
+  function confirmDeleteStudySession(sessionId: string) {
+    const target = studySessions.find((s) => s.id === sessionId);
+    if (!target) return;
+    setStudySessions((ss) => ss.filter((s) => s.id !== sessionId));
+    if (target.data === todayIso) {
+      const sessionHours = Math.round((target.durationSeconds / 3600) * 100) / 100;
+      setGoals((gs) =>
+        gs.map((g) =>
+          g.tipo === "horas"
+            ? { ...g, valorAtual: Math.max(0, Math.round((g.valorAtual - sessionHours) * 100) / 100) }
+            : g,
+        ),
+      );
+    }
+    setNotice("Sessão removida.");
+  }
+
   function deleteQuestionLog(logId: string) {
     if (preventReadOnlyAction()) return;
     const log = questionLogs.find((q) => q.id === logId);
@@ -1887,6 +1919,7 @@ export default function Home() {
                   activeSection={activeSection}
                   onOpenFocusTimer={openFocusTimer}
                   onNavigate={navigateFromDashboard}
+                  onDeleteSession={deleteStudySession}
                 />
               </ErrorBoundary>
 

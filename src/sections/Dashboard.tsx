@@ -1,7 +1,9 @@
-import { BarChart3, Flame, RotateCcw, Target, Timer } from "lucide-react";
+import { BarChart3, ChevronRight, Flame, RotateCcw, Target, Timer, Zap } from "lucide-react";
 import { motion } from "framer-motion";
+import { useState } from "react";
 import type { Goal, NavTarget, StudySession, Subject, Topic } from "@/types";
-import { addDays, corToAccent, formatTimer, isoDate, pct } from "@/lib/utils";
+import { addDays, computeStreak, corToAccent, formatTimer, isoDate, pct } from "@/lib/utils";
+import { SessionHistoryModal } from "@/components/SessionHistoryModal";
 
 type Props = {
   topics: Topic[];
@@ -17,6 +19,7 @@ type Props = {
   activeSection: NavTarget;
   onOpenFocusTimer: () => void;
   onNavigate: (target: NavTarget) => void;
+  onDeleteSession: (id: string) => void;
 };
 
 export function Dashboard({
@@ -33,7 +36,9 @@ export function Dashboard({
   activeSection,
   onOpenFocusTimer,
   onNavigate,
+  onDeleteSession,
 }: Props) {
+  const [historyOpen, setHistoryOpen] = useState(false);
   const completedTopics = topics.filter((t) => t.status === "Revisado").length;
 
   const subjectPerformance = subjects.map((subject) => {
@@ -69,6 +74,7 @@ export function Dashboard({
   const weekSessions = studySessions.filter((session) => session.data >= weekStartIso);
   const todaySeconds = todaySessions.reduce((sum, session) => sum + session.durationSeconds, 0);
   const weekSeconds = weekSessions.reduce((sum, session) => sum + session.durationSeconds, 0);
+  const streak = computeStreak(studySessions, todayIso);
   const recentSessions = studySessions.slice(0, 5);
 
   const kpiCards = [
@@ -236,6 +242,14 @@ export function Dashboard({
         {notice}
       </p>
 
+      {historyOpen && (
+        <SessionHistoryModal
+          sessions={studySessions}
+          onDelete={onDeleteSession}
+          onClose={() => setHistoryOpen(false)}
+        />
+      )}
+
       <section className={`${isVisible ? "block" : "hidden"} rounded-2xl border border-white bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.07)] ring-1 ring-slate-900/5 sm:p-5 xl:block`}>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
@@ -244,7 +258,7 @@ export function Dashboard({
             </p>
             <h2 className="mt-1 text-lg font-bold text-slate-950">Sessões de estudo</h2>
           </div>
-          <div className="grid grid-cols-2 gap-2 sm:w-auto">
+          <div className="grid grid-cols-3 gap-2 sm:w-auto">
             <div className="rounded-xl bg-[#0F172A] px-4 py-3 text-white shadow-sm shadow-slate-900/15">
               <p className="text-xs font-semibold text-white/45">Hoje</p>
               <p className="mt-1 font-mono text-lg font-bold">{formatTimer(todaySeconds)}</p>
@@ -252,6 +266,18 @@ export function Dashboard({
             <div className="rounded-xl bg-blue-50 px-4 py-3 text-blue-900 ring-1 ring-blue-100">
               <p className="text-xs font-semibold text-blue-600/70">7 dias</p>
               <p className="mt-1 font-mono text-lg font-bold">{formatTimer(weekSeconds)}</p>
+            </div>
+            <div className="rounded-xl bg-amber-50 px-4 py-3 text-amber-900 ring-1 ring-amber-100">
+              <p className="flex items-center gap-1 text-xs font-semibold text-amber-600/70">
+                <Zap className="h-3 w-3" aria-hidden="true" />
+                Sequência
+              </p>
+              <p className="mt-1 font-mono text-lg font-bold">
+                {streak}
+                <span className="ml-1 text-xs font-semibold text-amber-700/60">
+                  {streak === 1 ? "dia" : "dias"}
+                </span>
+              </p>
             </div>
           </div>
         </div>
@@ -261,26 +287,38 @@ export function Dashboard({
             Nenhuma sessão registrada ainda. Use o modo foco e toque em Registrar.
           </p>
         ) : (
-          <div className="mt-4 space-y-2">
-            {recentSessions.map((session) => (
-              <div
-                key={session.id}
-                className="flex min-w-0 items-center justify-between gap-3 rounded-xl bg-[#F7F8FA] p-3 ring-1 ring-slate-100"
-              >
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-slate-950">
-                    {session.topicoTitulo ?? (session.tipo === "revisao" ? "Revisão registrada" : "Sessão livre")}
-                  </p>
-                  <p className="mt-0.5 truncate text-xs font-medium text-slate-500">
-                    {session.materiaNome ?? "Sem matéria"} · {session.data} · {session.tipo === "revisao" ? "revisão" : session.tipo === "topico" ? "tópico" : "livre"}
-                  </p>
+          <>
+            <div className="mt-4 space-y-2">
+              {recentSessions.map((session) => (
+                <div
+                  key={session.id}
+                  className="flex min-w-0 items-center justify-between gap-3 rounded-xl bg-[#F7F8FA] p-3 ring-1 ring-slate-100"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-slate-950">
+                      {session.topicoTitulo ?? (session.tipo === "revisao" ? "Revisão registrada" : "Sessão livre")}
+                    </p>
+                    <p className="mt-0.5 truncate text-xs font-medium text-slate-500">
+                      {session.materiaNome ?? "Sem matéria"} · {session.data} · {session.tipo === "revisao" ? "revisão" : session.tipo === "topico" ? "tópico" : "livre"}
+                    </p>
+                  </div>
+                  <span className="shrink-0 rounded-lg bg-white px-2.5 py-1 font-mono text-xs font-bold text-slate-700 ring-1 ring-slate-200">
+                    {formatTimer(session.durationSeconds)}
+                  </span>
                 </div>
-                <span className="shrink-0 rounded-lg bg-white px-2.5 py-1 font-mono text-xs font-bold text-slate-700 ring-1 ring-slate-200">
-                  {formatTimer(session.durationSeconds)}
-                </span>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+            {studySessions.length > 5 && (
+              <button
+                type="button"
+                onClick={() => setHistoryOpen(true)}
+                className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl border border-slate-200 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+              >
+                Ver histórico completo ({studySessions.length} sessões)
+                <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
+              </button>
+            )}
+          </>
         )}
       </section>
     </>

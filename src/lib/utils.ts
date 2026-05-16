@@ -1,4 +1,4 @@
-import type { ChartSlice, Difficulty, SubjectAccent, TopicStatus } from "@/types";
+import type { ChartSlice, Difficulty, StudySession, SubjectAccent, TopicStatus } from "@/types";
 
 export function isoDate(date: Date) {
   return date.toISOString().slice(0, 10);
@@ -155,6 +155,23 @@ export function pieBackground(slices: ChartSlice[]) {
   });
 
   return `conic-gradient(${stops.join(", ")})`;
+}
+
+export function computeStreak(sessions: StudySession[], todayIso: string): number {
+  if (sessions.length === 0) return 0;
+  const datesWithSessions = new Set(sessions.map((s) => s.data));
+  const start = new Date(todayIso + "T12:00:00");
+  if (!datesWithSessions.has(todayIso)) {
+    start.setDate(start.getDate() - 1);
+    if (!datesWithSessions.has(isoDate(start))) return 0;
+  }
+  let streak = 0;
+  const cur = new Date(start);
+  while (datesWithSessions.has(isoDate(cur))) {
+    streak++;
+    cur.setDate(cur.getDate() - 1);
+  }
+  return streak;
 }
 
 export function formatTimer(seconds: number) {
