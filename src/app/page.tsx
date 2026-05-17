@@ -10,6 +10,7 @@ import {
   HomeIcon,
   Loader2,
   LogOut,
+  Menu,
   Maximize2,
   MessageSquarePlus,
   RefreshCw,
@@ -167,6 +168,7 @@ export default function Home() {
   const [notice, setNoticeState] = useState("Pronto para estudar.");
   const [feedback, setFeedback] = useState<AppFeedback | null>(null);
   const [mobileNavPortalReady, setMobileNavPortalReady] = useState(false);
+  const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
 
   // ── Timer state ───────────────────────────────────────────────────────────
   const [timerRunning, setTimerRunning] = useState(false);
@@ -1741,6 +1743,7 @@ export default function Home() {
 
   function openMobileSection(target: NavTarget) {
     setAdminView(false);
+    setMobileMoreOpen(false);
     setActiveSection(target);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -1831,7 +1834,6 @@ export default function Home() {
     { icon: ClipboardList, label: "Edital", target: "edital" as NavTarget, action: () => openMobileSection("edital") },
     { icon: RotateCcw, label: "Revisar", target: "revisoes" as NavTarget, action: () => openMobileSection("revisoes") },
     { icon: CalendarDays, label: "Plano", target: "cronograma" as NavTarget, action: () => openMobileSection("cronograma") },
-    { icon: BarChart3, label: "Dados", target: "simulados" as NavTarget, action: () => openMobileSection("simulados") },
   ];
   const hideMobileBottomNav =
     adminView ||
@@ -1846,31 +1848,66 @@ export default function Home() {
 
   const mobileBottomNav = mobileNavPortalReady
     ? createPortal(
-        <nav
-          aria-label="Navegação mobile"
-          className={`${hideMobileBottomNav ? "hidden" : "grid"} mobile-bottom-nav grid-cols-5 overflow-hidden border-t border-white/70 bg-white/[0.92] px-2 pb-[calc(0.45rem+env(safe-area-inset-bottom))] pt-2 shadow-[0_-14px_34px_rgba(15,23,42,0.14)] backdrop-blur-xl xl:hidden`}
-        >
-          {mobileNavItems.map((item) => {
-            const Icon = item.icon;
-            const active = activeSection === item.target;
-            return (
+        <>
+          {!hideMobileBottomNav && mobileMoreOpen && (
+            <div className="fixed inset-x-3 bottom-[calc(5.4rem+env(safe-area-inset-bottom))] z-40 rounded-2xl border border-white/80 bg-white/95 p-2 shadow-2xl shadow-slate-950/16 ring-1 ring-slate-900/5 backdrop-blur-xl xl:hidden">
               <button
-                key={item.label}
                 type="button"
-                onClick={item.action}
-                aria-current={active ? "page" : undefined}
-                className={`flex min-h-14 flex-col items-center justify-center gap-1 rounded-2xl px-1.5 py-1 text-[10px] font-bold transition sm:text-[11px] ${
-                  active
-                    ? "bg-blue-50 text-[#1877F2] shadow-sm ring-1 ring-blue-100"
-                    : "text-slate-500 hover:bg-slate-100 hover:text-[#1877F2]"
+                onClick={() => openMobileSection("simulados")}
+                aria-current={activeSection === "simulados" ? "page" : undefined}
+                className={`flex h-12 w-full items-center gap-3 rounded-xl px-3 text-left text-sm font-bold transition ${
+                  activeSection === "simulados"
+                    ? "bg-blue-50 text-[#1877F2] ring-1 ring-blue-100"
+                    : "text-slate-600 hover:bg-slate-100 hover:text-[#1877F2]"
                 }`}
               >
-                <Icon className="h-5 w-5" aria-hidden="true" />
-                {item.label}
+                <BarChart3 className="h-5 w-5 shrink-0" aria-hidden="true" />
+                <span className="min-w-0 truncate">Dados</span>
               </button>
-            );
-          })}
-        </nav>,
+            </div>
+          )}
+
+          <nav
+            aria-label="Navegação mobile"
+            className={`${hideMobileBottomNav ? "hidden" : "grid"} mobile-bottom-nav grid-cols-5 overflow-hidden border-t border-white/70 bg-white/[0.92] px-2 pb-[calc(0.45rem+env(safe-area-inset-bottom))] pt-2 shadow-[0_-14px_34px_rgba(15,23,42,0.14)] backdrop-blur-xl xl:hidden`}
+          >
+            {mobileNavItems.map((item) => {
+              const Icon = item.icon;
+              const active = activeSection === item.target;
+              return (
+                <button
+                  key={item.label}
+                  type="button"
+                  onClick={item.action}
+                  aria-current={active ? "page" : undefined}
+                  className={`flex min-h-14 flex-col items-center justify-center gap-1 rounded-2xl px-1 py-1 text-[9px] font-bold leading-none transition sm:text-[10px] ${
+                    active
+                      ? "bg-blue-50 text-[#1877F2] shadow-sm ring-1 ring-blue-100"
+                      : "text-slate-500 hover:bg-slate-100 hover:text-[#1877F2]"
+                  }`}
+                >
+                  <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
+                  <span className="max-w-full truncate">{item.label}</span>
+                </button>
+              );
+            })}
+
+            <button
+              type="button"
+              onClick={() => setMobileMoreOpen((open) => !open)}
+              aria-expanded={mobileMoreOpen}
+              aria-label="Abrir mais opções"
+              className={`flex min-h-14 flex-col items-center justify-center gap-1 rounded-2xl px-1 py-1 text-[9px] font-bold leading-none transition sm:text-[10px] ${
+                mobileMoreOpen || activeSection === "simulados"
+                  ? "bg-blue-50 text-[#1877F2] shadow-sm ring-1 ring-blue-100"
+                  : "text-slate-500 hover:bg-slate-100 hover:text-[#1877F2]"
+              }`}
+            >
+              <Menu className="h-5 w-5 shrink-0" aria-hidden="true" />
+              <span className="max-w-full truncate">Mais</span>
+            </button>
+          </nav>
+        </>,
         document.body,
       )
     : null;
