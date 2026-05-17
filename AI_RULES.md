@@ -86,3 +86,43 @@ Este arquivo define regras obrigatórias para qualquer IA (Claude Code, Copilot,
 3. Executar `npx tsc --noEmit` após mudanças
 4. Executar `npm run build` para confirmar
 5. Criar commits descritivos com o **porquê** da mudança
+
+---
+
+## Checklist obrigatório antes de gerar código
+
+Execute mentalmente antes de escrever qualquer código:
+
+### Reutilização
+- [ ] Verifiquei se já existe um componente para isso em `features/*/components/` ou `components/{ui,shared,charts}/`?
+- [ ] Verifiquei se já existe uma função de domínio para isso em `features/*/domain/` ou `lib/utils.ts`?
+- [ ] Verifiquei se o tipo já existe em `src/types/index.ts` ou `features/*/types.ts`?
+
+### Arquitetura
+- [ ] O componente recebe dados via props (não busca diretamente)?
+- [ ] Acesso ao Supabase está APENAS em `services/supabase/`?
+- [ ] Lógica de negócio complexa está em `domain/`, não no componente?
+- [ ] Imports usam `@/` (não caminhos relativos entre features)?
+
+### React
+- [ ] Não usei `useEffect` para sincronizar estado com props?
+- [ ] Não criei `useState` para valor que pode ser derivado inline?
+- [ ] `"use client"` só está presente onde realmente necessário?
+- [ ] Selects controlados têm `value` que sempre corresponde a uma `<option>` existente?
+
+### CSS/Design
+- [ ] O componente é mobile-first (sem breakpoint = mobile)?
+- [ ] Não usei `position: fixed` no `body` para scroll lock?
+- [ ] Mantive o design atual (cores, tipografia, espaçamento)?
+- [ ] Resets de form no `globals.css` estão dentro de `@layer base`?
+
+### Qualidade
+- [ ] Sem `any` explícito no TypeScript?
+- [ ] Sem `console.log` no código?
+- [ ] Sem código comentado?
+- [ ] Sem arquivos com sufixo 2, copy, backup, old?
+- [ ] Sem duplicação de lógica já existente?
+
+### Verificação final
+- [ ] `npx tsc --noEmit` passou?
+- [ ] `npm run build` passou?
