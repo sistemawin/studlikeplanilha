@@ -77,6 +77,7 @@ export function FocusTimer({
 
   useEffect(() => {
     if (pomodoroComplete && timerRunning) onToggle();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- onToggle reads Zustand state directly; safe to omit from deps
   }, [pomodoroComplete, timerRunning, timerSeconds]);
 
   function handleSubjectChange(subjectId: string) {

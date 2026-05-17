@@ -1,5 +1,3 @@
-import type { StudySession } from "@/types";
-
 export type StreakInfo = {
   days: number;
   atRisk: boolean;

@@ -1,4 +1,4 @@
-import type { Subject, Topic } from "@/types";
+import type { Subject } from "@/types";
 
 export type SubjectPerformance = {
   subject: Subject;

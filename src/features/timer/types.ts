@@ -1,5 +1,3 @@
-import type { StudySessionType } from "@/types";
-
 export type SessionData = {
   topicId?: string;
   reviewId?: string;

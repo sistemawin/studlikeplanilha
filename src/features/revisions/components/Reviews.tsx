@@ -1,6 +1,6 @@
 import { CalendarClock, CheckCircle2, ChevronDown, ChevronUp, Zap } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { NavTarget, Review, Subject, Topic } from "@/types";
 import { ReviewFocusMode } from "@/features/revisions/components/ReviewFocusMode";
 
@@ -48,10 +48,6 @@ export function Reviews({ reviews, topics, subjects, todayIso, activeSection, fo
   const [reschedulingId, setReschedulingId] = useState<string | null>(null);
   const [showUpcoming, setShowUpcoming] = useState(false);
   const [subjectFilter, setSubjectFilter] = useState<string>("all");
-
-  useEffect(() => {
-    if (activeSection !== "revisoes") setSubjectFilter("all");
-  }, [activeSection]);
 
   const pendingToday = reviews.filter((r) => !r.concluida && r.dataAgendada <= todayIso);
   const totalPending = reviews.filter((r) => !r.concluida).length;

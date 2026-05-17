@@ -16,13 +16,21 @@
 - [ ] Criar `src/constants/` com constantes globais extraídas do código
 - [ ] Separar `types/index.ts` em múltiplos arquivos por domínio conforme crescer
 
+## Qualidade e testes
+
+- [ ] Ampliar testes de domínio — adicionar edge cases para scheduling.ts (revisão com data no futuro, lista vazia, status inválido)
+- [ ] Criar testes para hooks customizados (`useScrollLock`, `useDebounce`) usando `@testing-library/react`
+- [ ] Criar testes de integração leves para o fluxo de sync (mock do Supabase client)
+- [ ] Auditar performance do timer — `timerSeconds` muda a cada segundo e pode causar re-renders em cascata
+- [ ] Mapear riscos de conflito offline: dois dispositivos editando simultaneamente (sem merge strategy atualmente)
+- [ ] Revisar `sync.ts` — sem rate limiting, pode gerar muitas requests em sessões longas
+- [ ] Adicionar testes E2E (Playwright) para fluxos críticos: login → edital → revisão → sessão
+
 ## Melhorias futuras
 
 - [ ] Migrar de document store (JSONB único) para tabelas relacionais no Supabase (melhor performance e query flexível)
 - [ ] Adicionar sincronização em tempo real (Supabase Realtime) para multi-device
 - [ ] Implementar modo offline completo com service worker + sync queue
-- [ ] Adicionar testes E2E (Playwright)
-- [ ] Expandir cobertura de testes unitários para funções de negócio
 - [ ] Implementar exportação de dados completa (PDF do edital, CSV do histórico)
 - [ ] Adicionar gráfico de progresso temporal (heatmap de horas ao longo dos meses)
 - [ ] Implementar notificações push (Web Push API) para revisões pendentes

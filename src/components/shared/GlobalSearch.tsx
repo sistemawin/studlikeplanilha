@@ -101,7 +101,7 @@ export function GlobalSearch({ topics, subjects, onStatusChange, onClose }: Prop
             </p>
           ) : results.length === 0 ? (
             <p className="px-5 py-8 text-center text-sm font-medium text-slate-400">
-              Nenhum tópico encontrado para "{query}".
+              Nenhum tópico encontrado para &quot;{query}&quot;.
             </p>
           ) : (
             <div className="divide-y divide-slate-50 px-2 py-2">

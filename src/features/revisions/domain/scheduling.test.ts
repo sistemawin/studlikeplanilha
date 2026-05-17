@@ -9,7 +9,7 @@ import {
   SPACED_REPETITION_INTERVALS,
   DIFFICULTY_INTERVAL_DAYS,
 } from "./scheduling";
-import { addDays, isoDate } from "@/lib/utils";
+import { addDays } from "@/lib/utils";
 
 const TODAY = "2025-06-01";
 const TOPIC_ID = "topic-1";

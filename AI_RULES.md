@@ -83,9 +83,8 @@ Este arquivo define regras obrigatórias para qualquer IA (Claude Code, Copilot,
 
 1. Ler o arquivo relevante antes de editar
 2. Entender o impacto da mudança em outros arquivos
-3. Executar `npx tsc --noEmit` após mudanças
-4. Executar `npm run build` para confirmar
-5. Criar commits descritivos com o **porquê** da mudança
+3. Executar `npm run check` completo ao final
+4. Criar commits descritivos com o **porquê** da mudança
 
 ---
 
@@ -123,9 +122,18 @@ Execute mentalmente antes de escrever qualquer código:
 - [ ] Sem arquivos com sufixo 2, copy, backup, old?
 - [ ] Sem duplicação de lógica já existente?
 
-### Verificação final
-- [ ] `npx tsc --noEmit` passou?
-- [ ] `npm run build` passou?
+### Verificação final obrigatória
+- [ ] `npm run check` passou completamente?
+  - TypeScript: passou / falhou
+  - Lint: passou / falhou
+  - Testes: passou / falhou (X/X)
+  - Forbidden files: passou / falhou
+  - Duplicates: passou / falhou
+  - Architecture: passou / falhou
+  - Domain coverage: passou / falhou
+  - Build: passou / falhou
+
+**Nunca reportar tarefa concluída sem ter rodado `npm run check` e informado o resultado de cada etapa.**
 
 ---
 
@@ -145,3 +153,31 @@ Execute mentalmente antes de escrever qualquer código:
 - **Testar todos os casos extremos**: empty array, zero, null, out-of-range
 - **Rodar `npm run test` antes de qualquer commit que altere `domain/`**
 - **Nunca alterar comportamento de domain sem atualizar o teste correspondente**
+- **`npm run check:domain` falha se qualquer domain/ não tiver teste** — isso é intencional
+
+---
+
+## Pipeline de qualidade
+
+Consulte `docs/quality/CHECKS.md` para detalhes de cada check.
+
+**Obrigação:** antes de reportar qualquer tarefa como concluída, rode:
+
+```bash
+npm run check
+```
+
+E informe o resultado de **cada etapa**:
+
+```
+✅ typecheck    — passou
+✅ lint         — passou
+✅ test         — passou (109/109)
+✅ forbidden    — passou
+✅ duplicates   — passou
+✅ architecture — passou
+✅ domain       — passou (5/5)
+✅ build        — passou
+```
+
+Se qualquer etapa falhar, corrija e rode novamente até tudo passar.

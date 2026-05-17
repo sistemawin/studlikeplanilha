@@ -8,7 +8,13 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "check:forbidden-files": "bash scripts/check-forbidden-files.sh",
+    "check:duplicates": "bash scripts/check-duplicates.sh",
+    "check:architecture": "bash scripts/check-architecture.sh",
+    "check:domain": "bash scripts/check-domain-coverage.sh",
+    "check": "npm run typecheck && npm run lint && npm run test && npm run check:forbidden-files && npm run check:duplicates && npm run check:architecture && npm run check:domain && npm run build"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.105.4",

@@ -10,7 +10,7 @@ import {
 import type { Goal, StudySession } from "@/types";
 
 const makeGoal = (valorAtual: number, valorObjetivo: number): Goal => ({
-  id: "g1", tipo: "horas", valorAtual, valorObjetivo,
+  id: "g1", tipo: "horas", valorAtual, valorObjetivo, dataReferencia: "2025-06-01",
 });
 
 const makeSession = (data: string, durationSeconds = 3600): StudySession => ({

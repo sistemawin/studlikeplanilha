@@ -1,5 +1,5 @@
 import type { Goal, StudySession } from "@/types";
-import { computeStreak, isoDate, addDays } from "@/lib/utils";
+import { computeStreak, addDays } from "@/lib/utils";
 
 /**
  * Returns the current goal progress as a percentage (0–100).
