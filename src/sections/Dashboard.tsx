@@ -18,6 +18,8 @@ type Props = {
   notice: string;
   activeSection: NavTarget;
   onOpenFocusTimer: () => void;
+  onStudySubject: (subjectId: string) => void;
+  onStudyTopic: (topicId: string, subjectId: string) => void;
   onNavigate: (target: NavTarget) => void;
   onDeleteSession: (id: string) => void;
   nextExam: { nome: string; data: string } | undefined;
@@ -49,6 +51,8 @@ export function Dashboard({
   activeSection,
   onOpenFocusTimer,
   onNavigate,
+  onStudySubject,
+  onStudyTopic,
   onDeleteSession,
   nextExam,
   todayPlan,
@@ -122,6 +126,7 @@ export function Dashboard({
   const todaySeconds = todaySessions.reduce((sum, session) => sum + session.durationSeconds, 0);
   const weekSeconds = weekSessions.reduce((sum, session) => sum + session.durationSeconds, 0);
   const streak = computeStreak(studySessions, todayIso);
+  const streakAtRisk = streak > 0 && todaySessions.length === 0;
   const recentSessions = studySessions.slice(0, 5);
   const studiedTopicsCount = topics.filter((t) => t.status !== "Não Estudado").length;
   const totalStudyHoursAll = Math.round(
@@ -343,14 +348,17 @@ export function Dashboard({
               {todayPlan.map((subject) => {
                 const accent = corToAccent(subject.cor);
                 return (
-                  <span
+                  <button
                     key={subject.id}
-                    className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-semibold"
+                    type="button"
+                    onClick={() => onStudySubject(subject.id)}
+                    aria-label={`Estudar ${subject.nome}`}
+                    className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-semibold transition hover:opacity-80"
                     style={{ backgroundColor: `${accent.chart}18`, color: accent.chart, border: `1px solid ${accent.chart}30` }}
                   >
                     <span className="h-2 w-2 rounded-full" style={{ backgroundColor: accent.chart }} aria-hidden="true" />
                     {subject.nome}
-                  </span>
+                  </button>
                 );
               })}
             </div>
@@ -372,7 +380,13 @@ export function Dashboard({
                   </p>
                   <div className="space-y-1.5">
                     {suggested.map((topic) => (
-                      <div key={topic.id} className="flex min-w-0 items-center gap-2">
+                      <button
+                        key={topic.id}
+                        type="button"
+                        onClick={() => onStudyTopic(topic.id, topic.materiaId)}
+                        aria-label={`Estudar ${topic.titulo}`}
+                        className="flex min-w-0 w-full items-center gap-2 rounded-lg px-1 py-0.5 text-left transition hover:bg-slate-50"
+                      >
                         <span
                           className="h-1.5 w-1.5 shrink-0 rounded-full"
                           style={{ backgroundColor: topic.accent.chart }}
@@ -382,7 +396,7 @@ export function Dashboard({
                         <span className="shrink-0 text-xs font-medium text-slate-400">
                           {topic.subjectNome.replace("Direito ", "")}
                         </span>
-                      </div>
+                      </button>
                     ))}
                   </div>
                 </div>
@@ -497,15 +511,16 @@ export function Dashboard({
               <p className="text-xs font-semibold text-blue-600/70">7 dias</p>
               <p className="mt-1 font-mono text-lg font-bold">{formatTimer(weekSeconds)}</p>
             </div>
-            <div className="rounded-xl bg-amber-50 px-4 py-3 text-amber-900 ring-1 ring-amber-100">
-              <p className="flex items-center gap-1 text-xs font-semibold text-amber-600/70">
+            <div className={`rounded-xl px-4 py-3 ring-1 ${streakAtRisk ? "bg-rose-50 ring-rose-100 text-rose-900" : "bg-amber-50 ring-amber-100 text-amber-900"}`}>
+              <p className={`flex items-center gap-1 text-xs font-semibold ${streakAtRisk ? "text-rose-500" : "text-amber-600/70"}`}>
                 <Zap className="h-3 w-3" aria-hidden="true" />
                 Sequência
+                {streakAtRisk && <span className="ml-0.5 h-1.5 w-1.5 animate-pulse rounded-full bg-rose-400" aria-hidden="true" />}
               </p>
               <p className="mt-1 font-mono text-lg font-bold">
                 {streak}
-                <span className="ml-1 text-xs font-semibold text-amber-700/60">
-                  {streak === 1 ? "dia" : "dias"}
+                <span className={`ml-1 text-xs font-semibold ${streakAtRisk ? "text-rose-500" : "text-amber-700/60"}`}>
+                  {streakAtRisk ? "em risco!" : streak === 1 ? "dia" : "dias"}
                 </span>
               </p>
             </div>

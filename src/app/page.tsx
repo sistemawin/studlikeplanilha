@@ -172,6 +172,8 @@ export default function Home() {
   const [timerRunning, setTimerRunning] = useState(false);
   const [timerSeconds, setTimerSeconds] = useState(0);
   const [timerFocusOpen, setTimerFocusOpen] = useState(false);
+  const [timerDefaultSubjectId, setTimerDefaultSubjectId] = useState<string | undefined>(undefined);
+  const [timerDefaultTopicId, setTimerDefaultTopicId] = useState<string | undefined>(undefined);
 
   // ── Auth state ────────────────────────────────────────────────────────────
   const [session, setSession] = useState<Session | null>(null);
@@ -1523,6 +1525,24 @@ export default function Home() {
   }
 
   function openFocusTimer() {
+    setTimerDefaultSubjectId(undefined);
+    setTimerDefaultTopicId(undefined);
+    setTimerFocusOpen(true);
+    setTimerRunning(true);
+    setNotice("Modo foco iniciado.");
+  }
+
+  function openFocusTimerWithSubject(subjectId: string) {
+    setTimerDefaultSubjectId(subjectId);
+    setTimerDefaultTopicId(undefined);
+    setTimerFocusOpen(true);
+    setTimerRunning(true);
+    setNotice("Modo foco iniciado.");
+  }
+
+  function openFocusTimerWithTopic(topicId: string, subjectId: string) {
+    setTimerDefaultSubjectId(subjectId);
+    setTimerDefaultTopicId(topicId);
     setTimerFocusOpen(true);
     setTimerRunning(true);
     setNotice("Modo foco iniciado.");
@@ -1873,6 +1893,8 @@ export default function Home() {
           topics={topics}
           pendingReviews={pendingToday}
           topicById={topicById}
+          defaultSubjectId={timerDefaultSubjectId}
+          defaultTopicId={timerDefaultTopicId}
           onToggle={toggleTimer}
           onReset={resetTimer}
           onClose={closeFocusTimer}
@@ -2154,6 +2176,8 @@ export default function Home() {
                   notice={homeNotice}
                   activeSection={activeSection}
                   onOpenFocusTimer={openFocusTimer}
+                  onStudySubject={openFocusTimerWithSubject}
+                  onStudyTopic={openFocusTimerWithTopic}
                   onNavigate={navigateFromDashboard}
                   onDeleteSession={deleteStudySession}
                   onAddManualSession={addManualSession}

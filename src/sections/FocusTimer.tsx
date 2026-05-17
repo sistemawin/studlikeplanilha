@@ -21,6 +21,8 @@ type Props = {
   topics: Topic[];
   pendingReviews: Review[];
   topicById: Record<string, Topic>;
+  defaultSubjectId?: string;
+  defaultTopicId?: string;
   onToggle: () => void;
   onReset: () => void;
   onClose: () => void;
@@ -37,15 +39,18 @@ export function FocusTimer({
   topics,
   pendingReviews,
   topicById,
+  defaultSubjectId,
+  defaultTopicId,
   onToggle,
   onReset,
   onClose,
   onFinishSession,
 }: Props) {
   const [sessionType, setSessionType] = useState<"topico" | "revisao">("topico");
-  const [sessionSubjectId, setSessionSubjectId] = useState(subjects[0]?.id ?? "");
+  const initialSubjectId = defaultSubjectId ?? subjects[0]?.id ?? "";
+  const [sessionSubjectId, setSessionSubjectId] = useState(initialSubjectId);
   const [sessionTopicId, setSessionTopicId] = useState(
-    () => topics.filter((t) => t.materiaId === (subjects[0]?.id ?? ""))[0]?.id ?? "",
+    () => defaultTopicId ?? topics.filter((t) => t.materiaId === initialSubjectId)[0]?.id ?? "",
   );
   const [sessionReviewId, setSessionReviewId] = useState(pendingReviews[0]?.id ?? "");
   const [pomodoroMode, setPomodoroMode] = useState(false);
