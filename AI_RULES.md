@@ -126,3 +126,22 @@ Execute mentalmente antes de escrever qualquer código:
 ### Verificação final
 - [ ] `npx tsc --noEmit` passou?
 - [ ] `npm run build` passou?
+
+---
+
+## Zustand — Regras obrigatórias
+
+- **Stores contêm apenas estado compartilhado** — não usar Zustand para estado local de componente
+- **Nunca colocar lógica de negócio complexa em stores** — chamar funções de `domain/`
+- **Nunca duplicar estado** — se está em uma store, não colocar também em useState
+- **Nunca derivar estado em store** — computar inline no componente com useMemo
+- **Usar seletores granulares** em componentes: `useStore((s) => s.campo)` não `useStore()`
+- **Usar `getState()` fora de render**: em funções, callbacks, setInterval — nunca chamar hooks fora de componentes
+- **Sem Supabase em stores** — stores são puramente UI state
+
+## Testes de domínio
+
+- **Criar `.test.ts` ao lado de cada arquivo `domain/*.ts`**
+- **Testar todos os casos extremos**: empty array, zero, null, out-of-range
+- **Rodar `npm run test` antes de qualquer commit que altere `domain/`**
+- **Nunca alterar comportamento de domain sem atualizar o teste correspondente**

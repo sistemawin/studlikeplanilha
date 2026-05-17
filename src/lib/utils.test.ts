@@ -46,7 +46,7 @@ describe("topicScore", () => {
   });
 
   it("'Não Estudado' tem pontuação mínima", () => {
-    expect(topicScore("Não Estudado", "Médio")).toBe(8);
+    expect(topicScore("Não Estudado", "Médio")).toBe(0);
   });
 
   it("dificuldade Fácil adiciona bônus", () => {

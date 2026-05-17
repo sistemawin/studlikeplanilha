@@ -26,6 +26,7 @@ import { getSupabaseBrowserClient, getSupabasePasswordVerifierClient } from "@/s
 import { loadRemoteState, saveRemoteState, serializeAppState, validateSchedule } from "@/services/supabase/sync";
 import { addDays, formatTimer, isoDate, pct } from "@/lib/utils";
 import { useScrollLock } from "@/hooks/useScrollLock";
+import { useTimerStore } from "@/store/timer";
 import { defaultGoals, defaultSchedule } from "@/lib/seed";
 import type { ReadyEdital } from "@/lib/readyEditals";
 import type {
@@ -170,12 +171,12 @@ export default function Home() {
   const [mobileNavPortalReady, setMobileNavPortalReady] = useState(false);
   const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
 
-  // ── Timer state ───────────────────────────────────────────────────────────
-  const [timerRunning, setTimerRunning] = useState(false);
-  const [timerSeconds, setTimerSeconds] = useState(0);
-  const [timerFocusOpen, setTimerFocusOpen] = useState(false);
-  const [timerDefaultSubjectId, setTimerDefaultSubjectId] = useState<string | undefined>(undefined);
-  const [timerDefaultTopicId, setTimerDefaultTopicId] = useState<string | undefined>(undefined);
+  // ── Timer state (Zustand) ─────────────────────────────────────────────────
+  const timerRunning = useTimerStore((s) => s.running);
+  const timerSeconds = useTimerStore((s) => s.seconds);
+  const timerFocusOpen = useTimerStore((s) => s.focusOpen);
+  const timerDefaultSubjectId = useTimerStore((s) => s.defaultSubjectId);
+  const timerDefaultTopicId = useTimerStore((s) => s.defaultTopicId);
 
   // ── Auth state ────────────────────────────────────────────────────────────
   const [session, setSession] = useState<Session | null>(null);
@@ -305,7 +306,7 @@ export default function Home() {
   // ── Timer tick ────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!timerRunning) return;
-    const id = window.setInterval(() => setTimerSeconds((s) => s + 1), 1000);
+    const id = window.setInterval(() => useTimerStore.getState().increment(), 1000);
     return () => window.clearInterval(id);
   }, [timerRunning]);
 
@@ -1531,62 +1532,52 @@ export default function Home() {
   }
 
   function openFocusTimer() {
-    setTimerDefaultSubjectId(undefined);
-    setTimerDefaultTopicId(undefined);
-    setTimerFocusOpen(true);
-    setTimerRunning(true);
+    useTimerStore.getState().open();
     setNotice("Modo foco iniciado.");
   }
 
   function openFocusTimerWithSubject(subjectId: string) {
-    setTimerDefaultSubjectId(subjectId);
-    setTimerDefaultTopicId(undefined);
-    setTimerFocusOpen(true);
-    setTimerRunning(true);
+    useTimerStore.getState().open(subjectId, undefined);
     setNotice("Modo foco iniciado.");
   }
 
   function openFocusTimerWithTopic(topicId: string, subjectId: string) {
-    setTimerDefaultSubjectId(subjectId);
-    setTimerDefaultTopicId(topicId);
-    setTimerFocusOpen(true);
-    setTimerRunning(true);
+    useTimerStore.getState().open(subjectId, topicId);
     setNotice("Modo foco iniciado.");
   }
 
   function toggleTimer() {
-    setTimerRunning((running) => {
-      const next = !running;
-      setNotice(next ? "Cronômetro iniciado." : `Cronômetro pausado em ${formatTimer(timerSeconds)}.`);
-      return next;
-    });
+    const ts = useTimerStore.getState();
+    const next = !ts.running;
+    ts.setRunning(next);
+    setNotice(next ? "Cronômetro iniciado." : `Cronômetro pausado em ${formatTimer(ts.seconds)}.`);
   }
 
   function resetTimer() {
-    setTimerRunning(false);
-    setTimerSeconds(0);
+    useTimerStore.getState().reset();
     setNotice("Cronômetro reiniciado.");
   }
 
   function closeFocusTimer() {
-    setTimerFocusOpen(false);
-    setNotice(`Sessão em ${formatTimer(timerSeconds)}.`);
+    const { seconds } = useTimerStore.getState();
+    setNotice(`Sessão em ${formatTimer(seconds)}.`);
+    useTimerStore.getState().closeView();
   }
 
   function finishSession({ topicId, reviewId }: { topicId?: string; reviewId?: string }) {
     if (preventReadOnlyAction()) return;
-    setTimerFocusOpen(false);
-    setTimerRunning(false);
+    const { seconds } = useTimerStore.getState();
+    useTimerStore.getState().finish();
 
-    const sessionHours = Math.round((timerSeconds / 3600) * 100) / 100;
-    const timeStr = formatTimer(timerSeconds);
+    const sessionHours = Math.round((seconds / 3600) * 100) / 100;
+    const timeStr = formatTimer(seconds);
     const topic = topicId ? topicById[topicId] : undefined;
     const review = reviewId ? reviews.find((r) => r.id === reviewId) : undefined;
     const reviewTopic = review ? topicById[review.topicoId] : undefined;
     const sessionTopic = topic ?? reviewTopic;
     const sessionSubject = sessionTopic ? subjectById[sessionTopic.materiaId] : undefined;
 
-    if (timerSeconds > 0) {
+    if (seconds > 0) {
       setGoals((gs) =>
         gs.map((g) =>
           g.tipo === "horas"
@@ -1600,7 +1591,7 @@ export default function Home() {
           tipo: topicId ? "topico" : reviewId ? "revisao" : "livre",
           data: todayIso,
           endedAt: new Date().toISOString(),
-          durationSeconds: timerSeconds,
+          durationSeconds: seconds,
           materiaId: sessionSubject?.id,
           materiaNome: sessionSubject?.nome,
           topicoId: sessionTopic?.id,
