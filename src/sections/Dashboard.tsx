@@ -505,24 +505,24 @@ export function Dashboard({
             </p>
             <h2 className="mt-1 text-lg font-bold text-slate-950">Sessões de estudo</h2>
           </div>
-          <div className="grid grid-cols-3 gap-2 sm:w-auto">
-            <div className="rounded-xl bg-[#0F172A] px-4 py-3 text-white shadow-sm shadow-slate-900/15">
-              <p className="text-xs font-semibold text-white/45">Hoje</p>
-              <p className="mt-1 font-mono text-lg font-bold">{formatTimer(todaySeconds)}</p>
+          <div className="grid min-w-0 max-w-full grid-cols-3 gap-2 overflow-hidden sm:w-auto">
+            <div className="min-w-0 overflow-hidden rounded-xl bg-[#0F172A] px-4 py-3 text-white shadow-sm shadow-slate-900/15">
+              <p className="max-w-full text-xs font-semibold text-white/45">Hoje</p>
+              <p className="mt-1 max-w-full font-mono text-lg font-bold">{formatTimer(todaySeconds)}</p>
             </div>
-            <div className="rounded-xl bg-blue-50 px-4 py-3 text-blue-900 ring-1 ring-blue-100">
-              <p className="text-xs font-semibold text-blue-600/70">7 dias</p>
-              <p className="mt-1 font-mono text-lg font-bold">{formatTimer(weekSeconds)}</p>
+            <div className="min-w-0 overflow-hidden rounded-xl bg-blue-50 px-4 py-3 text-blue-900 ring-1 ring-blue-100">
+              <p className="max-w-full text-xs font-semibold text-blue-600/70">7 dias</p>
+              <p className="mt-1 max-w-full font-mono text-lg font-bold">{formatTimer(weekSeconds)}</p>
             </div>
-            <div className={`rounded-xl px-4 py-3 ring-1 ${streakAtRisk ? "bg-rose-50 ring-rose-100 text-rose-900" : "bg-amber-50 ring-amber-100 text-amber-900"}`}>
-              <p className={`flex items-center gap-1 text-xs font-semibold ${streakAtRisk ? "text-rose-500" : "text-amber-600/70"}`}>
+            <div className={`min-w-0 overflow-hidden rounded-xl px-4 py-3 text-center ring-1 ${streakAtRisk ? "bg-rose-50 ring-rose-100 text-rose-900" : "bg-amber-50 ring-amber-100 text-amber-900"}`}>
+              <p className={`flex max-w-full items-center justify-center gap-1 text-center text-xs font-semibold tracking-[0.04em] ${streakAtRisk ? "text-rose-500" : "text-amber-600/70"}`}>
                 <Zap className="h-3 w-3" aria-hidden="true" />
                 Sequência
                 {streakAtRisk && <span className="ml-0.5 h-1.5 w-1.5 animate-pulse rounded-full bg-rose-400" aria-hidden="true" />}
               </p>
-              <p className="mt-1 font-mono text-lg font-bold">
+              <p className="mt-1 flex max-w-full items-baseline justify-center gap-1 font-mono text-lg font-bold">
                 {streak}
-                <span className={`ml-1 text-xs font-semibold ${streakAtRisk ? "text-rose-500" : "text-amber-700/60"}`}>
+                <span className={`text-xs font-semibold ${streakAtRisk ? "text-rose-500" : "text-amber-700/60"}`}>
                   {streakAtRisk ? "em risco!" : streak === 1 ? "dia" : "dias"}
                 </span>
               </p>
