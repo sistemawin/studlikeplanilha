@@ -134,8 +134,8 @@ export function Exams({
   const isVisible = activeSection === "simulados";
   const today = new Date().toISOString().slice(0, 10);
   const [showAllQuestionLogs, setShowAllQuestionLogs] = useState(false);
-  const [questionSubjectId, setQuestionSubjectId] = useState("");
-  const [questionTopicId, setQuestionTopicId] = useState("");
+  const [selectedSubjectId, setSelectedSubjectId] = useState("");
+  const [selectedTopicId, setSelectedTopicId] = useState("");
   const [questionQty, setQuestionQty] = useState("");
   const [questionHits, setQuestionHits] = useState("");
   const [questionDate, setQuestionDate] = useState(today);
@@ -359,20 +359,15 @@ export function Exams({
     return "bg-[#1877F2]";
   }
 
-  const selectedQuestionSubjectId = questionSubjectId || subjects[0]?.id || "";
-  const questionTopics = topics.filter((topic) => topic.materiaId === selectedQuestionSubjectId);
-  const selectedQuestionTopicId =
-    questionTopicId && questionTopics.some((topic) => topic.id === questionTopicId)
-      ? questionTopicId
-      : questionTopics[0]?.id ?? "";
+  const questionTopics = topics.filter((topic) => topic.materiaId === selectedSubjectId);
 
   function submitQuestionLog() {
     const quantidade = Number.parseInt(questionQty, 10);
     const acertos = questionHits.trim() ? Number.parseInt(questionHits, 10) : null;
 
     onAddQuestionLog({
-      materiaId: selectedQuestionSubjectId,
-      topicoId: selectedQuestionTopicId,
+      materiaId: selectedSubjectId,
+      topicoId: selectedTopicId,
       quantidade: Number.isFinite(quantidade) ? quantidade : 0,
       acertos: acertos !== null && Number.isFinite(acertos) ? acertos : null,
       data: questionDate || today,
@@ -382,8 +377,8 @@ export function Exams({
       Number.isFinite(quantidade)
       && quantidade > 0
       && (acertos === null || (Number.isFinite(acertos) && acertos >= 0 && acertos <= quantidade))
-      && selectedQuestionSubjectId
-      && selectedQuestionTopicId
+      && selectedSubjectId
+      && selectedTopicId
     ) {
       setQuestionQty("");
       setQuestionHits("");
@@ -840,13 +835,14 @@ export function Exams({
                 <label className="sr-only" htmlFor="question-subject">Matéria</label>
                 <select
                   id="question-subject"
-                  value={selectedQuestionSubjectId}
+                  value={selectedSubjectId}
                   onChange={(e) => {
-                    setQuestionSubjectId(e.target.value);
-                    setQuestionTopicId("");
+                    setSelectedSubjectId(e.target.value);
+                    setSelectedTopicId("");
                   }}
                   className="h-11 min-w-0 rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 md:h-10"
                 >
+                  <option value="">Selecione a matéria</option>
                   {subjects.map((subject) => (
                     <option key={subject.id} value={subject.id}>
                       {subject.nome}
@@ -857,10 +853,11 @@ export function Exams({
                 <label className="sr-only" htmlFor="question-topic">Tópico</label>
                 <select
                   id="question-topic"
-                  value={selectedQuestionTopicId}
-                  onChange={(e) => setQuestionTopicId(e.target.value)}
+                  value={selectedTopicId}
+                  onChange={(e) => setSelectedTopicId(e.target.value)}
                   className="h-11 min-w-0 rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 md:h-10"
                 >
+                  <option value="">Selecione o tópico</option>
                   {questionTopics.map((topic) => (
                     <option key={topic.id} value={topic.id}>
                       {topic.titulo}
