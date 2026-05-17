@@ -225,3 +225,15 @@ export type AdminUserRow = {
   is_admin: boolean;
   total_count: number | string;
 };
+
+export type AdminUserAction = "block" | "unblock" | "delete" | "promote";
+
+export type ReadOnlyUser = { id: string; email: string };
+
+export type ConfirmDialogState = {
+  title: string;
+  description: string;
+  details?: string;
+  confirmLabel?: string;
+  onConfirm: () => void;
+};

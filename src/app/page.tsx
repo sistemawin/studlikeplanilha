@@ -21,36 +21,33 @@ import {
 import { StudlikeLogo } from "@/components/ui/StudlikeLogo";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import type { Session } from "@supabase/supabase-js";
 import { getSupabaseBrowserClient, getSupabasePasswordVerifierClient } from "@/services/supabase/client";
-import { loadRemoteState, serializeAppState, validateSchedule } from "@/services/supabase/sync";
+import { loadRemoteState, serializeAppState } from "@/services/supabase/sync";
 import { syncAppState } from "@/services/sync/coordinator";
 import { persistLocally, loadPersisted, clearPersisted } from "@/services/persistence/local";
 import { hasPendingSync } from "@/services/queue/syncQueue";
 import { addDays, formatTimer, isoDate, pct } from "@/lib/utils";
 import { useScrollLock } from "@/hooks/useScrollLock";
 import { useTimerStore } from "@/store/timer";
+import { useAuthState } from "@/hooks/useAuthState";
+import { useAdminActions } from "@/hooks/useAdminActions";
 import { defaultGoals, defaultSchedule } from "@/lib/seed";
 import type { ReadyEdital } from "@/lib/readyEditals";
 import type {
   AppState,
-  AuthMode,
+  ConfirmDialogState,
   Difficulty,
   Goal,
   Exam,
   NavTarget,
   PlanningMode,
   QuestionLog,
+  ReadOnlyUser,
   Review,
   ReviewType,
   StudySession,
   Subject,
   SyncStatus,
-  Suggestion,
-  AdminUser,
-  AdminUserRow,
-  SuggestionRow,
-  SuggestionStatus,
   Topic,
   TopicStatus,
 } from "@/types";
@@ -72,16 +69,6 @@ import { GlobalSearch } from "@/components/shared/GlobalSearch";
 import { AppFeedbackToast, type AppFeedback, type FeedbackTone } from "@/components/shared/AppFeedbackToast";
 
 const SYNC_DEBOUNCE_MS = 700;
-const ADMIN_USERS_PAGE_SIZE = 20;
-type AdminUserAction = "block" | "unblock" | "delete" | "promote";
-type ReadOnlyUser = { id: string; email: string };
-type ConfirmDialogState = {
-  title: string;
-  description: string;
-  details?: string;
-  confirmLabel?: string;
-  onConfirm: () => void;
-};
 
 function feedbackToneFromMessage(message: string): FeedbackTone {
   const normalized = message.toLocaleLowerCase("pt-BR");
@@ -105,47 +92,6 @@ function feedbackToneFromMessage(message: string): FeedbackTone {
 
   return "success";
 }
-
-function normalizeAdminAppState(value: unknown): AppState {
-  if (!value || typeof value !== "object") {
-    throw new Error("Dados do usuário indisponíveis.");
-  }
-  const candidate = value as Partial<AppState> & { error?: string };
-  if (candidate.error) throw new Error(candidate.error);
-
-  return {
-    subjects: Array.isArray(candidate.subjects) ? candidate.subjects : [],
-    topics: Array.isArray(candidate.topics)
-      ? candidate.topics.map((topic) => ({ ...topic, estudadoEm: topic.estudadoEm ?? undefined }))
-      : [],
-    reviews: Array.isArray(candidate.reviews) ? candidate.reviews : [],
-    schedule: validateSchedule(candidate.schedule, defaultSchedule),
-    goals: Array.isArray(candidate.goals)
-      ? candidate.goals.map((goal) => ({
-          ...goal,
-          valorObjetivo: Number(goal.valorObjetivo),
-          valorAtual: Number(goal.valorAtual),
-        }))
-      : defaultGoals(),
-    exams: Array.isArray(candidate.exams)
-      ? candidate.exams.map((exam) => ({ ...exam, total: Number(exam.total), acertos: Number(exam.acertos) }))
-      : [],
-    questionLogs: Array.isArray(candidate.questionLogs)
-      ? candidate.questionLogs.map((log) => ({
-          ...log,
-          quantidade: Number(log.quantidade),
-          acertos: log.acertos === null ? null : Number(log.acertos),
-        }))
-      : [],
-    studySessions: Array.isArray(candidate.studySessions)
-      ? candidate.studySessions.map((session) => ({
-          ...session,
-          durationSeconds: Number(session.durationSeconds),
-        }))
-      : [],
-  };
-}
-
 export default function Home() {
   // Computed fresh every render — never stale if tab stays open overnight
   const todayIso = isoDate(new Date());
@@ -167,7 +113,6 @@ export default function Home() {
   const [manualDate, setManualDate] = useState(() => addDays(new Date(), 5));
   const [examDraft, setExamDraft] = useState({ nome: "", acertos: 0, total: 0 });
   const [activeSection, setActiveSection] = useState<NavTarget>("dashboard");
-  const [adminView, setAdminView] = useState(false);
   const [readOnlyUser, setReadOnlyUser] = useState<ReadOnlyUser | null>(null);
   const [notice, setNoticeState] = useState("Pronto para estudar.");
   const [feedback, setFeedback] = useState<AppFeedback | null>(null);
@@ -181,16 +126,21 @@ export default function Home() {
   const timerDefaultSubjectId = useTimerStore((s) => s.defaultSubjectId);
   const timerDefaultTopicId = useTimerStore((s) => s.defaultTopicId);
 
-  // ── Auth state ────────────────────────────────────────────────────────────
-  const [session, setSession] = useState<Session | null>(null);
-  const [authReady, setAuthReady] = useState(false);
-  const [authMode, setAuthMode] = useState<AuthMode>("login");
-  const [authEmail, setAuthEmail] = useState("");
-  const [authPassword, setAuthPassword] = useState("");
-  const [authName, setAuthName] = useState("");
-  const [authLoading, setAuthLoading] = useState(false);
-  const [authError, setAuthError] = useState("");
-  const [authMessage, setAuthMessage] = useState("");
+  // ── Auth state (hook) ─────────────────────────────────────────────────────
+  const {
+    session,
+    authReady,
+    authMode,
+    authEmail, setAuthEmail,
+    authPassword, setAuthPassword,
+    authName, setAuthName,
+    authLoading,
+    authError,
+    authMessage,
+    changeAuthMode,
+    submitAuth,
+    signOut,
+  } = useAuthState(setNotice);
 
   // ── Archive modal state ──────────────────────────────────────────────────
   const [archiveModalOpen, setArchiveModalOpen] = useState(false);
@@ -202,20 +152,42 @@ export default function Home() {
   // ── Subject modal state ───────────────────────────────────────────────────
   const [subjectModal, setSubjectModal] = useState<{ open: boolean; subject?: Subject }>({ open: false });
 
-  // ── Suggestions/admin state ───────────────────────────────────────────────
+  // ── Suggestion modal state ────────────────────────────────────────────────
   const [suggestionOpen, setSuggestionOpen] = useState(false);
   const [suggestionCategory, setSuggestionCategory] = useState("Melhoria de design");
   const [suggestionMessage, setSuggestionMessage] = useState("");
   const [suggestionLoading, setSuggestionLoading] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [adminLoading, setAdminLoading] = useState(false);
-  const [adminError, setAdminError] = useState("");
-  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
-  const [adminUsers, setAdminUsers] = useState<AdminUser[]>([]);
-  const [adminUsersTotal, setAdminUsersTotal] = useState(0);
-  const [adminUsersPage, setAdminUsersPage] = useState(0);
-  const [adminUsersSearch, setAdminUsersSearch] = useState("");
-  const [adminUsersLoading, setAdminUsersLoading] = useState(false);
+
+  // ── Admin state (hook) ────────────────────────────────────────────────────
+  const {
+    isAdmin,
+    adminView, setAdminView,
+    suggestions,
+    adminUsers,
+    adminUsersTotal,
+    adminUsersPage,
+    adminUsersSearch,
+    adminLoading,
+    adminUsersLoading,
+    adminError,
+    ADMIN_USERS_PAGE_SIZE,
+    loadAdminSuggestions,
+    loadAdminUsers,
+    searchAdminUsers,
+    manageAdminUser,
+    updateSuggestionStatus,
+    openAdminView,
+    refreshAdminData,
+    viewUserApp,
+  } = useAdminActions({
+    session,
+    setNotice,
+    setConfirmDialog,
+    applyAppState,
+    setReadOnlyUser,
+    setActiveSection,
+  });
+
   const [updateAvailable, setUpdateAvailable] = useState(false);
   const [refreshingApp, setRefreshingApp] = useState(false);
   const currentAppVersionRef = useRef("");
@@ -233,7 +205,9 @@ export default function Home() {
 
   // ── Sync status ───────────────────────────────────────────────────────────
   const [syncStatus, setSyncStatus] = useState<SyncStatus>("idle");
-  const [isOnlineState, setIsOnlineState] = useState(true);
+  const [isOnlineState, setIsOnlineState] = useState(
+    () => (typeof navigator !== "undefined" ? navigator.onLine : true),
+  );
   const savedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const feedbackIdRef = useRef(0);
 
@@ -257,8 +231,9 @@ export default function Home() {
     setFeedback(null);
   }, []);
 
-  // ── Load reminder prefs from localStorage ────────────────────────────────
+  // ── Load reminder prefs from localStorage (SSR-safe: must be in effect) ──
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- localStorage unavailable on SSR; effect is the correct pattern
     setReminderEnabled(localStorage.getItem("studlike_reminder_enabled") === "true");
     setReminderTime(localStorage.getItem("studlike_reminder_time") || "20:00");
   }, []);
@@ -317,12 +292,12 @@ export default function Home() {
   useScrollLock(timerFocusOpen);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- document.body unavailable on SSR; effect is the correct pattern
     setMobileNavPortalReady(true);
   }, []);
 
   // ── Online / offline detection ────────────────────────────────────────────
   useEffect(() => {
-    setIsOnlineState(navigator.onLine);
     function handleOnline() { setIsOnlineState(true); }
     function handleOffline() { setIsOnlineState(false); }
     window.addEventListener("online", handleOnline);
@@ -410,69 +385,13 @@ export default function Home() {
     });
   }, []);
 
-  // ── Auth init ─────────────────────────────────────────────────────────────
-  useEffect(() => {
-    try {
-      const supabase = getSupabaseBrowserClient();
-      const urlMarksPasswordRecovery =
-        window.location.hash.includes("type=recovery") || window.location.search.includes("type=recovery");
-
-      supabase.auth
-        .getSession()
-        .then(({ data }) => {
-          if (urlMarksPasswordRecovery && data.session) {
-            setAuthMode("reset");
-            setAuthPassword("");
-            setAuthMessage("Digite sua nova senha para concluir a recuperação.");
-          } else if (urlMarksPasswordRecovery) {
-            setAuthMode("forgot");
-            setAuthError("Link de recuperação expirado ou inválido. Solicite um novo e-mail.");
-          }
-          setSession(data.session);
-        })
-        .catch((err: unknown) => {
-          setAuthError(err instanceof Error ? err.message : "Não foi possível carregar a sessão.");
-        })
-        .finally(() => setAuthReady(true));
-
-      const { data: { subscription } } = supabase.auth.onAuthStateChange((event, next) => {
-        if (event === "PASSWORD_RECOVERY") {
-          if (next) {
-            setAuthMode("reset");
-            setAuthPassword("");
-            setAuthError("");
-            setAuthMessage("Digite sua nova senha para concluir a recuperação.");
-          } else {
-            setAuthMode("forgot");
-            setAuthError("Link de recuperação expirado ou inválido. Solicite um novo e-mail.");
-          }
-        }
-        setSession(next);
-        setAuthReady(true);
-      });
-
-      return () => subscription.unsubscribe();
-    } catch (err) {
-      queueMicrotask(() => {
-        setAuthReady(true);
-        setAuthError(err instanceof Error ? err.message : "Erro ao configurar autenticação.");
-      });
-    }
-  }, []);
-
   // ── Load remote data on login ─────────────────────────────────────────────
   useEffect(() => {
     if (!session) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- reset on logout is intentional
       setRemoteReady(false);
       setRemoteError("");
-      setIsAdmin(false);
-      setAdminView(false);
       setReadOnlyUser(null);
-      setSuggestions([]);
-      setAdminUsers([]);
-      setAdminUsersTotal(0);
-      setAdminUsersPage(0);
-      setAdminUsersSearch("");
       lastSyncedStateRef.current = "";
       clearPersisted();
       return;
@@ -535,40 +454,13 @@ export default function Home() {
     return () => { cancelled = true; };
   }, [session]);
 
-  // ── Admin access check ────────────────────────────────────────────────────
-  useEffect(() => {
-    if (!session) return;
-    let cancelled = false;
-    const supabase = getSupabaseBrowserClient();
-
-    async function checkAdmin() {
-      try {
-        const { data, error } = await supabase
-          .from("app_admins")
-          .select("user_id")
-          .eq("user_id", session!.user.id)
-          .maybeSingle();
-        if (cancelled) return;
-        if (error) {
-          setIsAdmin(false);
-          return;
-        }
-        setIsAdmin(Boolean(data));
-      } catch {
-        if (!cancelled) setIsAdmin(false);
-      }
-    }
-
-    void checkAdmin();
-    return () => { cancelled = true; };
-  }, [session]);
-
   // ── Debounced sync ────────────────────────────────────────────────────────
   // isOnlineState is in deps so the effect re-fires on reconnect, triggering
   // a sync flush when there are unsynced changes (lastSyncedStateRef stale).
   useEffect(() => {
     if (!session || !remoteReady) return;
     if (readOnlyUser) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- guard: no sync in read-only mode
       setSyncStatus("idle");
       return;
     }
@@ -715,30 +607,6 @@ export default function Home() {
     if (!readOnlyUser) return false;
     setNotice("Modo leitura ativo. Saia da visualização do usuário para editar seus dados.");
     return true;
-  }
-
-  async function viewUserApp(user: AdminUser) {
-    if (!session || !isAdmin) return;
-    setAdminLoading(true);
-    setAdminError("");
-    try {
-      const supabase = getSupabaseBrowserClient();
-      const { data, error } = await supabase.rpc("admin_get_user_state", {
-        p_target_user_id: user.id,
-      });
-      if (error) throw error;
-      const state = normalizeAdminAppState(data);
-      setReadOnlyUser({ id: user.id, email: user.email || user.id });
-      applyAppState(state);
-      setAdminView(false);
-      setActiveSection("dashboard");
-      setNotice(`Visualizando ${user.email || user.id} em modo leitura.`);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    } catch (err) {
-      setAdminError(err instanceof Error ? err.message : "Não foi possível abrir o app do usuário.");
-    } finally {
-      setAdminLoading(false);
-    }
   }
 
   async function exitReadOnlyMode() {
@@ -1230,152 +1098,6 @@ export default function Home() {
     }
   }
 
-  async function loadAdminSuggestions() {
-    if (!session || !isAdmin) return;
-    setAdminLoading(true);
-    setAdminError("");
-    try {
-      const supabase = getSupabaseBrowserClient();
-      const { data, error } = await supabase
-        .from("sugestoes")
-        .select("id,user_id,email,categoria,mensagem,status,created_at")
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      setSuggestions(((data ?? []) as SuggestionRow[]).map((row) => ({
-        id: row.id,
-        userId: row.user_id,
-        email: row.email,
-        categoria: row.categoria,
-        mensagem: row.mensagem,
-        status: row.status,
-        createdAt: row.created_at,
-      })));
-    } catch (err) {
-      setAdminError(err instanceof Error ? err.message : "Não foi possível carregar sugestões.");
-    } finally {
-      setAdminLoading(false);
-    }
-  }
-
-  async function loadAdminUsers(page = adminUsersPage, search = adminUsersSearch) {
-    if (!session || !isAdmin) return;
-    const safePage = Math.max(0, page);
-    const safeSearch = search.trim();
-    setAdminUsersLoading(true);
-    setAdminError("");
-    try {
-      const supabase = getSupabaseBrowserClient();
-      const { data, error } = await supabase.rpc("admin_list_users", {
-        p_limit: ADMIN_USERS_PAGE_SIZE,
-        p_offset: safePage * ADMIN_USERS_PAGE_SIZE,
-        p_search: safeSearch,
-      });
-      if (error) throw error;
-      const rows = (data ?? []) as AdminUserRow[];
-      setAdminUsers(rows.map((row) => ({
-        id: row.id,
-        email: row.email,
-        createdAt: row.created_at,
-        lastSignInAt: row.last_sign_in_at,
-        bannedUntil: row.banned_until,
-        isAdmin: row.is_admin,
-      })));
-      if (rows.length > 0) {
-        setAdminUsersTotal(Number(rows[0].total_count));
-      } else if (safePage === 0) {
-        setAdminUsersTotal(0);
-      }
-      setAdminUsersPage(safePage);
-    } catch (err) {
-      setAdminError(err instanceof Error ? err.message : "Não foi possível carregar usuários.");
-    } finally {
-      setAdminUsersLoading(false);
-    }
-  }
-
-  function searchAdminUsers(value: string) {
-    setAdminUsersSearch(value);
-    void loadAdminUsers(0, value);
-  }
-
-  async function manageAdminUser(user: AdminUser, action: AdminUserAction) {
-    if (!session || !isAdmin) return;
-    const actionLabels: Record<AdminUserAction, string> = {
-      block: "bloquear",
-      unblock: "desbloquear",
-      delete: "excluir",
-      promote: "promover a admin",
-    };
-    const destructive = action === "block" || action === "delete";
-    if (destructive) {
-      setConfirmDialog({
-        title: action === "delete" ? "Excluir conta?" : "Bloquear conta?",
-        description: `Você vai ${actionLabels[action]} a conta ${user.email || user.id}.`,
-        details: action === "delete"
-          ? "Essa ação remove o acesso do usuário e não deve ser usada sem confirmação prévia."
-          : "A conta ficará sem acesso até ser desbloqueada por um admin.",
-        confirmLabel: action === "delete" ? "Excluir conta" : "Bloquear conta",
-        onConfirm: () => {
-          void confirmManageAdminUser(user, action);
-        },
-      });
-      return;
-    }
-
-    await confirmManageAdminUser(user, action);
-  }
-
-  async function confirmManageAdminUser(user: AdminUser, action: AdminUserAction) {
-    const actionLabels: Record<AdminUserAction, string> = {
-      block: "bloquear",
-      unblock: "desbloquear",
-      delete: "excluir",
-      promote: "promover a admin",
-    };
-    setAdminUsersLoading(true);
-    setAdminError("");
-    try {
-      const supabase = getSupabaseBrowserClient();
-      const { error } = await supabase.rpc("admin_manage_user", {
-        p_target_user_id: user.id,
-        p_action: action,
-      });
-      if (error) throw error;
-      setNotice(`Usuário ${actionLabels[action]} com sucesso.`);
-      void loadAdminUsers(adminUsersPage, adminUsersSearch);
-    } catch (err) {
-      setAdminError(err instanceof Error ? err.message : "Não foi possível executar a ação.");
-      setAdminUsersLoading(false);
-    }
-  }
-
-  async function updateSuggestionStatus(id: string, status: SuggestionStatus) {
-    setSuggestions((items) => items.map((item) => (item.id === id ? { ...item, status } : item)));
-    try {
-      const supabase = getSupabaseBrowserClient();
-      const { error } = await supabase.from("sugestoes").update({ status }).eq("id", id);
-      if (error) throw error;
-      setNotice("Status da sugestão atualizado.");
-    } catch (err) {
-      setAdminError(err instanceof Error ? err.message : "Não foi possível atualizar o status.");
-      setNotice(err instanceof Error ? err.message : "Não foi possível atualizar o status.");
-      void loadAdminSuggestions();
-    }
-  }
-
-  function openAdminView() {
-    setAdminView(true);
-    void loadAdminSuggestions();
-    void loadAdminUsers(0, adminUsersSearch);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }
-
-  function refreshAdminData() {
-    void loadAdminSuggestions();
-    void loadAdminUsers(adminUsersPage, adminUsersSearch);
-    setNotice("Atualizando dados administrativos.", "info");
-  }
-
   async function refreshAppVersion() {
     if (refreshingApp) return;
     setRefreshingApp(true);
@@ -1666,111 +1388,6 @@ export default function Home() {
       setNotice(`${timeStr} registrado · revisão "${reviewTopic?.titulo ?? ""}" concluída.`);
     } else {
       setNotice(`Sessão de ${timeStr} registrada.`);
-    }
-  }
-
-  function changeAuthMode(next: AuthMode) {
-    setAuthMode(next);
-    setAuthError("");
-    setAuthMessage("");
-    if (authMode === "reset" && next !== "reset") {
-      void getSupabaseBrowserClient().auth.signOut();
-      setSession(null);
-      setAuthPassword("");
-    }
-  }
-
-  async function submitAuth() {
-    setAuthError("");
-    setAuthMessage("");
-    const email = authEmail.trim();
-    if (authMode === "forgot") {
-      if (!email) { setAuthError("Informe seu e-mail para recuperar a senha."); return; }
-      setAuthLoading(true);
-      try {
-        const supabase = getSupabaseBrowserClient();
-        const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: window.location.origin,
-        });
-        if (error) throw error;
-        setAuthMessage("Enviamos um link de recuperação para seu e-mail.");
-      } catch (err) {
-        setAuthError(err instanceof Error ? err.message : "Não foi possível enviar o e-mail de recuperação.");
-      } finally {
-        setAuthLoading(false);
-      }
-      return;
-    }
-
-    if (authMode === "reset") {
-      if (!authPassword) { setAuthError("Digite sua nova senha."); return; }
-      if (authPassword.length < 6) { setAuthError("A senha precisa ter pelo menos 6 caracteres."); return; }
-      setAuthLoading(true);
-      try {
-        const supabase = getSupabaseBrowserClient();
-        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-        if (sessionError) throw sessionError;
-        if (!sessionData.session) {
-          setAuthMode("forgot");
-          setAuthPassword("");
-          setAuthError("Sua sessão de recuperação expirou. Solicite um novo link por e-mail.");
-          return;
-        }
-
-        const { error } = await supabase.auth.updateUser({ password: authPassword });
-        if (error) throw error;
-        await supabase.auth.signOut();
-        setSession(null);
-        setAuthPassword("");
-        setAuthMode("login");
-        setAuthMessage("Senha atualizada. Entre novamente com a nova senha.");
-      } catch (err) {
-        setAuthError(err instanceof Error ? err.message : "Não foi possível atualizar a senha.");
-      } finally {
-        setAuthLoading(false);
-      }
-      return;
-    }
-
-    if (!email || !authPassword) { setAuthError("Preencha e-mail e senha."); return; }
-    if (authPassword.length < 6) { setAuthError("A senha precisa ter pelo menos 6 caracteres."); return; }
-    setAuthLoading(true);
-    try {
-      const supabase = getSupabaseBrowserClient();
-      if (authMode === "signup") {
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password: authPassword,
-          options: { data: { name: authName.trim() } },
-        });
-        if (error) throw error;
-        if (!data.session) { setAuthMessage("Conta criada. Confirme seu e-mail para entrar."); return; }
-        setSession(data.session);
-        setNotice("Conta criada com sucesso.");
-      } else {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email,
-          password: authPassword,
-        });
-        if (error) throw error;
-        setSession(data.session);
-        setNotice("Login realizado com sucesso.");
-      }
-    } catch (err) {
-      setAuthError(err instanceof Error ? err.message : "Não foi possível autenticar.");
-    } finally {
-      setAuthLoading(false);
-    }
-  }
-
-  async function signOut() {
-    try {
-      await getSupabaseBrowserClient().auth.signOut();
-      setSession(null);
-      setAuthPassword("");
-      setNotice("Sessão encerrada.");
-    } catch (err) {
-      setNotice(err instanceof Error ? err.message : "Não foi possível sair.");
     }
   }
 
