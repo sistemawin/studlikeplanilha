@@ -83,10 +83,12 @@ button:active {
   transform: translateY(1px);
 }
 
-input,
-select,
-textarea {
-  background-color: #ffffff;
+@layer base {
+  input,
+  select,
+  textarea {
+    background-color: #ffffff;
+  }
 }
 
 ::-webkit-scrollbar {
