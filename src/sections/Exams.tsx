@@ -393,7 +393,7 @@ export function Exams({
   return (
     <>
       {/* Analytics charts */}
-      <section className={`${isVisible ? "grid" : "hidden"} gap-6 xl:grid 2xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]`}>
+      <section className={`${isVisible ? "grid" : "hidden"} min-w-0 gap-4 sm:gap-6 xl:grid 2xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]`}>
         {hasStudyData ? (
           <>
             <PieChart
@@ -533,7 +533,7 @@ export function Exams({
       )}
 
       {/* Temporal evolution charts */}
-      <section className={`${isVisible ? "grid" : "hidden"} gap-6 xl:grid 2xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]`}>
+      <section className={`${isVisible ? "grid" : "hidden"} min-w-0 gap-4 sm:gap-6 xl:grid 2xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]`}>
         {/* Simulados ao longo do tempo */}
         <div className="w-full max-w-full overflow-hidden rounded-2xl border border-white bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.08)] ring-1 ring-slate-900/5 sm:p-5">
           <div className="flex items-start justify-between gap-3">
@@ -548,14 +548,14 @@ export function Exams({
           <div
             role="img"
             aria-label="Gráfico de evolução dos simulados"
-            className="mt-6 flex h-48 max-w-full items-end gap-2 overflow-hidden rounded-xl bg-[#F0F2F5] px-3 py-5 sm:h-52 sm:gap-3 sm:px-4"
+            className="mt-5 flex h-40 max-w-full items-end gap-2 overflow-x-auto overflow-y-hidden rounded-xl bg-[#F0F2F5] px-3 py-4 sm:mt-6 sm:h-52 sm:gap-3 sm:px-4 sm:py-5"
           >
             {examsByDate.length === 0 ? (
               <p className="self-center text-sm font-medium text-slate-500">Nenhum simulado registrado ainda.</p>
             ) : (
               examsByDate.map((exam) => (
-                <div key={exam.id} className="flex min-w-0 flex-1 flex-col items-center gap-1">
-                  <div className="flex h-36 w-full items-end rounded-lg bg-white shadow-inner">
+                <div key={exam.id} className="flex min-w-[34px] flex-1 flex-col items-center gap-1 sm:min-w-0">
+                  <div className="flex h-28 w-full items-end rounded-lg bg-white shadow-inner sm:h-36">
                     <div
                       className="w-full rounded-lg bg-gradient-to-t from-blue-600 to-cyan-400 transition-[height] duration-500"
                       style={{ height: `${Math.max(exam.percent, 4)}%` }}
@@ -583,14 +583,14 @@ export function Exams({
           <div
             role="img"
             aria-label="Gráfico de horas estudadas por semana"
-            className="mt-6 flex h-48 max-w-full items-end gap-2 overflow-hidden rounded-xl bg-[#F0F2F5] px-3 py-5 sm:h-52 sm:gap-3 sm:px-4"
+            className="mt-5 flex h-40 max-w-full items-end gap-2 overflow-x-auto overflow-y-hidden rounded-xl bg-[#F0F2F5] px-3 py-4 sm:mt-6 sm:h-52 sm:gap-3 sm:px-4 sm:py-5"
           >
             {weeklyHoursData.every((w) => w.hours === 0) ? (
               <p className="self-center text-sm font-medium text-slate-500">Nenhuma sessão registrada ainda.</p>
             ) : (
               weeklyHoursData.map((week, i) => (
-                <div key={i} className="flex min-w-0 flex-1 flex-col items-center gap-1">
-                  <div className="flex h-36 w-full items-end rounded-lg bg-white shadow-inner">
+                <div key={i} className="flex min-w-[34px] flex-1 flex-col items-center gap-1 sm:min-w-0">
+                  <div className="flex h-28 w-full items-end rounded-lg bg-white shadow-inner sm:h-36">
                     <div
                       className="w-full rounded-lg bg-gradient-to-t from-emerald-600 to-teal-400 transition-[height] duration-500"
                       style={{ height: `${Math.max((week.hours / maxWeeklyHours) * 100, week.hours > 0 ? 4 : 0)}%` }}
@@ -642,7 +642,8 @@ export function Exams({
               </div>
             </div>
 
-            <div className="flex gap-1 overflow-x-auto pb-1">
+            <div className="max-w-full overflow-x-auto pb-1">
+              <div className="flex min-w-max gap-1">
               <div className="grid shrink-0 gap-0.5 pr-1" style={{ gridTemplateRows: "repeat(7, 12px)" }}>
                 {["S", "T", "Q", "Q", "S", "S", "D"].map((l, i) => (
                   <span key={i} className="flex h-3 items-center text-[9px] font-bold text-slate-300">{l}</span>
@@ -664,6 +665,7 @@ export function Exams({
                   );
                 })}
               </div>
+              </div>
             </div>
           </div>
         </section>
@@ -679,11 +681,11 @@ export function Exams({
             <div
               role="img"
               aria-label="Gráfico de horas por dia da semana"
-              className="mt-6 flex h-40 items-end gap-2 overflow-hidden rounded-xl bg-[#F0F2F5] px-4 py-5 sm:h-48 sm:gap-4"
+              className="mt-5 flex h-36 items-end gap-2 overflow-x-auto overflow-y-hidden rounded-xl bg-[#F0F2F5] px-3 py-4 sm:mt-6 sm:h-48 sm:gap-4 sm:px-4 sm:py-5"
             >
               {hoursPerWeekday.map((hours, i) => (
-                <div key={i} className="flex min-w-0 flex-1 flex-col items-center gap-2">
-                  <div className="flex h-28 w-full items-end rounded-lg bg-white shadow-inner sm:h-32">
+                <div key={i} className="flex min-w-[34px] flex-1 flex-col items-center gap-2 sm:min-w-0">
+                  <div className="flex h-24 w-full items-end rounded-lg bg-white shadow-inner sm:h-32">
                     <div
                       className="w-full rounded-lg bg-gradient-to-t from-violet-600 to-fuchsia-400 transition-[height] duration-500"
                       style={{ height: `${Math.max((hours / maxWeekdayHours) * 100, hours > 0 ? 4 : 0)}%` }}
@@ -701,7 +703,7 @@ export function Exams({
       )}
 
       {/* Performance bar chart + ranking */}
-      <section className={`${isVisible ? "grid" : "hidden"} gap-5 xl:grid 2xl:grid-cols-[minmax(0,1.1fr)_minmax(360px,0.9fr)]`}>
+      <section className={`${isVisible ? "grid" : "hidden"} min-w-0 gap-4 sm:gap-5 xl:grid 2xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]`}>
         {/* Bar chart */}
         <div className="w-full max-w-full overflow-hidden rounded-2xl border border-white bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.08)] ring-1 ring-slate-900/5 sm:p-5">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
@@ -732,14 +734,14 @@ export function Exams({
           <div
             role="img"
             aria-label="Gráfico de barras de desempenho em simulados"
-            className="mt-6 flex h-48 max-w-full items-end gap-2 overflow-hidden rounded-xl bg-[#F0F2F5] px-3 py-5 sm:h-52 sm:gap-3 sm:px-4"
+            className="mt-5 flex h-40 max-w-full items-end gap-2 overflow-x-auto overflow-y-hidden rounded-xl bg-[#F0F2F5] px-3 py-4 sm:mt-6 sm:h-52 sm:gap-3 sm:px-4 sm:py-5"
           >
             {examTrend.length === 0 ? (
               <p className="self-center text-sm font-medium text-slate-500">Nenhum simulado registrado.</p>
             ) : (
               examTrend.map((exam) => (
-                <div key={exam.id} className="flex min-w-0 flex-1 flex-col items-center gap-2">
-                  <div className="flex h-36 w-full items-end rounded-lg bg-white shadow-inner">
+                <div key={exam.id} className="flex min-w-[42px] flex-1 flex-col items-center gap-2 sm:min-w-0">
+                  <div className="flex h-28 w-full items-end rounded-lg bg-white shadow-inner sm:h-36">
                     <div
                       className="w-full rounded-lg bg-gradient-to-t from-blue-600 to-cyan-400 transition-[height] duration-500"
                       style={{ height: `${Math.max(exam.percent, 4)}%` }}
@@ -965,7 +967,7 @@ export function Exams({
 
         {/* Weekly progress */}
         {(weeklyHoursTarget > 0 || weeklyQuestionsTarget > 0) && (
-          <div className="mt-4 grid grid-cols-2 gap-3">
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
             {weeklyHoursTarget > 0 && (
               <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-3">
                 <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-blue-500">Horas esta semana</p>
