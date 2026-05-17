@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpenCheck, ChevronLeft, Download, FileText, Pencil, Plus, Search, Sparkles, Trash2, X } from "lucide-react";
+import { ArrowRightLeft, BookOpenCheck, ChevronLeft, Download, FileText, Pencil, Plus, Search, Sparkles, Trash2, X } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
 import type { Difficulty, NavTarget, Subject, Topic, TopicStatus } from "@/types";
@@ -40,6 +40,7 @@ type Props = {
   onAddTopics: () => void;
   onDeleteTopic: (topicId: string) => void;
   onEditTopic: (topicId: string, newTitle: string) => void;
+  onMoveTopic: (topicId: string, targetSubjectId: string) => void;
   onAddSubject: () => void;
   onEditSubject: (subject: Subject) => void;
   onDeleteSubject: (subjectId: string) => void;
@@ -232,6 +233,7 @@ export function Edital({
   onAddTopics,
   onDeleteTopic,
   onEditTopic,
+  onMoveTopic,
   onAddSubject,
   onEditSubject,
   onDeleteSubject,
@@ -243,6 +245,7 @@ export function Edital({
   const [difficultyFilter, setDifficultyFilter] = useState<DifficultyFilter>("todas");
   const [editingTopicId, setEditingTopicId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
+  const [movingTopicId, setMovingTopicId] = useState<string | null>(null);
   const [sortMode, setSortMode] = useState<SortMode>("default");
 
   function exportEdital() {
@@ -480,22 +483,63 @@ export function Edital({
                       </div>
                     </div>
                     <div className="flex shrink-0 items-center gap-1">
-                      {editingTopicId !== topic.id && (
-                        <button
-                          onClick={() => startEditTopic(topic)}
-                          aria-label={`Renomear tópico ${topic.titulo}`}
-                          className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-400 transition hover:bg-blue-50 hover:text-blue-600"
-                        >
-                          <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
-                        </button>
+                      {movingTopicId === topic.id ? (
+                        <>
+                          <select
+                            autoFocus
+                            defaultValue=""
+                            onChange={(e) => {
+                              if (e.target.value) {
+                                onMoveTopic(topic.id, e.target.value);
+                                setMovingTopicId(null);
+                              }
+                            }}
+                            className="h-9 rounded-xl border border-blue-300 bg-blue-50 px-2 text-xs font-semibold text-slate-900 outline-none focus:ring-2 focus:ring-blue-200"
+                          >
+                            <option value="">Mover para...</option>
+                            {subjects
+                              .filter((s) => s.id !== activeSubjectId)
+                              .map((s) => (
+                                <option key={s.id} value={s.id}>{s.nome}</option>
+                              ))}
+                          </select>
+                          <button
+                            onClick={() => setMovingTopicId(null)}
+                            aria-label="Cancelar"
+                            className="flex h-9 w-9 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100"
+                          >
+                            <X className="h-3.5 w-3.5" aria-hidden="true" />
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          {editingTopicId !== topic.id && subjects.length > 1 && (
+                            <button
+                              onClick={() => { setMovingTopicId(topic.id); setEditingTopicId(null); }}
+                              aria-label={`Mover tópico ${topic.titulo}`}
+                              className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-400 transition hover:bg-violet-50 hover:text-violet-600"
+                            >
+                              <ArrowRightLeft className="h-3.5 w-3.5" aria-hidden="true" />
+                            </button>
+                          )}
+                          {editingTopicId !== topic.id && (
+                            <button
+                              onClick={() => startEditTopic(topic)}
+                              aria-label={`Renomear tópico ${topic.titulo}`}
+                              className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-400 transition hover:bg-blue-50 hover:text-blue-600"
+                            >
+                              <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
+                            </button>
+                          )}
+                          <button
+                            onClick={() => onDeleteTopic(topic.id)}
+                            aria-label={`Excluir tópico ${topic.titulo}`}
+                            className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-400 transition hover:bg-red-50 hover:text-red-500"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                          </button>
+                        </>
                       )}
-                      <button
-                        onClick={() => onDeleteTopic(topic.id)}
-                        aria-label={`Excluir tópico ${topic.titulo}`}
-                        className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-400 transition hover:bg-red-50 hover:text-red-500"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
-                      </button>
                     </div>
                   </motion.div>
                 );

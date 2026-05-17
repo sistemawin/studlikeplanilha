@@ -712,6 +712,33 @@ export default function Home() {
     ]);
   }
 
+  function moveTopic(topicId: string, targetSubjectId: string) {
+    if (preventReadOnlyAction()) return;
+    const topic = topics.find((t) => t.id === topicId);
+    const targetSubject = subjects.find((s) => s.id === targetSubjectId);
+    if (!topic || !targetSubject) return;
+    setTopics((ts) => ts.map((t) => (t.id === topicId ? { ...t, materiaId: targetSubjectId } : t)));
+    setQuestionLogs((logs) => logs.map((log) => log.topicoId === topicId ? { ...log, materiaId: targetSubjectId } : log));
+    setNotice(`"${topic.titulo}" movido para ${targetSubject.nome}.`);
+  }
+
+  function completeAllTodayReviews() {
+    if (preventReadOnlyAction()) return;
+    const pending = reviews.filter((r) => !r.concluida && r.dataAgendada <= todayIso);
+    if (pending.length === 0) return;
+    setConfirmDialog({
+      title: "Concluir todas as revisões?",
+      description: `Você vai marcar ${pending.length} revisão${pending.length !== 1 ? "ões" : ""} como concluída${pending.length !== 1 ? "s" : ""}.`,
+      details: "Útil quando já estudou todos os tópicos do dia. Essa ação não pode ser desfeita.",
+      confirmLabel: "Concluir todas",
+      onConfirm: () => {
+        const ids = new Set(pending.map((r) => r.id));
+        setReviews((rs) => rs.map((r) => (ids.has(r.id) ? { ...r, concluida: true } : r)));
+        setNotice(`${pending.length} revisão${pending.length !== 1 ? "ões" : ""} concluída${pending.length !== 1 ? "s" : ""}.`);
+      },
+    });
+  }
+
   function editTopicTitle(topicId: string, newTitle: string) {
     if (preventReadOnlyAction()) return;
     const trimmed = newTitle.trim();
@@ -2112,6 +2139,7 @@ export default function Home() {
                   onAddTopics={addTopicsFromText}
                   onDeleteTopic={deleteTopic}
                   onEditTopic={editTopicTitle}
+                  onMoveTopic={moveTopic}
                   onAddSubject={() => {
                     if (preventReadOnlyAction()) return;
                     setSubjectModal({ open: true });
@@ -2135,6 +2163,7 @@ export default function Home() {
                     activeSection={activeSection}
                     onComplete={completeReview}
                     onReschedule={rescheduleReview}
+                    onCompleteAll={completeAllTodayReviews}
                   />
                 </ErrorBoundary>
               )}

@@ -22,6 +22,7 @@ type Props = {
   activeSection: NavTarget;
   onComplete: (reviewId: string) => void;
   onReschedule: (reviewId: string, days: number) => void;
+  onCompleteAll: () => void;
 };
 
 const RESCHEDULE_OPTIONS = [1, 3, 7, 14];
@@ -40,7 +41,7 @@ const REVIEW_TYPE_LABEL: Record<string, string> = {
   dificuldade: "dificuldade",
 };
 
-export function Reviews({ reviews, topics, subjects, todayIso, activeSection, onComplete, onReschedule }: Props) {
+export function Reviews({ reviews, topics, subjects, todayIso, activeSection, onComplete, onReschedule, onCompleteAll }: Props) {
   const [reschedulingId, setReschedulingId] = useState<string | null>(null);
   const [showUpcoming, setShowUpcoming] = useState(false);
   const [subjectFilter, setSubjectFilter] = useState<string>("all");
@@ -76,7 +77,19 @@ export function Reviews({ reviews, topics, subjects, todayIso, activeSection, on
         isVisible ? "block" : "hidden"
       } scroll-mt-24 rounded-2xl border border-white bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.08)] ring-1 ring-slate-900/5 sm:p-5 xl:block`}
     >
-      <h2 className="mb-4 text-lg font-bold text-slate-950">Para revisar hoje</h2>
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <h2 className="text-lg font-bold text-slate-950">Para revisar hoje</h2>
+        {pendingToday.length > 1 && (
+          <button
+            type="button"
+            onClick={onCompleteAll}
+            className="flex h-9 items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 text-xs font-bold text-emerald-700 hover:bg-emerald-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-400"
+          >
+            <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
+            Concluir todas ({pendingToday.length})
+          </button>
+        )}
+      </div>
 
       <div className="mb-4 grid grid-cols-3 gap-2">
         <div className="rounded-xl bg-amber-50 p-3 ring-1 ring-amber-100">
