@@ -1,7 +1,8 @@
-import { CalendarClock, CheckCircle2, ChevronDown, ChevronUp } from "lucide-react";
+import { CalendarClock, CheckCircle2, ChevronDown, ChevronUp, Zap } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
 import type { NavTarget, Review, Subject, Topic } from "@/types";
+import { ReviewFocusMode } from "@/components/ReviewFocusMode";
 
 const DAY_SHORT = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
@@ -45,6 +46,7 @@ export function Reviews({ reviews, topics, subjects, todayIso, activeSection, on
   const [reschedulingId, setReschedulingId] = useState<string | null>(null);
   const [showUpcoming, setShowUpcoming] = useState(false);
   const [subjectFilter, setSubjectFilter] = useState<string>("all");
+  const [focusModeOpen, setFocusModeOpen] = useState(false);
 
   const pendingToday = reviews.filter((r) => !r.concluida && r.dataAgendada <= todayIso);
   const totalPending = reviews.filter((r) => !r.concluida).length;
@@ -77,18 +79,42 @@ export function Reviews({ reviews, topics, subjects, todayIso, activeSection, on
         isVisible ? "block" : "hidden"
       } scroll-mt-24 rounded-2xl border border-white bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.08)] ring-1 ring-slate-900/5 sm:p-5 xl:block`}
     >
-      <div className="mb-4 flex items-center justify-between gap-3">
+      {focusModeOpen && (
+        <ReviewFocusMode
+          reviews={pendingToday}
+          topics={topics}
+          subjects={subjects}
+          todayIso={todayIso}
+          onComplete={onComplete}
+          onReschedule={onReschedule}
+          onClose={() => setFocusModeOpen(false)}
+        />
+      )}
+
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-lg font-bold text-slate-950">Para revisar hoje</h2>
-        {pendingToday.length > 1 && (
-          <button
-            type="button"
-            onClick={onCompleteAll}
-            className="flex h-9 items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 text-xs font-bold text-emerald-700 hover:bg-emerald-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-400"
-          >
-            <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
-            Concluir todas ({pendingToday.length})
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {pendingToday.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setFocusModeOpen(true)}
+              className="flex h-9 items-center gap-2 rounded-xl bg-emerald-600 px-3 text-xs font-bold text-white shadow-sm hover:bg-emerald-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-400"
+            >
+              <Zap className="h-3.5 w-3.5" aria-hidden="true" />
+              Modo foco
+            </button>
+          )}
+          {pendingToday.length > 1 && (
+            <button
+              type="button"
+              onClick={onCompleteAll}
+              className="flex h-9 items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 text-xs font-bold text-emerald-700 hover:bg-emerald-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-400"
+            >
+              <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
+              Concluir todas ({pendingToday.length})
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="mb-4 grid grid-cols-3 gap-2">
