@@ -26,6 +26,15 @@ const DIFFICULTY_CYCLE: Difficulty[] = ["Fácil", "Médio", "Difícil"];
 type StatusFilter = TopicStatus | "todos";
 type DifficultyFilter = Difficulty | "todas";
 type SortMode = "default" | "nome" | "peso" | "progresso";
+type TopicSortMode = "default" | "status" | "dificuldade" | "nome";
+
+const STATUS_ORDER: Record<TopicStatus, number> = {
+  "Não Estudado": 0,
+  "Teoria Lida": 1,
+  "Questões Feitas": 2,
+  Revisado: 3,
+};
+const DIFFICULTY_ORDER: Record<Difficulty, number> = { Fácil: 0, Médio: 1, Difícil: 2 };
 
 type Props = {
   subjects: Subject[];
@@ -247,6 +256,7 @@ export function Edital({
   const [editingTitle, setEditingTitle] = useState("");
   const [movingTopicId, setMovingTopicId] = useState<string | null>(null);
   const [sortMode, setSortMode] = useState<SortMode>("default");
+  const [topicSortMode, setTopicSortMode] = useState<TopicSortMode>("default");
 
   function exportEdital() {
     const STATUS_SYMBOL: Record<string, string> = {
@@ -344,6 +354,12 @@ export function Edital({
   if (activeSubjectId && detailSubject) {
     const subjectTopics = topics.filter((t) => t.materiaId === activeSubjectId);
     const filteredSubjectTopics = subjectTopics.filter((topic) => topicMatchesFilters(topic, detailSubject.nome));
+    const sortedSubjectTopics = (() => {
+      if (topicSortMode === "nome") return [...filteredSubjectTopics].sort((a, b) => a.titulo.localeCompare(b.titulo, "pt-BR"));
+      if (topicSortMode === "status") return [...filteredSubjectTopics].sort((a, b) => STATUS_ORDER[a.status] - STATUS_ORDER[b.status]);
+      if (topicSortMode === "dificuldade") return [...filteredSubjectTopics].sort((a, b) => DIFFICULTY_ORDER[b.dificuldade] - DIFFICULTY_ORDER[a.dificuldade]);
+      return filteredSubjectTopics;
+    })();
     const accent = corToAccent(detailSubject.cor);
     const lineCount = newTopicText.split("\n").filter((l) => l.trim()).length;
 
@@ -401,11 +417,33 @@ export function Edital({
           </div>
         )}
 
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <p className="text-xs font-semibold text-slate-400">
+            {sortedSubjectTopics.length} de {subjectTopics.length} tópico{subjectTopics.length !== 1 ? "s" : ""}
+          </p>
+          {subjectTopics.length > 1 && (
+            <>
+              <label className="sr-only" htmlFor="topic-sort">Ordenar tópicos</label>
+              <select
+                id="topic-sort"
+                value={topicSortMode}
+                onChange={(e) => setTopicSortMode(e.target.value as TopicSortMode)}
+                className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              >
+                <option value="default">Padrão</option>
+                <option value="nome">A–Z</option>
+                <option value="status">Por status</option>
+                <option value="dificuldade">Mais difícil primeiro</option>
+              </select>
+            </>
+          )}
+        </div>
+
         <EditalFilters
           search={search}
           status={statusFilter}
           difficulty={difficultyFilter}
-          resultLabel={`${filteredSubjectTopics.length} de ${subjectTopics.length} tópico${subjectTopics.length !== 1 ? "s" : ""} nesta matéria`}
+          resultLabel={`${sortedSubjectTopics.length} de ${subjectTopics.length} tópico${subjectTopics.length !== 1 ? "s" : ""} nesta matéria`}
           onSearchChange={setSearch}
           onStatusChange={setStatusFilter}
           onDifficultyChange={setDifficultyFilter}
@@ -424,7 +462,7 @@ export function Edital({
                 Nenhum tópico encontrado com os filtros atuais.
               </div>
             ) : (
-              filteredSubjectTopics.map((topic) => {
+              sortedSubjectTopics.map((topic) => {
                 const statusStyle = STATUS_COLORS[topic.status];
                 const diffStyle = DIFFICULTY_COLORS[topic.dificuldade];
 

@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import type { Goal, Review, Subject, Topic } from "@/types";
 import { formatTimer } from "@/lib/utils";
 
-const POMODORO_DURATION = 25 * 60;
+const POMODORO_DURATIONS = [25, 45, 60] as const;
+type PomodoroDuration = typeof POMODORO_DURATIONS[number];
 
 type SessionData = {
   topicId?: string;
@@ -48,10 +49,17 @@ export function FocusTimer({
   );
   const [sessionReviewId, setSessionReviewId] = useState(pendingReviews[0]?.id ?? "");
   const [pomodoroMode, setPomodoroMode] = useState(false);
+  const [pomodoroDuration, setPomodoroDuration] = useState<PomodoroDuration>(25);
 
-  const pomodoroRemaining = Math.max(0, POMODORO_DURATION - timerSeconds);
-  const pomodoroComplete = pomodoroMode && timerSeconds >= POMODORO_DURATION;
-  const pomodoroProgress = pomodoroMode ? Math.min(timerSeconds / POMODORO_DURATION, 1) : 0;
+  const pomodoroDurationSecs = pomodoroDuration * 60;
+  const pomodoroRemaining = Math.max(0, pomodoroDurationSecs - timerSeconds);
+  const pomodoroComplete = pomodoroMode && timerSeconds >= pomodoroDurationSecs;
+  const pomodoroProgress = pomodoroMode ? Math.min(timerSeconds / pomodoroDurationSecs, 1) : 0;
+
+  function handleSetPomodoroDuration(min: PomodoroDuration) {
+    setPomodoroDuration(min);
+    if (timerSeconds > 0) onReset();
+  }
 
   useEffect(() => {
     if (pomodoroComplete && timerRunning) onToggle();
@@ -115,6 +123,26 @@ export function FocusTimer({
             </button>
           ))}
         </div>
+
+        {pomodoroMode && (
+          <div className="mb-3 flex w-full max-w-xs gap-1 rounded-xl bg-white/5 p-1">
+            {POMODORO_DURATIONS.map((min) => (
+              <button
+                key={min}
+                type="button"
+                onClick={() => handleSetPomodoroDuration(min)}
+                aria-pressed={pomodoroDuration === min}
+                className={`flex-1 rounded-lg py-1 text-xs font-semibold transition ${
+                  pomodoroDuration === min
+                    ? "bg-white/20 text-white shadow-sm"
+                    : "text-blue-300 hover:text-white"
+                }`}
+              >
+                {min}min
+              </button>
+            ))}
+          </div>
+        )}
 
         <p className="rounded-full bg-white/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-blue-100 ring-1 ring-white/15">
           {pomodoroComplete ? "Pomodoro concluído!" : timerRunning ? "Estudando agora" : "Sessão pausada"}
