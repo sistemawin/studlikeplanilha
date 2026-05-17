@@ -3,7 +3,7 @@ import { useState } from "react";
 import type { Exam, Goal, NavTarget, QuestionLog, Review, StudySession, Subject, Topic } from "@/types";
 import { PieChart } from "@/components/PieChart";
 import { ProgressBar } from "@/components/ProgressBar";
-import { corToAccent, isoDate, pct, topicScore } from "@/lib/utils";
+import { addDays, corToAccent, isoDate, pct, topicScore } from "@/lib/utils";
 
 type ExamDraft = { nome: string; acertos: number; total: number };
 
@@ -307,6 +307,23 @@ export function Exams({
     .filter((q) => q.data >= weekStart && q.data <= todayIso)
     .reduce((sum, q) => sum + q.quantidade, 0);
   const weeklyQuestionsTarget = questionGoal.valorObjetivo * 5;
+
+  const lastWeekStart = addDays(new Date(weekStart + "T12:00:00"), -7);
+  const lastWeekEnd = addDays(new Date(weekStart + "T12:00:00"), -1);
+  const lastWeekSeconds = studySessions
+    .filter((s) => s.data >= lastWeekStart && s.data <= lastWeekEnd)
+    .reduce((sum, s) => sum + s.durationSeconds, 0);
+  const lastWeekQuestions = questionLogs
+    .filter((q) => q.data >= lastWeekStart && q.data <= lastWeekEnd)
+    .reduce((sum, q) => sum + q.quantidade, 0);
+  const hoursVsLastWeek =
+    lastWeekSeconds > 0
+      ? Math.round(((weeklySeconds - lastWeekSeconds) / lastWeekSeconds) * 100)
+      : null;
+  const questionsVsLastWeek =
+    lastWeekQuestions > 0
+      ? Math.round(((weeklyQuestions - lastWeekQuestions) / lastWeekQuestions) * 100)
+      : null;
 
   // ── Day-of-week distribution ───────────────────────────────────────────────
   const WEEKDAY_LABELS = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
@@ -939,7 +956,14 @@ export function Exams({
             {weeklyHoursTarget > 0 && (
               <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-3">
                 <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-blue-500">Horas esta semana</p>
-                <p className="mt-1 text-2xl font-black text-blue-700">{weeklyHours}h</p>
+                <div className="mt-1 flex items-baseline gap-2">
+                  <p className="text-2xl font-black text-blue-700">{weeklyHours}h</p>
+                  {hoursVsLastWeek !== null && (
+                    <span className={`text-[10px] font-bold ${hoursVsLastWeek >= 0 ? "text-emerald-600" : "text-rose-500"}`}>
+                      {hoursVsLastWeek >= 0 ? "+" : ""}{hoursVsLastWeek}% vs ant.
+                    </span>
+                  )}
+                </div>
                 <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-blue-100">
                   <div
                     className="h-1.5 rounded-full bg-blue-500 transition-[width] duration-500"
@@ -952,7 +976,14 @@ export function Exams({
             {weeklyQuestionsTarget > 0 && (
               <div className="rounded-xl border border-emerald-100 bg-emerald-50/60 p-3">
                 <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-emerald-500">Questões esta semana</p>
-                <p className="mt-1 text-2xl font-black text-emerald-700">{weeklyQuestions}</p>
+                <div className="mt-1 flex items-baseline gap-2">
+                  <p className="text-2xl font-black text-emerald-700">{weeklyQuestions}</p>
+                  {questionsVsLastWeek !== null && (
+                    <span className={`text-[10px] font-bold ${questionsVsLastWeek >= 0 ? "text-emerald-600" : "text-rose-500"}`}>
+                      {questionsVsLastWeek >= 0 ? "+" : ""}{questionsVsLastWeek}% vs ant.
+                    </span>
+                  )}
+                </div>
                 <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-emerald-100">
                   <div
                     className="h-1.5 rounded-full bg-emerald-500 transition-[width] duration-500"

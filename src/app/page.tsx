@@ -613,11 +613,22 @@ export default function Home() {
           return subject ? [subject] : [];
         })();
 
+  const sevenDaysAgo = addDays(new Date(), -7);
+  const recentStudiedCount = topics.filter(
+    (t) => t.estudadoEm && t.estudadoEm >= sevenDaysAgo,
+  ).length;
+  const remainingUnstudied = topics.filter((t) => t.status === "Não Estudado").length;
+  const weeksToFinish =
+    recentStudiedCount > 0 && remainingUnstudied > 0
+      ? Math.ceil(remainingUnstudied / recentStudiedCount)
+      : null;
+
   const homeNotice = (() => {
     if (overdueCount > 0) return `${overdueCount} revisão${overdueCount !== 1 ? "ões" : ""} atrasada${overdueCount !== 1 ? "s" : ""} — prioridade máxima.`;
     if (pendingToday.length > 0) return `${pendingToday.length} revisão${pendingToday.length !== 1 ? "ões" : ""} para hoje.`;
     if (upcomingReviewCount > 0) return `${upcomingReviewCount} revisão${upcomingReviewCount !== 1 ? "ões" : ""} nos próximos 7 dias.`;
     if (todayPlan.length > 0) return `Plano de hoje: ${todayPlan.map((s) => s.nome).join(", ")}.`;
+    if (weeksToFinish !== null) return `Ritmo atual: ~${weeksToFinish} semana${weeksToFinish !== 1 ? "s" : ""} para concluir o edital.`;
     return notice;
   })();
 
