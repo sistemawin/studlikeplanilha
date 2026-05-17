@@ -68,7 +68,7 @@ export function FocusTimer({
 
   useEffect(() => {
     if (pomodoroComplete && timerRunning) onToggle();
-  }, [pomodoroComplete, timerRunning]);
+  }, [pomodoroComplete, timerRunning, timerSeconds]);
 
   const sessionTopics = topics.filter((t) => t.materiaId === sessionSubjectId);
 

@@ -35,6 +35,8 @@ type Props = {
     durationSeconds: number;
     data: string;
   }) => void;
+  historyOpen: boolean;
+  onHistoryOpenChange: (open: boolean) => void;
 };
 
 export function Dashboard({
@@ -59,8 +61,9 @@ export function Dashboard({
   examCount,
   totalQuestionsLogged,
   onAddManualSession,
+  historyOpen,
+  onHistoryOpenChange,
 }: Props) {
-  const [historyOpen, setHistoryOpen] = useState(false);
   const [manualOpen, setManualOpen] = useState(false);
   const [manualTipo, setManualTipo] = useState<StudySessionType>("topico");
   const [manualSubjectId, setManualSubjectId] = useState("");
@@ -458,7 +461,7 @@ export function Dashboard({
         <SessionHistoryModal
           sessions={studySessions}
           onDelete={onDeleteSession}
-          onClose={() => setHistoryOpen(false)}
+          onClose={() => onHistoryOpenChange(false)}
         />
       )}
 
@@ -689,7 +692,7 @@ export function Dashboard({
             {studySessions.length > 5 && (
               <button
                 type="button"
-                onClick={() => setHistoryOpen(true)}
+                onClick={() => onHistoryOpenChange(true)}
                 className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl border border-slate-200 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-50"
               >
                 Ver histórico completo ({studySessions.length} sessões)

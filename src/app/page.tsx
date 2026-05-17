@@ -217,6 +217,10 @@ export default function Home() {
   // ── Global search state ───────────────────────────────────────────────────
   const [searchOpen, setSearchOpen] = useState(false);
 
+  // ── Modal visibility for hideMobileBottomNav ──────────────────────────────
+  const [sessionHistoryOpen, setSessionHistoryOpen] = useState(false);
+  const [reviewFocusModeOpen, setReviewFocusModeOpen] = useState(false);
+
   // ── Reminder state ────────────────────────────────────────────────────────
   const [reminderEnabled, setReminderEnabled] = useState(false);
   const [reminderTime, setReminderTime] = useState("20:00");
@@ -1835,7 +1839,10 @@ export default function Home() {
     subjectModal.open ||
     suggestionOpen ||
     archiveModalOpen ||
-    Boolean(confirmDialog);
+    Boolean(confirmDialog) ||
+    searchOpen ||
+    sessionHistoryOpen ||
+    reviewFocusModeOpen;
 
   const mobileBottomNav = mobileNavPortalReady
     ? createPortal(
@@ -2185,6 +2192,8 @@ export default function Home() {
                   todayPlan={todayPlan}
                   examCount={exams.length}
                   totalQuestionsLogged={questionLogs.reduce((sum, q) => sum + q.quantidade, 0)}
+                  historyOpen={sessionHistoryOpen}
+                  onHistoryOpenChange={setSessionHistoryOpen}
                 />
               </ErrorBoundary>
 
@@ -2224,6 +2233,8 @@ export default function Home() {
                     subjects={subjectById}
                     todayIso={todayIso}
                     activeSection={activeSection}
+                    focusModeOpen={reviewFocusModeOpen}
+                    onFocusModeOpenChange={setReviewFocusModeOpen}
                     onComplete={completeReview}
                     onReschedule={rescheduleReview}
                     onCompleteAll={completeAllTodayReviews}

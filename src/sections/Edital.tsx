@@ -2,7 +2,7 @@
 
 import { ArrowRightLeft, BookOpenCheck, ChevronLeft, Download, FileText, Pencil, Plus, Search, Sparkles, Trash2, X } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Difficulty, NavTarget, Subject, Topic, TopicStatus } from "@/types";
 import { corToAccent } from "@/lib/utils";
 import type { ReadyEdital } from "@/lib/readyEditals";
@@ -257,6 +257,12 @@ export function Edital({
   const [movingTopicId, setMovingTopicId] = useState<string | null>(null);
   const [sortMode, setSortMode] = useState<SortMode>("default");
   const [topicSortMode, setTopicSortMode] = useState<TopicSortMode>("default");
+
+  useEffect(() => {
+    setStatusFilter("todos");
+    setDifficultyFilter("todas");
+    setSearch("");
+  }, [activeSubjectId]);
 
   function exportEdital() {
     const STATUS_SYMBOL: Record<string, string> = {

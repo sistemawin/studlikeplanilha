@@ -1,6 +1,6 @@
 import { CalendarClock, CheckCircle2, ChevronDown, ChevronUp, Zap } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { NavTarget, Review, Subject, Topic } from "@/types";
 import { ReviewFocusMode } from "@/components/ReviewFocusMode";
 
@@ -21,6 +21,8 @@ type Props = {
   subjects: Record<string, Subject>;
   todayIso: string;
   activeSection: NavTarget;
+  focusModeOpen: boolean;
+  onFocusModeOpenChange: (open: boolean) => void;
   onComplete: (reviewId: string) => void;
   onReschedule: (reviewId: string, days: number) => void;
   onCompleteAll: () => void;
@@ -42,11 +44,14 @@ const REVIEW_TYPE_LABEL: Record<string, string> = {
   dificuldade: "dificuldade",
 };
 
-export function Reviews({ reviews, topics, subjects, todayIso, activeSection, onComplete, onReschedule, onCompleteAll }: Props) {
+export function Reviews({ reviews, topics, subjects, todayIso, activeSection, focusModeOpen, onFocusModeOpenChange, onComplete, onReschedule, onCompleteAll }: Props) {
   const [reschedulingId, setReschedulingId] = useState<string | null>(null);
   const [showUpcoming, setShowUpcoming] = useState(false);
   const [subjectFilter, setSubjectFilter] = useState<string>("all");
-  const [focusModeOpen, setFocusModeOpen] = useState(false);
+
+  useEffect(() => {
+    if (activeSection !== "revisoes") setSubjectFilter("all");
+  }, [activeSection]);
 
   const pendingToday = reviews.filter((r) => !r.concluida && r.dataAgendada <= todayIso);
   const totalPending = reviews.filter((r) => !r.concluida).length;
@@ -87,7 +92,7 @@ export function Reviews({ reviews, topics, subjects, todayIso, activeSection, on
           todayIso={todayIso}
           onComplete={onComplete}
           onReschedule={onReschedule}
-          onClose={() => setFocusModeOpen(false)}
+          onClose={() => onFocusModeOpenChange(false)}
         />
       )}
 
@@ -97,7 +102,7 @@ export function Reviews({ reviews, topics, subjects, todayIso, activeSection, on
           {pendingToday.length > 0 && (
             <button
               type="button"
-              onClick={() => setFocusModeOpen(true)}
+              onClick={() => onFocusModeOpenChange(true)}
               className="flex h-9 items-center gap-2 rounded-xl bg-emerald-600 px-3 text-xs font-bold text-white shadow-sm hover:bg-emerald-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-400"
             >
               <Zap className="h-3.5 w-3.5" aria-hidden="true" />
