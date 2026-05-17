@@ -354,6 +354,40 @@ export function Dashboard({
                 );
               })}
             </div>
+
+            {/* Suggested next topics */}
+            {(() => {
+              const suggested = todayPlan.flatMap((subject) => {
+                const accent = corToAccent(subject.cor);
+                return topics
+                  .filter((t) => t.materiaId === subject.id && t.status === "Não Estudado")
+                  .slice(0, 2)
+                  .map((t) => ({ ...t, subjectNome: subject.nome, accent }));
+              }).slice(0, 4);
+              if (suggested.length === 0) return null;
+              return (
+                <div className="mt-3 border-t border-slate-100 pt-3">
+                  <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">
+                    Próximos tópicos
+                  </p>
+                  <div className="space-y-1.5">
+                    {suggested.map((topic) => (
+                      <div key={topic.id} className="flex min-w-0 items-center gap-2">
+                        <span
+                          className="h-1.5 w-1.5 shrink-0 rounded-full"
+                          style={{ backgroundColor: topic.accent.chart }}
+                          aria-hidden="true"
+                        />
+                        <p className="min-w-0 truncate text-sm font-medium text-slate-700">{topic.titulo}</p>
+                        <span className="shrink-0 text-xs font-medium text-slate-400">
+                          {topic.subjectNome.replace("Direito ", "")}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         </div>
       )}

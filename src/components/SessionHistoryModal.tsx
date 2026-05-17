@@ -1,4 +1,4 @@
-import { Trash2, X } from "lucide-react";
+import { Download, Trash2, X } from "lucide-react";
 import { useEffect } from "react";
 import type { StudySession } from "@/types";
 import { formatTimer } from "@/lib/utils";
@@ -22,6 +22,23 @@ const TYPE_STYLE: Record<string, string> = {
 };
 
 export function SessionHistoryModal({ sessions, onDelete, onClose }: Props) {
+  function exportCSV() {
+    const header = "Data,Tipo,Materia,Topico,Duracao (min)\n";
+    const rows = sessions
+      .map((s) =>
+        [s.data, s.tipo, s.materiaNome ?? "", s.topicoTitulo ?? "", Math.round(s.durationSeconds / 60)]
+          .map((v) => `"${String(v).replace(/"/g, '""')}"`)
+          .join(","),
+      )
+      .join("\n");
+    const blob = new Blob([header + rows], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "sessoes.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
   useEffect(() => {
     const prevHtmlOverflow = document.documentElement.style.overflow;
     const prevBodyOverflow = document.body.style.overflow;
@@ -64,14 +81,26 @@ export function SessionHistoryModal({ sessions, onDelete, onClose }: Props) {
               {sessions.length} sessão{sessions.length !== 1 ? "ões" : ""} registrada{sessions.length !== 1 ? "s" : ""}
             </p>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Fechar histórico"
-            className="flex h-9 w-9 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-700"
-          >
-            <X className="h-5 w-5" aria-hidden="true" />
-          </button>
+          <div className="flex items-center gap-1">
+            {sessions.length > 0 && (
+              <button
+                type="button"
+                onClick={exportCSV}
+                aria-label="Exportar sessões como CSV"
+                className="flex h-9 w-9 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+              >
+                <Download className="h-4 w-4" aria-hidden="true" />
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Fechar histórico"
+              className="flex h-9 w-9 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+            >
+              <X className="h-5 w-5" aria-hidden="true" />
+            </button>
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
