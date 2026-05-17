@@ -53,7 +53,7 @@ function GoalCard({
   }
 
   return (
-    <div className={`min-w-0 rounded-xl border p-4 ${tone}`}>
+    <div className={`min-w-0 w-full max-w-full overflow-hidden rounded-xl border p-4 ${tone}`}>
       <div className="flex items-center justify-between gap-2">
         <p className="break-words text-sm font-medium">{label}</p>
         <button
@@ -398,7 +398,7 @@ export function Exams({
       } min-w-0 w-full max-w-full gap-4 overflow-x-hidden scroll-mt-24 pb-[calc(5.75rem+env(safe-area-inset-bottom))] sm:gap-5 xl:grid xl:pb-0`}
     >
       {/* Analytics charts */}
-      <section className={`${isVisible ? "grid" : "hidden"} min-w-0 gap-4 sm:gap-6 xl:grid 2xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]`}>
+      <section className={`${isVisible ? "grid" : "hidden"} min-w-0 w-full max-w-full gap-4 overflow-hidden sm:gap-6 xl:grid 2xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]`}>
         {hasStudyData ? (
           <>
             <PieChart
@@ -415,7 +415,7 @@ export function Exams({
             />
           </>
         ) : (
-          <div className="2xl:col-span-2 flex flex-col items-center justify-center gap-3 rounded-2xl border border-white bg-white p-10 text-center shadow-[0_18px_45px_rgba(15,23,42,0.07)] ring-1 ring-slate-900/5">
+          <div className="2xl:col-span-2 flex min-w-0 w-full max-w-full flex-col items-center justify-center gap-3 overflow-hidden rounded-2xl border border-white bg-white p-10 text-center shadow-[0_18px_45px_rgba(15,23,42,0.07)] ring-1 ring-slate-900/5">
             <BarChart3Icon className="h-8 w-8 text-slate-300" aria-hidden="true" />
             <p className="text-sm font-semibold text-slate-500">Nenhum dado para exibir ainda.</p>
             <p className="text-sm text-slate-400">Estude tópicos do edital para ver suas estatísticas aqui.</p>
@@ -425,8 +425,8 @@ export function Exams({
 
       {/* Diagnosis */}
       {showDiagnosis && (
-        <section className={`${isVisible ? "block" : "hidden"} xl:block`}>
-          <div className="w-full overflow-hidden rounded-2xl border border-white bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.08)] ring-1 ring-slate-900/5 sm:p-5">
+        <section className={`${isVisible ? "block" : "hidden"} min-w-0 w-full max-w-full overflow-hidden xl:block`}>
+          <div className="min-w-0 w-full max-w-full overflow-hidden rounded-2xl border border-white bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.08)] ring-1 ring-slate-900/5 sm:p-5">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-rose-400">Diagnóstico</p>
@@ -446,7 +446,7 @@ export function Exams({
                 </p>
               </div>
             ) : (
-              <div className="mt-5 grid gap-4 lg:grid-cols-3">
+              <div className="mt-5 grid min-w-0 w-full max-w-full gap-4 overflow-hidden lg:grid-cols-3">
                 {/* Not studied gaps */}
                 <div className="rounded-xl border border-rose-100 bg-rose-50/50 p-3">
                   <p className="mb-2 text-xs font-bold uppercase tracking-[0.12em] text-rose-500">
@@ -538,9 +538,9 @@ export function Exams({
       )}
 
       {/* Temporal evolution charts */}
-      <section className={`${isVisible ? "grid" : "hidden"} min-w-0 gap-4 sm:gap-6 xl:grid 2xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]`}>
+      <section className={`${isVisible ? "grid" : "hidden"} min-w-0 w-full max-w-full gap-4 overflow-hidden sm:gap-6 xl:grid 2xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]`}>
         {/* Simulados ao longo do tempo */}
-        <div className="w-full max-w-full overflow-hidden rounded-2xl border border-white bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.08)] ring-1 ring-slate-900/5 sm:p-5">
+        <div className="min-w-0 w-full max-w-full overflow-hidden rounded-2xl border border-white bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.08)] ring-1 ring-slate-900/5 sm:p-5">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-blue-400">Evolução</p>
@@ -553,7 +553,7 @@ export function Exams({
           <div
             role="img"
             aria-label="Gráfico de evolução dos simulados"
-            className="mt-5 flex h-40 max-w-full items-end gap-2 overflow-x-auto overflow-y-hidden rounded-xl bg-[#F0F2F5] px-3 py-4 sm:mt-6 sm:h-52 sm:gap-3 sm:px-4 sm:py-5"
+            className="mt-5 flex h-40 w-full max-w-full items-end gap-2 overflow-x-auto overflow-y-hidden rounded-xl bg-[#F0F2F5] px-3 py-4 sm:mt-6 sm:h-52 sm:gap-3 sm:px-4 sm:py-5"
           >
             {examsByDate.length === 0 ? (
               <p className="self-center text-sm font-medium text-slate-500">Nenhum simulado registrado ainda.</p>
@@ -575,7 +575,7 @@ export function Exams({
         </div>
 
         {/* Horas estudadas por semana */}
-        <div className="w-full max-w-full overflow-hidden rounded-2xl border border-white bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.08)] ring-1 ring-slate-900/5 sm:p-5">
+        <div className="min-w-0 w-full max-w-full overflow-hidden rounded-2xl border border-white bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.08)] ring-1 ring-slate-900/5 sm:p-5">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-emerald-400">Horas</p>
@@ -588,7 +588,7 @@ export function Exams({
           <div
             role="img"
             aria-label="Gráfico de horas estudadas por semana"
-            className="mt-5 flex h-40 max-w-full items-end gap-2 overflow-x-auto overflow-y-hidden rounded-xl bg-[#F0F2F5] px-3 py-4 sm:mt-6 sm:h-52 sm:gap-3 sm:px-4 sm:py-5"
+            className="mt-5 flex h-40 w-full max-w-full items-end gap-2 overflow-x-auto overflow-y-hidden rounded-xl bg-[#F0F2F5] px-3 py-4 sm:mt-6 sm:h-52 sm:gap-3 sm:px-4 sm:py-5"
           >
             {weeklyHoursData.every((w) => w.hours === 0) ? (
               <p className="self-center text-sm font-medium text-slate-500">Nenhuma sessão registrada ainda.</p>
@@ -611,9 +611,9 @@ export function Exams({
       </section>
 
       {/* Time distribution by subject */}
-      <section className={`${isVisible ? "block" : "hidden"} xl:block`}>
+      <section className={`${isVisible ? "block" : "hidden"} min-w-0 w-full max-w-full overflow-hidden xl:block`}>
         {timePieSlices.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-white bg-white p-10 text-center shadow-[0_18px_45px_rgba(15,23,42,0.07)] ring-1 ring-slate-900/5">
+          <div className="flex min-w-0 w-full max-w-full flex-col items-center justify-center gap-3 overflow-hidden rounded-2xl border border-white bg-white p-10 text-center shadow-[0_18px_45px_rgba(15,23,42,0.07)] ring-1 ring-slate-900/5">
             <Timer className="h-8 w-8 text-slate-300" aria-hidden="true" />
             <p className="text-sm font-semibold text-slate-500">Nenhuma sessão com matéria registrada ainda.</p>
             <p className="text-sm text-slate-400">Use o modo foco e selecione uma matéria para ver a distribuição.</p>
@@ -630,8 +630,8 @@ export function Exams({
 
       {/* Activity heatmap */}
       {studySessions.length > 0 && (
-        <section className={`${isVisible ? "block" : "hidden"} xl:block`}>
-          <div className="overflow-hidden rounded-2xl border border-white bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.08)] ring-1 ring-slate-900/5 sm:p-5">
+        <section className={`${isVisible ? "block" : "hidden"} min-w-0 w-full max-w-full overflow-hidden xl:block`}>
+          <div className="min-w-0 w-full max-w-full overflow-hidden rounded-2xl border border-white bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.08)] ring-1 ring-slate-900/5 sm:p-5">
             <div className="mb-4 flex items-start justify-between gap-3">
               <div>
                 <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#1877F2]">Atividade</p>
@@ -647,7 +647,7 @@ export function Exams({
               </div>
             </div>
 
-            <div className="max-w-full overflow-x-auto pb-1">
+            <div className="w-full max-w-full overflow-x-auto overflow-y-hidden pb-1">
               <div className="flex min-w-max gap-1">
               <div className="grid shrink-0 gap-0.5 pr-1" style={{ gridTemplateRows: "repeat(7, 12px)" }}>
                 {["S", "T", "Q", "Q", "S", "S", "D"].map((l, i) => (
@@ -678,15 +678,15 @@ export function Exams({
 
       {/* Day-of-week distribution */}
       {studySessions.length > 0 && (
-        <section className={`${isVisible ? "block" : "hidden"} xl:block`}>
-          <div className="overflow-hidden rounded-2xl border border-white bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.08)] ring-1 ring-slate-900/5 sm:p-5">
+        <section className={`${isVisible ? "block" : "hidden"} min-w-0 w-full max-w-full overflow-hidden xl:block`}>
+          <div className="min-w-0 w-full max-w-full overflow-hidden rounded-2xl border border-white bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.08)] ring-1 ring-slate-900/5 sm:p-5">
             <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-violet-400">Hábito</p>
             <h2 className="mt-1 text-xl font-bold text-slate-950">Distribuição por dia da semana</h2>
             <p className="mt-1 text-sm leading-6 text-slate-500">Horas acumuladas de estudo por dia da semana desde o início.</p>
             <div
               role="img"
               aria-label="Gráfico de horas por dia da semana"
-              className="mt-5 flex h-36 items-end gap-2 overflow-x-auto overflow-y-hidden rounded-xl bg-[#F0F2F5] px-3 py-4 sm:mt-6 sm:h-48 sm:gap-4 sm:px-4 sm:py-5"
+              className="mt-5 flex h-36 w-full max-w-full items-end gap-2 overflow-x-auto overflow-y-hidden rounded-xl bg-[#F0F2F5] px-3 py-4 sm:mt-6 sm:h-48 sm:gap-4 sm:px-4 sm:py-5"
             >
               {hoursPerWeekday.map((hours, i) => (
                 <div key={i} className="flex min-w-[34px] flex-1 flex-col items-center gap-2 sm:min-w-0">
@@ -708,9 +708,9 @@ export function Exams({
       )}
 
       {/* Performance bar chart + ranking */}
-      <section className={`${isVisible ? "grid" : "hidden"} min-w-0 gap-4 sm:gap-5 xl:grid 2xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]`}>
+      <section className={`${isVisible ? "grid" : "hidden"} min-w-0 w-full max-w-full gap-4 overflow-hidden sm:gap-5 xl:grid 2xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]`}>
         {/* Bar chart */}
-        <div className="w-full max-w-full overflow-hidden rounded-2xl border border-white bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.08)] ring-1 ring-slate-900/5 sm:p-5">
+        <div className="min-w-0 w-full max-w-full overflow-hidden rounded-2xl border border-white bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.08)] ring-1 ring-slate-900/5 sm:p-5">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0">
               <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-blue-400">Acertos</p>
@@ -739,7 +739,7 @@ export function Exams({
           <div
             role="img"
             aria-label="Gráfico de barras de desempenho em simulados"
-            className="mt-5 flex h-40 max-w-full items-end gap-2 overflow-x-auto overflow-y-hidden rounded-xl bg-[#F0F2F5] px-3 py-4 sm:mt-6 sm:h-52 sm:gap-3 sm:px-4 sm:py-5"
+            className="mt-5 flex h-40 w-full max-w-full items-end gap-2 overflow-x-auto overflow-y-hidden rounded-xl bg-[#F0F2F5] px-3 py-4 sm:mt-6 sm:h-52 sm:gap-3 sm:px-4 sm:py-5"
           >
             {examTrend.length === 0 ? (
               <p className="self-center text-sm font-medium text-slate-500">Nenhum simulado registrado.</p>
@@ -761,7 +761,7 @@ export function Exams({
         </div>
 
         {/* Ranking */}
-        <div className="w-full max-w-full overflow-hidden rounded-2xl border border-white bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.08)] ring-1 ring-slate-900/5 sm:p-5">
+        <div className="min-w-0 w-full max-w-full overflow-hidden rounded-2xl border border-white bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.08)] ring-1 ring-slate-900/5 sm:p-5">
           <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#1877F2]">Ranking</p>
           <h2 className="mt-1 text-xl font-bold text-slate-950">Top matérias e tópicos</h2>
           {hasStudyData ? (
@@ -778,7 +778,7 @@ export function Exams({
                     <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
                       <div
                         className="h-1.5 rounded-full transition-[width] duration-500"
-                        style={{ width: `${item.score}%`, backgroundColor: item.accent.chart }}
+                        style={{ width: `${Math.min(item.score, 100)}%`, backgroundColor: item.accent.chart }}
                       />
                     </div>
                   </div>
@@ -814,17 +814,17 @@ export function Exams({
       <div
         className={`${
           isVisible ? "block" : "hidden"
-        } w-full max-w-full overflow-hidden rounded-2xl border border-white bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.07)] ring-1 ring-slate-900/5 sm:p-5 xl:block`}
+        } min-w-0 w-full max-w-full overflow-hidden rounded-2xl border border-white bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.07)] ring-1 ring-slate-900/5 sm:p-5 xl:block`}
       >
         <h2 className="break-words text-lg font-semibold">Questões, metas, simulados e revisão manual</h2>
 
         {/* Question registration */}
-        <div className="mt-4 min-w-0 rounded-xl border border-slate-200 bg-slate-50/70 p-4">
-          <div className="flex items-center gap-2">
+        <div className="mt-4 min-w-0 w-full max-w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-50/70 p-4">
+          <div className="flex min-w-0 items-center gap-2">
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#1877F2] text-white">
               <ListChecks className="h-4 w-4" aria-hidden="true" />
             </span>
-            <div>
+            <div className="min-w-0">
               <p className="font-semibold">Registrar questões por tópico</p>
               <p className="text-sm text-slate-500">Selecione a matéria, o tópico e a quantidade feita.</p>
             </div>
@@ -836,7 +836,7 @@ export function Exams({
             </p>
           ) : (
             <>
-              <div className="mt-4 grid min-w-0 gap-2 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)_110px_110px_150px_auto]">
+              <div className="mt-4 grid min-w-0 w-full max-w-full gap-2 overflow-hidden xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)_110px_110px_150px_auto]">
                 <label className="sr-only" htmlFor="question-subject">Matéria</label>
                 <select
                   id="question-subject"
@@ -941,7 +941,7 @@ export function Exams({
                 <button
                   type="button"
                   onClick={() => setShowAllQuestionLogs((v) => !v)}
-                  className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl border border-slate-200 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                  className="mt-3 flex w-full max-w-full items-center justify-center gap-1.5 rounded-xl border border-slate-200 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-50"
                 >
                   <ChevronRight className={`h-3.5 w-3.5 transition-transform ${showAllQuestionLogs ? "rotate-90" : ""}`} aria-hidden="true" />
                   {showAllQuestionLogs
@@ -954,7 +954,7 @@ export function Exams({
         </div>
 
         {/* Editable goal cards */}
-        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+        <div className="mt-4 grid min-w-0 w-full max-w-full gap-4 overflow-hidden sm:grid-cols-2">
           <GoalCard
             goal={hourGoal}
             label="Horas estudadas"
@@ -971,9 +971,9 @@ export function Exams({
 
         {/* Weekly progress */}
         {(weeklyHoursTarget > 0 || weeklyQuestionsTarget > 0) && (
-        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        <div className="mt-4 grid min-w-0 w-full max-w-full gap-3 overflow-hidden sm:grid-cols-2">
             {weeklyHoursTarget > 0 && (
-              <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-3">
+              <div className="min-w-0 w-full max-w-full overflow-hidden rounded-xl border border-blue-100 bg-blue-50/60 p-3">
                 <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-blue-500">Horas esta semana</p>
                 <div className="mt-1 flex items-baseline gap-2">
                   <p className="text-2xl font-black text-blue-700">{weeklyHours}h</p>
@@ -993,7 +993,7 @@ export function Exams({
               </div>
             )}
             {weeklyQuestionsTarget > 0 && (
-              <div className="rounded-xl border border-emerald-100 bg-emerald-50/60 p-3">
+              <div className="min-w-0 w-full max-w-full overflow-hidden rounded-xl border border-emerald-100 bg-emerald-50/60 p-3">
                 <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-emerald-500">Questões esta semana</p>
                 <div className="mt-1 flex items-baseline gap-2">
                   <p className="text-2xl font-black text-emerald-700">{weeklyQuestions}</p>
@@ -1016,16 +1016,16 @@ export function Exams({
         )}
 
         {/* Exam registration */}
-        <div className="mt-5 min-w-0 rounded-xl border border-slate-200 bg-slate-50/70 p-4">
+        <div className="mt-5 min-w-0 w-full max-w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-50/70 p-4">
           <p className="font-semibold">Registrar simulado</p>
-          <div className="mt-3 grid min-w-0 gap-2 xl:grid-cols-[minmax(0,1fr)_90px_90px_auto]">
+          <div className="mt-3 grid min-w-0 w-full max-w-full gap-2 overflow-hidden xl:grid-cols-[minmax(0,1fr)_90px_90px_auto]">
             <label className="sr-only" htmlFor="exam-nome">Nome do simulado</label>
             <input
               id="exam-nome"
               value={examDraft.nome}
               onChange={(e) => onExamDraftChange({ ...examDraft, nome: e.target.value })}
               placeholder="Nome do simulado"
-              className="h-11 rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 md:h-10"
+              className="h-11 min-w-0 rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 md:h-10"
             />
             <label className="sr-only" htmlFor="exam-acertos">Acertos</label>
             <input
@@ -1035,7 +1035,7 @@ export function Exams({
               value={examDraft.acertos}
               onChange={(e) => onExamDraftChange({ ...examDraft, acertos: Number(e.target.value) })}
               aria-label="Acertos"
-              className="h-11 rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 md:h-10"
+              className="h-11 min-w-0 rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 md:h-10"
             />
             <label className="sr-only" htmlFor="exam-total">Total de questões</label>
             <input
@@ -1045,11 +1045,11 @@ export function Exams({
               value={examDraft.total}
               onChange={(e) => onExamDraftChange({ ...examDraft, total: Number(e.target.value) })}
               aria-label="Total de questões"
-              className="h-11 rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 md:h-10"
+              className="h-11 min-w-0 rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 md:h-10"
             />
             <button
               onClick={onAddExam}
-              className="flex h-11 items-center justify-center gap-2 rounded-xl bg-[#1877F2] px-3 text-sm font-bold text-white hover:bg-[#1B74E4] focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500 md:h-10"
+              className="flex h-11 min-w-0 items-center justify-center gap-2 rounded-xl bg-[#1877F2] px-3 text-sm font-bold text-white hover:bg-[#1B74E4] focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500 md:h-10"
             >
               <Save className="h-4 w-4" aria-hidden="true" />
               Salvar
@@ -1060,7 +1060,7 @@ export function Exams({
             {exams.map((exam) => (
               <div
                 key={exam.id}
-                className="flex items-center justify-between gap-3 rounded-xl bg-white p-3 shadow-sm shadow-slate-900/5"
+                className="flex min-w-0 items-center justify-between gap-3 rounded-xl bg-white p-3 shadow-sm shadow-slate-900/5"
               >
                 <span className="min-w-0 truncate text-sm font-medium">{exam.nome}</span>
                 <div className="flex shrink-0 items-center gap-2">
@@ -1079,9 +1079,9 @@ export function Exams({
         </div>
 
         {/* Manual review */}
-        <div className="mt-5 min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-blue-50/50 p-4">
+        <div className="mt-5 min-w-0 w-full max-w-full overflow-hidden rounded-xl border border-slate-200 bg-blue-50/50 p-4">
           <p className="font-semibold">Revisão manual</p>
-          <div className="mt-3 grid min-w-0 max-w-full gap-2 overflow-hidden xl:grid-cols-[minmax(0,1fr)_150px_auto]">
+          <div className="mt-3 grid min-w-0 w-full max-w-full gap-2 overflow-hidden xl:grid-cols-[minmax(0,1fr)_150px_auto]">
             <label className="sr-only" htmlFor="manual-topic">Tópico para revisão</label>
             <select
               id="manual-topic"

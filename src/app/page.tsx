@@ -2023,7 +2023,7 @@ export default function Home() {
       </aside>
 
       {/* Main content */}
-      <section className="w-full max-w-full overflow-x-hidden pb-[calc(5.5rem+env(safe-area-inset-bottom))] xl:ml-64 xl:w-auto xl:pb-0">
+      <section className="min-w-0 w-full max-w-full overflow-x-hidden pb-[calc(5.5rem+env(safe-area-inset-bottom))] xl:ml-64 xl:w-auto xl:pb-0">
         {updateAvailable && (
           <div className="sticky top-0 z-30 border-b border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800 shadow-sm md:px-6 xl:px-8">
             <div className="mx-auto flex max-w-[1600px] flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -2163,7 +2163,7 @@ export default function Home() {
           </div>
         </header>
 
-        <div className="mx-auto w-full max-w-[1600px] space-y-5 overflow-x-hidden p-4 md:space-y-6 md:p-6 xl:p-8">
+        <div className="mx-auto min-w-0 w-full max-w-[1600px] space-y-5 overflow-x-hidden p-4 md:space-y-6 md:p-6 xl:p-8">
           {readOnlyUser && !adminView && (
             <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-blue-900 shadow-sm sm:flex sm:items-center sm:justify-between sm:gap-4">
               <div>
@@ -2282,7 +2282,7 @@ export default function Home() {
               <section
                 className={`${
                   activeSection === "cronograma" || activeSection === "simulados" ? "grid" : "hidden"
-                } min-w-0 w-full max-w-full gap-5 overflow-x-hidden xl:grid 2xl:grid-cols-2`}
+                } min-w-0 w-full max-w-full gap-5 overflow-hidden xl:grid 2xl:grid-cols-2`}
               >
                 <ErrorBoundary label="Cronograma">
                   <Schedule
