@@ -2194,6 +2194,7 @@ export default function Home() {
                     reviews={reviews}
                     todayIso={todayIso}
                     studySessions={studySessions}
+                    onDifficultyChange={updateTopicDifficulty}
                   />
                 </ErrorBoundary>
               </section>

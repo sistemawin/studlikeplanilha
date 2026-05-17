@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpenCheck, ChevronLeft, FileText, Pencil, Plus, Search, Sparkles, Trash2, X } from "lucide-react";
+import { BookOpenCheck, ChevronLeft, Download, FileText, Pencil, Plus, Search, Sparkles, Trash2, X } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
 import type { Difficulty, NavTarget, Subject, Topic, TopicStatus } from "@/types";
@@ -244,6 +244,36 @@ export function Edital({
   const [editingTopicId, setEditingTopicId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
   const [sortMode, setSortMode] = useState<SortMode>("default");
+
+  function exportEdital() {
+    const STATUS_SYMBOL: Record<string, string> = {
+      "Não Estudado": "○",
+      "Teoria Lida": "◐",
+      "Questões Feitas": "●",
+      Revisado: "✓",
+    };
+    const lines: string[] = ["EDITAL VERTICALIZADO", "=".repeat(40), ""];
+    for (const subject of subjects) {
+      const subjectTopics = topics.filter((t) => t.materiaId === subject.id);
+      lines.push(`${subject.nome.toUpperCase()} (peso ${subject.peso})`);
+      lines.push("─".repeat(40));
+      if (subjectTopics.length === 0) {
+        lines.push("  (sem tópicos)");
+      } else {
+        for (const topic of subjectTopics) {
+          lines.push(`  ${STATUS_SYMBOL[topic.status] ?? "○"} ${topic.titulo}  [${topic.status}]`);
+        }
+      }
+      lines.push("");
+    }
+    const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "edital.txt";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
 
   function startEditTopic(topic: Topic) {
     setEditingTopicId(topic.id);
@@ -533,6 +563,17 @@ export function Edital({
                 <option value="progresso">Maior progresso</option>
               </select>
             </>
+          )}
+          {subjects.length > 0 && (
+            <button
+              type="button"
+              onClick={exportEdital}
+              aria-label="Exportar edital como texto"
+              className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 shadow-sm hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-400"
+            >
+              <Download className="h-4 w-4" aria-hidden="true" />
+              <span className="hidden sm:inline">Exportar</span>
+            </button>
           )}
           <button
             onClick={onAddSubject}

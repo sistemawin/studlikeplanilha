@@ -29,6 +29,7 @@ type Props = {
   reviews: Review[];
   todayIso: string;
   studySessions: StudySession[];
+  onDifficultyChange: (topicId: string, difficulty: import("@/types").Difficulty) => void;
 };
 
 function GoalCard({
@@ -128,6 +129,7 @@ export function Exams({
   reviews,
   todayIso,
   studySessions,
+  onDifficultyChange,
 }: Props) {
   const isVisible = activeSection === "simulados";
   const today = new Date().toISOString().slice(0, 10);
@@ -460,9 +462,20 @@ export function Exams({
                               {Math.round(item.accuracy * 100)}%
                             </span>
                           </div>
-                          <p className="mt-0.5 truncate text-[11px] font-medium text-slate-500">
-                            {item.subject?.nome ?? "—"} · {item.quantidade} questões
-                          </p>
+                          <div className="mt-1.5 flex items-center justify-between gap-2">
+                            <p className="truncate text-[11px] font-medium text-slate-500">
+                              {item.subject?.nome ?? "—"} · {item.quantidade} questões
+                            </p>
+                            {item.topic!.dificuldade !== "Difícil" && (
+                              <button
+                                type="button"
+                                onClick={() => onDifficultyChange(item.topic!.id, "Difícil")}
+                                className="shrink-0 rounded-md border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[10px] font-bold text-amber-700 hover:bg-amber-100"
+                              >
+                                → Difícil
+                              </button>
+                            )}
+                          </div>
                         </div>
                       ))}
                     </div>
