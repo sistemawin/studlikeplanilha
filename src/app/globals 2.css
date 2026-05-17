@@ -1,0 +1,81 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f7f7f8;
+  --foreground: #111827;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
+    "Inter", "Geist", "Geist Fallback", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono", "Geist Mono Fallback", ui-monospace, monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  width: 100%;
+  max-width: 100%;
+  min-height: 100%;
+  overflow-x: hidden;
+  overscroll-behavior: none;
+  background: var(--background);
+}
+
+body {
+  width: 100%;
+  max-width: 100%;
+  min-height: 100dvh;
+  background: var(--background);
+  color: var(--foreground);
+  font-family:
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
+    "Inter", var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  font-feature-settings:
+    "liga" 1,
+    "kern" 1,
+    "ss01" 1,
+    "cv05" 1,
+    "cv08" 1;
+  font-optical-sizing: auto;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: geometricPrecision;
+  overflow-x: hidden;
+  overscroll-behavior: none;
+}
+
+::selection {
+  background: #1877f2;
+  color: #ffffff;
+}
+
+button,
+select,
+input,
+textarea {
+  font: inherit;
+}
+
+button,
+select {
+  -webkit-tap-highlight-color: transparent;
+}
+
+input,
+select,
+textarea {
+  font-size: 16px;
+}
+
+@media (min-width: 768px) {
+  input,
+  select,
+  textarea {
+    font-size: 14px;
+  }
+}

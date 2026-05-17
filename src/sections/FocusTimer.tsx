@@ -60,6 +60,15 @@ export function FocusTimer({
   const pomodoroRemaining = Math.max(0, pomodoroDurationSecs - timerSeconds);
   const pomodoroComplete = pomodoroMode && timerSeconds >= pomodoroDurationSecs;
   const pomodoroProgress = pomodoroMode ? Math.min(timerSeconds / pomodoroDurationSecs, 1) : 0;
+  const defaultSubjectExists = subjects.some((subject) => subject.id === defaultSubjectId);
+  const fallbackSubjectId = defaultSubjectExists ? defaultSubjectId ?? "" : subjects[0]?.id ?? "";
+  const selectedSubjectExists = subjects.some((subject) => subject.id === sessionSubjectId);
+  const effectiveSubjectId = selectedSubjectExists ? sessionSubjectId : fallbackSubjectId;
+  const sessionTopics = topics.filter((topic) => topic.materiaId === effectiveSubjectId);
+  const defaultTopicExists = sessionTopics.some((topic) => topic.id === defaultTopicId);
+  const selectedTopicExists = sessionTopics.some((topic) => topic.id === sessionTopicId);
+  const fallbackTopicId = defaultTopicExists ? defaultTopicId ?? "" : sessionTopics[0]?.id ?? "";
+  const effectiveTopicId = selectedTopicExists ? sessionTopicId : fallbackTopicId;
 
   function handleSetPomodoroDuration(min: PomodoroDuration) {
     setPomodoroDuration(min);
@@ -70,14 +79,19 @@ export function FocusTimer({
     if (pomodoroComplete && timerRunning) onToggle();
   }, [pomodoroComplete, timerRunning, timerSeconds]);
 
-  const sessionTopics = topics.filter((t) => t.materiaId === sessionSubjectId);
+  useEffect(() => {
+    setSessionSubjectId((current) => {
+      if (subjects.some((subject) => subject.id === current)) return current;
+      return fallbackSubjectId;
+    });
+  }, [fallbackSubjectId, subjects]);
 
-  // Effective values: always fall back to the first available option so the
-  // <select> never has value="" without a matching <option>. When value=""
-  // has no matching option, iOS Safari shows the field blank and selecting
-  // the visually-highlighted first item doesn't fire onChange (no "change").
-  const effectiveSubjectId = sessionSubjectId || subjects[0]?.id || "";
-  const effectiveTopicId = sessionTopicId || sessionTopics[0]?.id || "";
+  useEffect(() => {
+    setSessionTopicId((current) => {
+      if (sessionTopics.some((topic) => topic.id === current)) return current;
+      return fallbackTopicId;
+    });
+  }, [fallbackTopicId, sessionTopics]);
 
   function handleSubjectChange(subjectId: string) {
     setSessionSubjectId(subjectId);
