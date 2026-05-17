@@ -1,7 +1,9 @@
 import { CheckCircle2, Pause, Play, RotateCcw, Timer, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Goal, Review, Subject, Topic } from "@/types";
 import { formatTimer } from "@/lib/utils";
+
+const POMODORO_DURATION = 25 * 60;
 
 type SessionData = {
   topicId?: string;
@@ -45,6 +47,15 @@ export function FocusTimer({
     () => topics.filter((t) => t.materiaId === (subjects[0]?.id ?? ""))[0]?.id ?? "",
   );
   const [sessionReviewId, setSessionReviewId] = useState(pendingReviews[0]?.id ?? "");
+  const [pomodoroMode, setPomodoroMode] = useState(false);
+
+  const pomodoroRemaining = Math.max(0, POMODORO_DURATION - timerSeconds);
+  const pomodoroComplete = pomodoroMode && timerSeconds >= POMODORO_DURATION;
+  const pomodoroProgress = pomodoroMode ? Math.min(timerSeconds / POMODORO_DURATION, 1) : 0;
+
+  useEffect(() => {
+    if (pomodoroComplete && timerRunning) onToggle();
+  }, [pomodoroComplete, timerRunning]);
 
   const sessionTopics = topics.filter((t) => t.materiaId === sessionSubjectId);
 
@@ -86,18 +97,48 @@ export function FocusTimer({
         </div>
 
       <div className="flex min-h-[420px] shrink-0 flex-col items-center justify-center py-8 text-center sm:min-h-[460px] md:flex-1 md:py-10">
+        {/* Mode toggle */}
+        <div className="mb-4 flex w-full max-w-xs gap-1 rounded-xl bg-white/5 p-1">
+          {([["livre", "Livre"], ["pomodoro", "Pomodoro · 25min"]] as const).map(([mode, label]) => (
+            <button
+              key={mode}
+              type="button"
+              onClick={() => { setPomodoroMode(mode === "pomodoro"); }}
+              aria-pressed={pomodoroMode === (mode === "pomodoro")}
+              className={`flex-1 rounded-lg py-1.5 text-xs font-semibold transition ${
+                pomodoroMode === (mode === "pomodoro")
+                  ? "bg-white text-blue-700 shadow-sm"
+                  : "text-blue-200 hover:text-white"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
         <p className="rounded-full bg-white/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-blue-100 ring-1 ring-white/15">
-          {timerRunning ? "Estudando agora" : "Sessão pausada"}
+          {pomodoroComplete ? "Pomodoro concluído!" : timerRunning ? "Estudando agora" : "Sessão pausada"}
         </p>
+
         <div className="mt-8 rounded-[2rem] border border-white/15 bg-white/10 px-8 py-8 shadow-2xl shadow-blue-950/40 backdrop-blur md:px-16 md:py-12">
           <time
-            className="font-mono text-7xl font-semibold tracking-normal text-white md:text-9xl"
+            className={`font-mono text-7xl font-semibold tracking-normal md:text-9xl ${pomodoroComplete ? "text-emerald-300" : "text-white"}`}
             dateTime={`PT${Math.floor(timerSeconds / 60)}M${timerSeconds % 60}S`}
           >
-            {formatTimer(timerSeconds)}
+            {pomodoroMode ? formatTimer(pomodoroRemaining) : formatTimer(timerSeconds)}
           </time>
+          {pomodoroMode && (
+            <div className="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-white/20">
+              <div
+                className="h-1.5 rounded-full bg-white transition-[width] duration-1000"
+                style={{ width: `${pomodoroProgress * 100}%` }}
+              />
+            </div>
+          )}
           <p className="mt-4 text-sm font-medium text-blue-100 md:text-base">
-            Respire, mantenha o foco e avance uma tarefa por vez.
+            {pomodoroComplete
+              ? "Sessão concluída! Registre e descanse 5 minutos."
+              : "Respire, mantenha o foco e avance uma tarefa por vez."}
           </p>
         </div>
 

@@ -346,6 +346,28 @@ export function Edital({
           </p>
         </div>
 
+        {subjectTopics.length > 0 && (
+          <div className="mb-5 grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {STATUS_CYCLE.map((status) => {
+              const count = subjectTopics.filter((t) => t.status === status).length;
+              const style = STATUS_COLORS[status];
+              return (
+                <button
+                  key={status}
+                  type="button"
+                  onClick={() => setStatusFilter(statusFilter === status ? "todos" : status)}
+                  aria-pressed={statusFilter === status}
+                  className="rounded-xl p-3 text-left transition hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-400"
+                  style={{ backgroundColor: style.bg, outline: statusFilter === status ? `2px solid ${style.text}` : undefined }}
+                >
+                  <p className="text-xl font-black" style={{ color: style.text }}>{count}</p>
+                  <p className="mt-0.5 text-[10px] font-bold leading-tight" style={{ color: style.text }}>{status}</p>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
         <EditalFilters
           search={search}
           status={statusFilter}
