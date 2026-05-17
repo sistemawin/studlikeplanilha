@@ -2282,7 +2282,7 @@ export default function Home() {
               <section
                 className={`${
                   activeSection === "cronograma" || activeSection === "simulados" ? "grid" : "hidden"
-                } gap-5 xl:grid 2xl:grid-cols-2`}
+                } min-w-0 w-full max-w-full gap-5 overflow-x-hidden xl:grid 2xl:grid-cols-2`}
               >
                 <ErrorBoundary label="Cronograma">
                   <Schedule

@@ -23,15 +23,15 @@ export function PieChart({ title, subtitle, slices, centerLabel }: Props) {
         <BarChart3 className="h-5 w-5 shrink-0 text-blue-500" aria-hidden="true" />
       </div>
 
-      <div className="mt-5 grid min-w-0 gap-5 sm:grid-cols-[160px_minmax(0,1fr)] sm:items-center">
+      <div className="mt-4 grid min-w-0 gap-4 sm:mt-5 sm:grid-cols-[160px_minmax(0,1fr)] sm:items-center">
         <div
           role="img"
           aria-label={`Gráfico: ${title}`}
-          className="relative mx-auto h-40 w-40 max-w-full rounded-full shadow-inner shadow-slate-900/10"
+          className="relative mx-auto h-32 w-32 max-w-full rounded-full shadow-inner shadow-slate-900/10 sm:h-40 sm:w-40"
           style={{ background: pieBackground(slices) }}
         >
-          <div className="absolute inset-5 flex flex-col items-center justify-center rounded-full bg-white text-center shadow-sm">
-            <span className="text-2xl font-semibold text-slate-950">{centerLabel}</span>
+          <div className="absolute inset-4 flex flex-col items-center justify-center rounded-full bg-white text-center shadow-sm sm:inset-5">
+            <span className="text-xl font-semibold text-slate-950 sm:text-2xl">{centerLabel}</span>
             <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">total</span>
           </div>
         </div>

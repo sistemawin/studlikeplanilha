@@ -391,7 +391,12 @@ export function Exams({
   }
 
   return (
-    <>
+    <div
+      id="simulados"
+      className={`${
+        isVisible ? "grid" : "hidden"
+      } min-w-0 w-full max-w-full gap-4 overflow-x-hidden scroll-mt-24 pb-[calc(5.75rem+env(safe-area-inset-bottom))] sm:gap-5 xl:grid xl:pb-0`}
+    >
       {/* Analytics charts */}
       <section className={`${isVisible ? "grid" : "hidden"} min-w-0 gap-4 sm:gap-6 xl:grid 2xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]`}>
         {hasStudyData ? (
@@ -807,10 +812,9 @@ export function Exams({
 
       {/* Goals + exam form + manual review */}
       <div
-        id="simulados"
         className={`${
           isVisible ? "block" : "hidden"
-        } w-full max-w-full overflow-hidden scroll-mt-24 rounded-2xl border border-white bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.07)] ring-1 ring-slate-900/5 sm:p-5 xl:block`}
+        } w-full max-w-full overflow-hidden rounded-2xl border border-white bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.07)] ring-1 ring-slate-900/5 sm:p-5 xl:block`}
       >
         <h2 className="break-words text-lg font-semibold">Questões, metas, simulados e revisão manual</h2>
 
@@ -1110,6 +1114,6 @@ export function Exams({
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }
