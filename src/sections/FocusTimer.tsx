@@ -72,15 +72,25 @@ export function FocusTimer({
 
   const sessionTopics = topics.filter((t) => t.materiaId === sessionSubjectId);
 
+  // If sessionTopicId is "" (uninitialized) but topics are available, pick the first one.
+  // This fixes the case where the component mounted before topics loaded, or when
+  // defaultSubjectId was set but no topics existed yet at mount time.
+  useEffect(() => {
+    if (!sessionTopicId && sessionTopics.length > 0) {
+      setSessionTopicId(sessionTopics[0].id);
+    }
+  }, [sessionTopics.length, sessionTopicId]);
+
   function handleSubjectChange(subjectId: string) {
     setSessionSubjectId(subjectId);
-    setSessionTopicId(topics.filter((t) => t.materiaId === subjectId)[0]?.id ?? "");
+    const first = topics.filter((t) => t.materiaId === subjectId)[0];
+    setSessionTopicId(first?.id ?? "");
   }
 
   function handleFinish() {
     onFinishSession({
-      topicId: sessionType === "topico" ? sessionTopicId : undefined,
-      reviewId: sessionType === "revisao" ? sessionReviewId : undefined,
+      topicId: sessionType === "topico" && sessionTopicId ? sessionTopicId : undefined,
+      reviewId: sessionType === "revisao" && sessionReviewId ? sessionReviewId : undefined,
     });
   }
 
