@@ -1,6 +1,6 @@
 // Studlike Service Worker
 // Bump CACHE_VERSION on each production deploy to flush stale caches.
-const CACHE_VERSION = "1";
+const CACHE_VERSION = "2";
 const CACHE_NAME = "studlike-v" + CACHE_VERSION;
 
 // Pre-cache only the stable shell URLs (no hashed chunks — Next.js handles those).
@@ -11,11 +11,7 @@ self.addEventListener("install", (event) => {
     caches
       .open(CACHE_NAME)
       .then((cache) => cache.addAll(SHELL_URLS).catch(() => {}))
-    // Do NOT call skipWaiting() here.
-    // This keeps the new SW in "waiting" state until the user clicks the
-    // in-app "Recarregar" button, which posts SKIP_WAITING below.
-    // Chrome also shows its own "Update" option in the PWA install menu
-    // precisely because the SW is in waiting state.
+      .then(() => self.skipWaiting())
   );
 });
 
@@ -47,8 +43,8 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
   if (url.origin !== location.origin) return;
 
-  // Never cache API routes or Supabase calls — always network.
-  if (url.pathname.startsWith("/api/")) return;
+  // Never cache API routes or Next.js build assets — always network.
+  if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/_next/")) return;
 
   // Network-first strategy: try the network, cache the response,
   // fall back to the cached version if offline.
