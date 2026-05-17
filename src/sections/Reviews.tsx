@@ -123,17 +123,17 @@ export function Reviews({ reviews, topics, subjects, todayIso, activeSection, fo
       </div>
 
       <div className="mb-4 grid min-w-0 w-full max-w-full grid-cols-3 gap-2 overflow-hidden">
-        <div className="min-w-0 max-w-full overflow-hidden rounded-xl bg-amber-50 p-3 text-center ring-1 ring-amber-100">
+        <div className="flex min-h-[4.5rem] min-w-0 flex-col items-center justify-between overflow-hidden rounded-xl bg-amber-50 p-3 text-center ring-1 ring-amber-100">
           <p className="max-w-full break-words text-center text-[10px] font-bold uppercase leading-4 tracking-[0.04em] text-amber-500 sm:text-[11px]">Hoje</p>
-          <p className="mt-1 text-2xl font-black text-amber-700">{pendingToday.length}</p>
+          <p className="text-2xl font-black text-amber-700">{pendingToday.length}</p>
         </div>
-        <div className="min-w-0 max-w-full overflow-hidden rounded-xl bg-slate-50 p-3 text-center ring-1 ring-slate-100">
+        <div className="flex min-h-[4.5rem] min-w-0 flex-col items-center justify-between overflow-hidden rounded-xl bg-slate-50 p-3 text-center ring-1 ring-slate-100">
           <p className="max-w-full break-words text-center text-[10px] font-bold uppercase leading-4 tracking-[0.04em] text-slate-400 sm:text-[11px]">Pendentes</p>
-          <p className="mt-1 text-2xl font-black text-slate-700">{totalPending}</p>
+          <p className="text-2xl font-black text-slate-700">{totalPending}</p>
         </div>
-        <div className="min-w-0 max-w-full overflow-hidden rounded-xl bg-emerald-50 p-3 text-center ring-1 ring-emerald-100">
+        <div className="flex min-h-[4.5rem] min-w-0 flex-col items-center justify-between overflow-hidden rounded-xl bg-emerald-50 p-3 text-center ring-1 ring-emerald-100">
           <p className="max-w-full break-words text-center text-[10px] font-bold uppercase leading-4 tracking-[0.04em] text-emerald-500 sm:text-[11px]">Concluídas</p>
-          <p className="mt-1 text-2xl font-black text-emerald-700">{totalCompleted}</p>
+          <p className="text-2xl font-black text-emerald-700">{totalCompleted}</p>
         </div>
       </div>
 
