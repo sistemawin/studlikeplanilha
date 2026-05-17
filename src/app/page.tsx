@@ -23,7 +23,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { Session } from "@supabase/supabase-js";
 import { getSupabaseBrowserClient, getSupabasePasswordVerifierClient } from "@/services/supabase/client";
-import { loadRemoteState, saveRemoteState, serializeAppState, validateSchedule } from "@/services/supabase/sync";
+import { loadRemoteState, serializeAppState, validateSchedule } from "@/services/supabase/sync";
+import { syncAppState } from "@/services/sync/coordinator";
+import { persistLocally, loadPersisted, clearPersisted } from "@/services/persistence/local";
+import { hasPendingSync } from "@/services/queue/syncQueue";
 import { addDays, formatTimer, isoDate, pct } from "@/lib/utils";
 import { useScrollLock } from "@/hooks/useScrollLock";
 import { useTimerStore } from "@/store/timer";
@@ -230,6 +233,7 @@ export default function Home() {
 
   // ── Sync status ───────────────────────────────────────────────────────────
   const [syncStatus, setSyncStatus] = useState<SyncStatus>("idle");
+  const [isOnlineState, setIsOnlineState] = useState(true);
   const savedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const feedbackIdRef = useRef(0);
 
@@ -314,6 +318,19 @@ export default function Home() {
 
   useEffect(() => {
     setMobileNavPortalReady(true);
+  }, []);
+
+  // ── Online / offline detection ────────────────────────────────────────────
+  useEffect(() => {
+    setIsOnlineState(navigator.onLine);
+    function handleOnline() { setIsOnlineState(true); }
+    function handleOffline() { setIsOnlineState(false); }
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
   }, []);
 
   // ── App update detection ─────────────────────────────────────────────────
@@ -457,18 +474,20 @@ export default function Home() {
       setAdminUsersPage(0);
       setAdminUsersSearch("");
       lastSyncedStateRef.current = "";
+      clearPersisted();
       return;
     }
 
     let cancelled = false;
     const supabase = getSupabaseBrowserClient();
+    const userId = session.user.id;
 
     async function load() {
       setRemoteLoading(true);
       setRemoteReady(false);
       setRemoteError("");
       try {
-        const remote = await loadRemoteState(supabase, session!.user.id);
+        const remote = await loadRemoteState(supabase, userId);
         if (cancelled) return;
         setSubjects(remote.subjects);
         setTopics(remote.topics);
@@ -480,14 +499,33 @@ export default function Home() {
         setStudySessions(remote.studySessions);
         setSelectedSubject(remote.subjects[0]?.id ?? "");
         setSelectedManualTopic(remote.topics[0]?.id ?? "");
+        persistLocally(userId, remote);
         lastSyncedStateRef.current = serializeAppState(remote);
         setNotice("Dados carregados com segurança.");
         setRemoteReady(true);
       } catch (err) {
         if (cancelled) return;
-        const msg = err instanceof Error ? err.message : "Não foi possível carregar dados.";
-        setRemoteError(msg);
-        setNotice(msg);
+        // Remote unavailable: try local fallback so the user can work offline
+        const localState = loadPersisted(userId);
+        if (localState) {
+          setSubjects(localState.subjects);
+          setTopics(localState.topics);
+          setReviews(localState.reviews);
+          setSchedule(localState.schedule);
+          setGoals(localState.goals);
+          setExams(localState.exams);
+          setQuestionLogs(localState.questionLogs);
+          setStudySessions(localState.studySessions);
+          setSelectedSubject(localState.subjects[0]?.id ?? "");
+          setSelectedManualTopic(localState.topics[0]?.id ?? "");
+          lastSyncedStateRef.current = ""; // force sync when online
+          setRemoteReady(true);
+          setNotice("Sem conexão. Usando dados locais. Sincronizando quando reconectar.");
+        } else {
+          const msg = err instanceof Error ? err.message : "Não foi possível carregar dados.";
+          setRemoteError(msg);
+          setNotice(msg);
+        }
       } finally {
         if (!cancelled) setRemoteLoading(false);
       }
@@ -526,6 +564,8 @@ export default function Home() {
   }, [session]);
 
   // ── Debounced sync ────────────────────────────────────────────────────────
+  // isOnlineState is in deps so the effect re-fires on reconnect, triggering
+  // a sync flush when there are unsynced changes (lastSyncedStateRef stale).
   useEffect(() => {
     if (!session || !remoteReady) return;
     if (readOnlyUser) {
@@ -538,7 +578,10 @@ export default function Home() {
     latestStateRef.current = state;
     latestSerializedStateRef.current = serialized;
 
-    if (serialized === lastSyncedStateRef.current) {
+    const hasUnsyncedChanges = serialized !== lastSyncedStateRef.current;
+    const hasPending = session && hasPendingSync(session.user.id);
+
+    if (!hasUnsyncedChanges && !hasPending) {
       setSyncStatus("idle");
       return;
     }
@@ -556,17 +599,22 @@ export default function Home() {
       setSyncStatus("saving");
 
       try {
-        await saveRemoteState(supabase, session.user.id, stateToSave);
-        lastSyncedStateRef.current = serializedToSave;
-        setRemoteError("");
-        setSyncStatus("saved");
-        if (savedTimeoutRef.current) window.clearTimeout(savedTimeoutRef.current);
-        savedTimeoutRef.current = setTimeout(() => setSyncStatus("idle"), 2000);
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : "Não foi possível salvar seus dados.";
-        setRemoteError(msg);
-        setNotice(msg);
-        setSyncStatus("error");
+        const result = await syncAppState(supabase, session.user.id, stateToSave);
+
+        if (result.status === "synced") {
+          lastSyncedStateRef.current = serializedToSave;
+          setRemoteError("");
+          setSyncStatus("saved");
+          if (savedTimeoutRef.current) window.clearTimeout(savedTimeoutRef.current);
+          savedTimeoutRef.current = setTimeout(() => setSyncStatus("idle"), 2000);
+        } else if (result.status === "queued") {
+          setSyncStatus("pending");
+        } else {
+          const msg = result.error.message;
+          setRemoteError(msg);
+          setNotice(msg);
+          setSyncStatus("error");
+        }
       } finally {
         syncInFlightRef.current = false;
         if (pendingSyncRef.current || latestSerializedStateRef.current !== lastSyncedStateRef.current) {
@@ -578,7 +626,7 @@ export default function Home() {
 
     const id = window.setTimeout(() => void runSync(), SYNC_DEBOUNCE_MS);
     return () => window.clearTimeout(id);
-  }, [subjects, topics, reviews, schedule, goals, exams, questionLogs, studySessions, session, remoteReady, readOnlyUser]);
+  }, [subjects, topics, reviews, schedule, goals, exams, questionLogs, studySessions, session, remoteReady, readOnlyUser, isOnlineState]);
 
   // ── Derived state ─────────────────────────────────────────────────────────
   const topicById = useMemo(

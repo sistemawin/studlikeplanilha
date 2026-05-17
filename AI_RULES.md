@@ -157,6 +157,47 @@ Execute mentalmente antes de escrever qualquer código:
 
 ---
 
+## Sincronização — Regras obrigatórias
+
+Consulte `docs/synchronization/` para arquitetura completa.
+
+### Acesso e fluxo
+
+- **Nunca chamar `saveRemoteState` diretamente de componentes ou UI** — use sempre `syncAppState` do coordinator
+- **Nunca sincronizar direto do componente** — sync é responsabilidade do `useEffect` em page.tsx
+- **Todo acesso ao Supabase** deve estar em `services/supabase/` — nunca em features ou componentes
+- **Persistir localmente antes de tentar rede** — `persistLocally` sempre precede `saveRemoteState`
+
+### Retry e confiabilidade
+
+- **Nunca criar retry infinito** — sempre definir `maxAttempts` explícito
+- **Toda sync crítica deve usar `withRetry`** — nunca call único sem retry para dados do usuário
+- **Toda operação em `saveRemoteState` deve ser idempotente** — upsert por ID, não insert único
+- **Alterar `saveRemoteState`?** — verificar que a operação continua idempotente após a mudança
+
+### Persistência local
+
+- **Qualquer mudança em `local.ts`** exige auditoria do formato de chave e versionamento
+- **Não remover `clearPersisted()` do logout** — dados de um usuário nunca podem vazar para outro
+- **Versão do schema** (`VERSION = 1`) — incrementar se estrutura de `StoredEntry` mudar
+
+### Safe guards
+
+- **`syncInFlightRef`** — nunca remover: previne syncs concorrentes
+- **`lastSyncedStateRef`** — atualizar APENAS em sync confirmada (`status: "synced"`)
+- **`isOnlineState` nas deps do sync effect** — garante flush automático ao reconectar
+- **Nunca criar múltiplos `setInterval` para o timer** — Zustand store garante estado único
+- **Fila de pendentes (`syncQueue`)** — um slot por vez, não lista de operações
+
+### Testes
+
+- **Toda alteração em `services/sync/coordinator.ts`** exige atualização em `coordinator.test.ts`
+- **Toda alteração em `services/retry/backoff.ts`** exige atualização em `backoff.test.ts`
+- **Nova operação em `saveRemoteState`** deve ser idempotente — documentar e testar se possível
+- **Usar `fastRetry = { maxAttempts: 1, baseMs: 1 }`** em testes para evitar delays reais
+
+---
+
 ## Pipeline de qualidade
 
 Consulte `docs/quality/CHECKS.md` para detalhes de cada check.

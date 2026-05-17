@@ -356,7 +356,11 @@ export async function saveRemoteState(supabase: SupabaseClient, userId: string, 
   }
 
   // ── Cronograma (single JSONB row per user) ────────────────────────────────
-  await supabase.from("cronograma").delete().eq("user_id", userId);
+  // delete-then-insert is safe with retry: if insert fails, the retry's delete
+  // will find 0 rows (OK) and the insert will succeed on the next attempt.
+  const { error: deleteScheduleError } = await supabase
+    .from("cronograma").delete().eq("user_id", userId);
+  if (deleteScheduleError) throw deleteScheduleError;
   const { error: scheduleError } = await supabase
     .from("cronograma")
     .insert({ user_id: userId, configuracao: state.schedule });
