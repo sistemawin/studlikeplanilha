@@ -72,14 +72,12 @@ export function FocusTimer({
 
   const sessionTopics = topics.filter((t) => t.materiaId === sessionSubjectId);
 
-  // If sessionTopicId is "" (uninitialized) but topics are available, pick the first one.
-  // This fixes the case where the component mounted before topics loaded, or when
-  // defaultSubjectId was set but no topics existed yet at mount time.
-  useEffect(() => {
-    if (!sessionTopicId && sessionTopics.length > 0) {
-      setSessionTopicId(sessionTopics[0].id);
-    }
-  }, [sessionTopics.length, sessionTopicId]);
+  // Effective values: always fall back to the first available option so the
+  // <select> never has value="" without a matching <option>. When value=""
+  // has no matching option, iOS Safari shows the field blank and selecting
+  // the visually-highlighted first item doesn't fire onChange (no "change").
+  const effectiveSubjectId = sessionSubjectId || subjects[0]?.id || "";
+  const effectiveTopicId = sessionTopicId || sessionTopics[0]?.id || "";
 
   function handleSubjectChange(subjectId: string) {
     setSessionSubjectId(subjectId);
@@ -89,7 +87,7 @@ export function FocusTimer({
 
   function handleFinish() {
     onFinishSession({
-      topicId: sessionType === "topico" && sessionTopicId ? sessionTopicId : undefined,
+      topicId: sessionType === "topico" && effectiveTopicId ? effectiveTopicId : undefined,
       reviewId: sessionType === "revisao" && sessionReviewId ? sessionReviewId : undefined,
     });
   }
@@ -247,7 +245,7 @@ export function FocusTimer({
               <div>
                 <label className="sr-only">Matéria</label>
                 <select
-                  value={sessionSubjectId}
+                  value={effectiveSubjectId}
                   onChange={(e) => handleSubjectChange(e.target.value)}
                   className="h-9 w-full rounded-xl bg-white/10 px-3 text-sm text-white outline-none ring-1 ring-white/20 focus:ring-2 focus:ring-white/40"
                 >
@@ -261,7 +259,7 @@ export function FocusTimer({
               <div>
                 <label className="sr-only">Tópico</label>
                 <select
-                  value={sessionTopicId}
+                  value={effectiveTopicId}
                   onChange={(e) => setSessionTopicId(e.target.value)}
                   disabled={sessionTopics.length === 0}
                   className="h-9 w-full rounded-xl bg-white/10 px-3 text-sm text-white outline-none ring-1 ring-white/20 focus:ring-2 focus:ring-white/40 disabled:opacity-40"
