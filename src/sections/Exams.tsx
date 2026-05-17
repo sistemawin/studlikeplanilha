@@ -448,18 +448,18 @@ export function Exams({
             ) : (
               <div className="mt-5 grid min-w-0 w-full max-w-full gap-4 overflow-hidden lg:grid-cols-3">
                 {/* Not studied gaps */}
-                <div className="rounded-xl border border-rose-100 bg-rose-50/50 p-3">
-                  <p className="mb-2 text-xs font-bold uppercase tracking-[0.12em] text-rose-500">
+                <div className="min-w-0 w-full max-w-full overflow-hidden rounded-xl border border-rose-100 bg-rose-50/50 p-3">
+                  <p className="mb-2 max-w-full break-words text-xs font-bold uppercase leading-5 tracking-[0.08em] text-rose-500">
                     Não estudados (prioridade alta)
                   </p>
                   {notStudiedGaps.length === 0 ? (
                     <p className="text-xs font-medium text-slate-400">Nenhum pendente.</p>
                   ) : (
-                    <div className="space-y-2">
+                    <div className="min-w-0 w-full max-w-full space-y-2 overflow-hidden">
                       {notStudiedGaps.map((item) => (
-                        <div key={item.topic.id} className="rounded-lg bg-white p-2.5 ring-1 ring-rose-100">
-                          <p className="truncate text-xs font-semibold text-slate-950">{item.topic.titulo}</p>
-                          <p className="mt-0.5 truncate text-[11px] font-medium text-slate-500">
+                        <div key={item.topic.id} className="min-w-0 w-full max-w-full overflow-hidden rounded-lg bg-white p-2.5 ring-1 ring-rose-100">
+                          <p className="max-w-full truncate text-xs font-semibold text-slate-950">{item.topic.titulo}</p>
+                          <p className="mt-0.5 max-w-full truncate text-[11px] font-medium text-slate-500">
                             {item.subject!.nome} · peso {item.subject!.peso}
                           </p>
                         </div>
@@ -469,24 +469,24 @@ export function Exams({
                 </div>
 
                 {/* Low accuracy gaps */}
-                <div className="rounded-xl border border-amber-100 bg-amber-50/50 p-3">
-                  <p className="mb-2 text-xs font-bold uppercase tracking-[0.12em] text-amber-600">
+                <div className="min-w-0 w-full max-w-full overflow-hidden rounded-xl border border-amber-100 bg-amber-50/50 p-3">
+                  <p className="mb-2 max-w-full break-words text-xs font-bold uppercase leading-5 tracking-[0.08em] text-amber-600">
                     Baixo aproveitamento em questões
                   </p>
                   {lowAccuracyGaps.length === 0 ? (
                     <p className="text-xs font-medium text-slate-400">Nenhum abaixo de 60%.</p>
                   ) : (
-                    <div className="space-y-2">
+                    <div className="min-w-0 w-full max-w-full space-y-2 overflow-hidden">
                       {lowAccuracyGaps.map((item) => (
-                        <div key={item.topic!.id} className="rounded-lg bg-white p-2.5 ring-1 ring-amber-100">
-                          <div className="flex items-center justify-between gap-2">
-                            <p className="truncate text-xs font-semibold text-slate-950">{item.topic!.titulo}</p>
+                        <div key={item.topic!.id} className="min-w-0 w-full max-w-full overflow-hidden rounded-lg bg-white p-2.5 ring-1 ring-amber-100">
+                          <div className="flex min-w-0 w-full max-w-full items-center justify-between gap-2 overflow-hidden">
+                            <p className="min-w-0 max-w-full truncate text-xs font-semibold text-slate-950">{item.topic!.titulo}</p>
                             <span className="shrink-0 text-xs font-bold text-amber-600">
                               {Math.round(item.accuracy * 100)}%
                             </span>
                           </div>
-                          <div className="mt-1.5 flex items-center justify-between gap-2">
-                            <p className="truncate text-[11px] font-medium text-slate-500">
+                          <div className="mt-1.5 flex min-w-0 w-full max-w-full items-center justify-between gap-2 overflow-hidden">
+                            <p className="min-w-0 max-w-full truncate text-[11px] font-medium text-slate-500">
                               {item.subject?.nome ?? "—"} · {item.quantidade} questões
                             </p>
                             {item.topic!.dificuldade !== "Difícil" && (
@@ -506,24 +506,24 @@ export function Exams({
                 </div>
 
                 {/* Overdue gaps */}
-                <div className="rounded-xl border border-orange-100 bg-orange-50/50 p-3">
-                  <p className="mb-2 flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.12em] text-orange-500">
+                <div className="min-w-0 w-full max-w-full overflow-hidden rounded-xl border border-orange-100 bg-orange-50/50 p-3">
+                  <p className="mb-2 flex max-w-full items-center gap-1.5 break-words text-xs font-bold uppercase leading-5 tracking-[0.08em] text-orange-500">
                     <Clock className="h-3 w-3" aria-hidden="true" />
                     Revisões em atraso
                   </p>
                   {overdueGaps.length === 0 ? (
                     <p className="text-xs font-medium text-slate-400">Nenhuma em atraso.</p>
                   ) : (
-                    <div className="space-y-2">
+                    <div className="min-w-0 w-full max-w-full space-y-2 overflow-hidden">
                       {overdueGaps.map((item) => (
-                        <div key={item.topic!.id} className="rounded-lg bg-white p-2.5 ring-1 ring-orange-100">
-                          <div className="flex items-center justify-between gap-2">
-                            <p className="truncate text-xs font-semibold text-slate-950">{item.topic!.titulo}</p>
+                        <div key={item.topic!.id} className="min-w-0 w-full max-w-full overflow-hidden rounded-lg bg-white p-2.5 ring-1 ring-orange-100">
+                          <div className="flex min-w-0 w-full max-w-full items-center justify-between gap-2 overflow-hidden">
+                            <p className="min-w-0 max-w-full truncate text-xs font-semibold text-slate-950">{item.topic!.titulo}</p>
                             <span className="shrink-0 text-xs font-bold text-orange-500">
                               {item.days}d
                             </span>
                           </div>
-                          <p className="mt-0.5 truncate text-[11px] font-medium text-slate-500">
+                          <p className="mt-0.5 max-w-full truncate text-[11px] font-medium text-slate-500">
                             {item.subject?.nome ?? "—"}
                           </p>
                         </div>
