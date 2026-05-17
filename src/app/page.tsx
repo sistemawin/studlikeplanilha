@@ -14,6 +14,7 @@ import {
   MessageSquarePlus,
   RefreshCw,
   RotateCcw,
+  Search,
   ShieldCheck,
 } from "lucide-react";
 import { StudlikeLogo } from "@/components/StudlikeLogo";
@@ -62,6 +63,7 @@ import { SuggestionModal } from "@/components/SuggestionModal";
 import { ArchiveEditalModal } from "@/components/ArchiveEditalModal";
 import { AdminPanel } from "@/sections/AdminPanel";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { GlobalSearch } from "@/components/GlobalSearch";
 import { AppFeedbackToast, type AppFeedback, type FeedbackTone } from "@/components/AppFeedbackToast";
 
 const SYNC_DEBOUNCE_MS = 700;
@@ -209,6 +211,9 @@ export default function Home() {
   const [updateAvailable, setUpdateAvailable] = useState(false);
   const [refreshingApp, setRefreshingApp] = useState(false);
   const currentAppVersionRef = useRef("");
+
+  // ── Global search state ───────────────────────────────────────────────────
+  const [searchOpen, setSearchOpen] = useState(false);
 
   // ── Reminder state ────────────────────────────────────────────────────────
   const [reminderEnabled, setReminderEnabled] = useState(false);
@@ -1894,6 +1899,15 @@ export default function Home() {
         onClose={closeArchiveModal}
       />
 
+      {searchOpen && (
+        <GlobalSearch
+          topics={topics}
+          subjects={subjects}
+          onStatusChange={updateTopicStatus}
+          onClose={() => setSearchOpen(false)}
+        />
+      )}
+
       <ConfirmDialog
         open={Boolean(confirmDialog)}
         title={confirmDialog?.title ?? ""}
@@ -1991,6 +2005,18 @@ export default function Home() {
                   {syncStatus === "saved" && <Check className="h-3 w-3" aria-hidden="true" />}
                   {syncStatus === "saving" ? "Salvando…" : syncStatus === "pending" ? "Aguardando…" : syncStatus === "saved" ? "Salvo" : "Erro ao salvar"}
                 </span>
+              )}
+
+              {topics.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setSearchOpen(true)}
+                  aria-label="Pesquisa global de tópicos"
+                  className="flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm shadow-slate-900/5 hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
+                >
+                  <Search className="h-4 w-4" aria-hidden="true" />
+                  <span className="hidden sm:inline">Buscar</span>
+                </button>
               )}
 
               <button
