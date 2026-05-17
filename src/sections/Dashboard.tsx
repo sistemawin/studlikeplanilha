@@ -1,4 +1,4 @@
-import { BarChart3, ChevronRight, Flag, Flame, Plus, RotateCcw, Save, Target, Timer, X, Zap } from "lucide-react";
+import { BarChart3, BookOpen, ChevronRight, Clock, FileText, Flag, Flame, ListChecks, Plus, RotateCcw, Save, Star, Target, Timer, Trophy, X, Zap } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import type { Goal, NavTarget, StudySession, StudySessionType, Subject, Topic } from "@/types";
@@ -22,6 +22,8 @@ type Props = {
   onDeleteSession: (id: string) => void;
   nextExam: { nome: string; data: string } | undefined;
   todayPlan: Subject[];
+  examCount: number;
+  totalQuestionsLogged: number;
   onAddManualSession: (data: {
     tipo: StudySessionType;
     materiaId?: string;
@@ -50,6 +52,8 @@ export function Dashboard({
   onDeleteSession,
   nextExam,
   todayPlan,
+  examCount,
+  totalQuestionsLogged,
   onAddManualSession,
 }: Props) {
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -119,6 +123,28 @@ export function Dashboard({
   const weekSeconds = weekSessions.reduce((sum, session) => sum + session.durationSeconds, 0);
   const streak = computeStreak(studySessions, todayIso);
   const recentSessions = studySessions.slice(0, 5);
+  const studiedTopicsCount = topics.filter((t) => t.status !== "Não Estudado").length;
+  const totalStudyHoursAll = Math.round(
+    (studySessions.reduce((s, ss) => s + ss.durationSeconds, 0) / 3600) * 10,
+  ) / 10;
+
+  type AchievementDef = { id: string; label: string; Icon: React.ElementType; color: string; unlocked: boolean };
+  const allAchievements: AchievementDef[] = [
+    { id: "first_study",  label: "Primeiro tópico",   Icon: Star,       color: "#f59e0b", unlocked: studiedTopicsCount >= 1 },
+    { id: "topics_10",    label: "10 tópicos",         Icon: BookOpen,   color: "#3b82f6", unlocked: studiedTopicsCount >= 10 },
+    { id: "topics_50",    label: "50 tópicos",         Icon: BookOpen,   color: "#1877F2", unlocked: studiedTopicsCount >= 50 },
+    { id: "streak_3",     label: "3 dias seguidos",    Icon: Flame,      color: "#f97316", unlocked: streak >= 3 },
+    { id: "streak_7",     label: "Semana completa",    Icon: Flame,      color: "#ef4444", unlocked: streak >= 7 },
+    { id: "streak_30",    label: "30 dias seguidos",   Icon: Trophy,     color: "#8b5cf6", unlocked: streak >= 30 },
+    { id: "first_review", label: "Primeira revisão",   Icon: RotateCcw,  color: "#10b981", unlocked: reviews.totalCompleted >= 1 },
+    { id: "reviews_50",   label: "50 revisões",        Icon: RotateCcw,  color: "#059669", unlocked: reviews.totalCompleted >= 50 },
+    { id: "first_exam",   label: "Primeiro simulado",  Icon: FileText,   color: "#06b6d4", unlocked: examCount >= 1 },
+    { id: "questions_50", label: "50 questões",        Icon: ListChecks, color: "#6366f1", unlocked: totalQuestionsLogged >= 50 },
+    { id: "hours_10",     label: "10 horas de estudo", Icon: Clock,      color: "#0ea5e9", unlocked: totalStudyHoursAll >= 10 },
+    { id: "hours_50",     label: "50 horas de estudo", Icon: Trophy,     color: "#7c3aed", unlocked: totalStudyHoursAll >= 50 },
+  ];
+  const unlockedAchievements = allAchievements.filter((a) => a.unlocked);
+
   const daysUntilExam = nextExam
     ? Math.ceil(
         (new Date(nextExam.data + "T12:00:00").getTime() - new Date(todayIso + "T12:00:00").getTime()) /
@@ -352,6 +378,30 @@ export function Dashboard({
             {daysUntilExam > 1 && (
               <p className="text-xs font-semibold text-slate-500">dias restantes</p>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Achievements */}
+      {unlockedAchievements.length > 0 && (
+        <div className={`${isVisible ? "block" : "hidden"} xl:block`}>
+          <div className="rounded-2xl border border-white bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.06)] ring-1 ring-slate-900/5 sm:p-5">
+            <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400">Conquistas</p>
+            <div className="flex flex-wrap gap-2">
+              {unlockedAchievements.map((a) => {
+                const Icon = a.Icon;
+                return (
+                  <span
+                    key={a.id}
+                    className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold ring-1 ring-inset"
+                    style={{ backgroundColor: `${a.color}10`, color: a.color, outline: `1px solid ${a.color}30` }}
+                  >
+                    <Icon className="h-3 w-3" aria-hidden="true" />
+                    {a.label}
+                  </span>
+                );
+              })}
+            </div>
           </div>
         </div>
       )}

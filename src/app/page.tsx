@@ -2159,6 +2159,8 @@ export default function Home() {
                   onAddManualSession={addManualSession}
                   nextExam={nextExam}
                   todayPlan={todayPlan}
+                  examCount={exams.length}
+                  totalQuestionsLogged={questionLogs.reduce((sum, q) => sum + q.quantidade, 0)}
                 />
               </ErrorBoundary>
 

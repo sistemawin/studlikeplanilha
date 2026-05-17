@@ -1,4 +1,4 @@
-import { AlertCircle, BarChart3 as BarChart3Icon, CheckCircle2, Clock, ListChecks, Pencil, Save, Timer, Trash2, TrendingUp, X } from "lucide-react";
+import { AlertCircle, BarChart3 as BarChart3Icon, CheckCircle2, ChevronRight, Clock, ListChecks, Pencil, Save, Timer, Trash2, TrendingUp, X } from "lucide-react";
 import { useState } from "react";
 import type { Exam, Goal, NavTarget, QuestionLog, Review, StudySession, Subject, Topic } from "@/types";
 import { PieChart } from "@/components/PieChart";
@@ -133,6 +133,7 @@ export function Exams({
 }: Props) {
   const isVisible = activeSection === "simulados";
   const today = new Date().toISOString().slice(0, 10);
+  const [showAllQuestionLogs, setShowAllQuestionLogs] = useState(false);
   const [questionSubjectId, setQuestionSubjectId] = useState("");
   const [questionTopicId, setQuestionTopicId] = useState("");
   const [questionQty, setQuestionQty] = useState("");
@@ -904,7 +905,7 @@ export function Exams({
               </div>
 
               <div className="mt-3 space-y-2">
-                {questionLogs.slice(0, 5).map((log) => {
+                {(showAllQuestionLogs ? questionLogs : questionLogs.slice(0, 5)).map((log) => {
                   const subject = subjects.find((item) => item.id === log.materiaId);
                   const topic = topics.find((item) => item.id === log.topicoId);
                   return (
@@ -930,6 +931,18 @@ export function Exams({
                   );
                 })}
               </div>
+              {questionLogs.length > 5 && (
+                <button
+                  type="button"
+                  onClick={() => setShowAllQuestionLogs((v) => !v)}
+                  className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl border border-slate-200 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                >
+                  <ChevronRight className={`h-3.5 w-3.5 transition-transform ${showAllQuestionLogs ? "rotate-90" : ""}`} aria-hidden="true" />
+                  {showAllQuestionLogs
+                    ? "Mostrar menos"
+                    : `Ver histórico completo (${questionLogs.length} registros)`}
+                </button>
+              )}
             </>
           )}
         </div>
