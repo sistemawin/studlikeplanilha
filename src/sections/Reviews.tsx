@@ -122,17 +122,17 @@ export function Reviews({ reviews, topics, subjects, todayIso, activeSection, fo
         </div>
       </div>
 
-      <div className="mb-4 grid grid-cols-3 gap-2">
-        <div className="rounded-xl bg-amber-50 p-3 ring-1 ring-amber-100">
-          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-amber-500">Hoje</p>
+      <div className="mb-4 grid min-w-0 w-full max-w-full grid-cols-3 gap-2 overflow-hidden">
+        <div className="min-w-0 max-w-full overflow-hidden rounded-xl bg-amber-50 p-3 text-center ring-1 ring-amber-100">
+          <p className="max-w-full break-words text-center text-[10px] font-bold uppercase leading-4 tracking-[0.04em] text-amber-500 sm:text-[11px]">Hoje</p>
           <p className="mt-1 text-2xl font-black text-amber-700">{pendingToday.length}</p>
         </div>
-        <div className="rounded-xl bg-slate-50 p-3 ring-1 ring-slate-100">
-          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">Pendentes</p>
+        <div className="min-w-0 max-w-full overflow-hidden rounded-xl bg-slate-50 p-3 text-center ring-1 ring-slate-100">
+          <p className="max-w-full break-words text-center text-[10px] font-bold uppercase leading-4 tracking-[0.04em] text-slate-400 sm:text-[11px]">Pendentes</p>
           <p className="mt-1 text-2xl font-black text-slate-700">{totalPending}</p>
         </div>
-        <div className="rounded-xl bg-emerald-50 p-3 ring-1 ring-emerald-100">
-          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-emerald-500">Concluídas</p>
+        <div className="min-w-0 max-w-full overflow-hidden rounded-xl bg-emerald-50 p-3 text-center ring-1 ring-emerald-100">
+          <p className="max-w-full break-words text-center text-[10px] font-bold uppercase leading-4 tracking-[0.04em] text-emerald-500 sm:text-[11px]">Concluídas</p>
           <p className="mt-1 text-2xl font-black text-emerald-700">{totalCompleted}</p>
         </div>
       </div>
