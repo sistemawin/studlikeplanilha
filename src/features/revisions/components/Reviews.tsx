@@ -2,7 +2,7 @@ import { CalendarClock, CheckCircle2, ChevronDown, ChevronUp, Zap } from "lucide
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import type { NavTarget, Review, Subject, Topic } from "@/types";
-import { ReviewFocusMode } from "@/components/ReviewFocusMode";
+import { ReviewFocusMode } from "@/features/revisions/components/ReviewFocusMode";
 
 const DAY_SHORT = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 

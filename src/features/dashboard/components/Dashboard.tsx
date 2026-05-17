@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { useState } from "react";
 import type { Goal, NavTarget, StudySession, StudySessionType, Subject, Topic } from "@/types";
 import { addDays, computeStreak, corToAccent, formatTimer, isoDate, pct } from "@/lib/utils";
-import { SessionHistoryModal } from "@/components/SessionHistoryModal";
+import { SessionHistoryModal } from "@/features/timer/components/SessionHistoryModal";
 
 type Props = {
   topics: Topic[];

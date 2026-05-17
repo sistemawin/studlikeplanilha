@@ -18,12 +18,12 @@ import {
   Search,
   ShieldCheck,
 } from "lucide-react";
-import { StudlikeLogo } from "@/components/StudlikeLogo";
+import { StudlikeLogo } from "@/components/ui/StudlikeLogo";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { Session } from "@supabase/supabase-js";
-import { getSupabaseBrowserClient, getSupabasePasswordVerifierClient } from "@/lib/supabase";
-import { loadRemoteState, saveRemoteState, serializeAppState, validateSchedule } from "@/lib/sync";
+import { getSupabaseBrowserClient, getSupabasePasswordVerifierClient } from "@/services/supabase/client";
+import { loadRemoteState, saveRemoteState, serializeAppState, validateSchedule } from "@/services/supabase/sync";
 import { addDays, formatTimer, isoDate, pct } from "@/lib/utils";
 import { useScrollLock } from "@/hooks/useScrollLock";
 import { defaultGoals, defaultSchedule } from "@/lib/seed";
@@ -50,22 +50,22 @@ import type {
   Topic,
   TopicStatus,
 } from "@/types";
-import { AuthScreen } from "@/components/AuthScreen";
-import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { NavButton } from "@/components/NavButton";
-import { SubjectModal } from "@/components/SubjectModal";
-import { Dashboard } from "@/sections/Dashboard";
-import { Edital } from "@/sections/Edital";
-import { Reviews } from "@/sections/Reviews";
-import { Schedule } from "@/sections/Schedule";
-import { Exams } from "@/sections/Exams";
-import { FocusTimer } from "@/sections/FocusTimer";
-import { SuggestionModal } from "@/components/SuggestionModal";
-import { ArchiveEditalModal } from "@/components/ArchiveEditalModal";
-import { AdminPanel } from "@/sections/AdminPanel";
-import { ConfirmDialog } from "@/components/ConfirmDialog";
-import { GlobalSearch } from "@/components/GlobalSearch";
-import { AppFeedbackToast, type AppFeedback, type FeedbackTone } from "@/components/AppFeedbackToast";
+import { AuthScreen } from "@/features/auth/components/AuthScreen";
+import { ErrorBoundary } from "@/components/shared/ErrorBoundary";
+import { NavButton } from "@/components/ui/NavButton";
+import { SubjectModal } from "@/features/subjects/components/SubjectModal";
+import { Dashboard } from "@/features/dashboard/components/Dashboard";
+import { Edital } from "@/features/subjects/components/Edital";
+import { Reviews } from "@/features/revisions/components/Reviews";
+import { Schedule } from "@/features/planner/components/Schedule";
+import { Exams } from "@/features/statistics/components/Exams";
+import { FocusTimer } from "@/features/timer/components/FocusTimer";
+import { SuggestionModal } from "@/features/admin/components/SuggestionModal";
+import { ArchiveEditalModal } from "@/features/subjects/components/ArchiveEditalModal";
+import { AdminPanel } from "@/features/admin/components/AdminPanel";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { GlobalSearch } from "@/components/shared/GlobalSearch";
+import { AppFeedbackToast, type AppFeedback, type FeedbackTone } from "@/components/shared/AppFeedbackToast";
 
 const SYNC_DEBOUNCE_MS = 700;
 const ADMIN_USERS_PAGE_SIZE = 20;

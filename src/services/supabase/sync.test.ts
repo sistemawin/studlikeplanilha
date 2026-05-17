@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { serializeAppState, validateSchedule } from "./sync";
-import { defaultSchedule } from "./seed";
+import { defaultSchedule } from "../../lib/seed";
 import type { AppState } from "@/types";
 
 describe("validateSchedule", () => {

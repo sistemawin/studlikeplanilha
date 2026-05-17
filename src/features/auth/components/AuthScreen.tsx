@@ -1,5 +1,5 @@
 import { Loader2, LockKeyhole, Mail, ShieldCheck, UserPlus } from "lucide-react";
-import { StudlikeLogo } from "@/components/StudlikeLogo";
+import { StudlikeLogo } from "@/components/ui/StudlikeLogo";
 import type { AuthMode } from "@/types";
 
 type Props = {

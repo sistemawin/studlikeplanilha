@@ -1,8 +1,8 @@
 import { AlertCircle, BarChart3 as BarChart3Icon, CheckCircle2, ChevronRight, Clock, ListChecks, Pencil, Save, Timer, Trash2, TrendingUp, X } from "lucide-react";
 import { useState } from "react";
 import type { Exam, Goal, NavTarget, QuestionLog, Review, StudySession, Subject, Topic } from "@/types";
-import { PieChart } from "@/components/PieChart";
-import { ProgressBar } from "@/components/ProgressBar";
+import { PieChart } from "@/components/charts/PieChart";
+import { ProgressBar } from "@/components/ui/ProgressBar";
 import { addDays, corToAccent, isoDate, pct, topicScore } from "@/lib/utils";
 
 type ExamDraft = { nome: string; acertos: number; total: number };
