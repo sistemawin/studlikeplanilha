@@ -290,6 +290,31 @@ export function Exams({
   }));
   const totalStudyHours = Math.round((studySessions.reduce((sum, s) => sum + s.durationSeconds, 0) / 3600) * 10) / 10;
 
+  // ── Weekly progress ────────────────────────────────────────────────────────
+  const weekStart = (() => {
+    const d = new Date(todayIso + "T12:00:00");
+    d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+    return isoDate(d);
+  })();
+  const weeklySeconds = studySessions
+    .filter((s) => s.data >= weekStart && s.data <= todayIso)
+    .reduce((sum, s) => sum + s.durationSeconds, 0);
+  const weeklyHours = Math.round((weeklySeconds / 3600) * 10) / 10;
+  const weeklyHoursTarget = hourGoal.valorObjetivo * 5;
+  const weeklyQuestions = questionLogs
+    .filter((q) => q.data >= weekStart && q.data <= todayIso)
+    .reduce((sum, q) => sum + q.quantidade, 0);
+  const weeklyQuestionsTarget = questionGoal.valorObjetivo * 5;
+
+  // ── Day-of-week distribution ───────────────────────────────────────────────
+  const WEEKDAY_LABELS = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
+  const hoursPerWeekday = Array(7).fill(0) as number[];
+  for (const session of studySessions) {
+    const dayIndex = (new Date(session.data + "T12:00:00").getDay() + 6) % 7;
+    hoursPerWeekday[dayIndex] += session.durationSeconds / 3600;
+  }
+  const maxWeekdayHours = Math.max(...hoursPerWeekday, 0.1);
+
   // ── Activity heatmap (last 12 weeks, Mon-aligned) ──────────────────────────
   const heatmapMinutesByDate = new Map<string, number>();
   for (const session of studySessions) {
@@ -613,6 +638,37 @@ export function Exams({
         </section>
       )}
 
+      {/* Day-of-week distribution */}
+      {studySessions.length > 0 && (
+        <section className={`${isVisible ? "block" : "hidden"} xl:block`}>
+          <div className="overflow-hidden rounded-2xl border border-white bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.08)] ring-1 ring-slate-900/5 sm:p-5">
+            <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-violet-400">Hábito</p>
+            <h2 className="mt-1 text-xl font-bold text-slate-950">Distribuição por dia da semana</h2>
+            <p className="mt-1 text-sm leading-6 text-slate-500">Horas acumuladas de estudo por dia da semana desde o início.</p>
+            <div
+              role="img"
+              aria-label="Gráfico de horas por dia da semana"
+              className="mt-6 flex h-40 items-end gap-2 overflow-hidden rounded-xl bg-[#F0F2F5] px-4 py-5 sm:h-48 sm:gap-4"
+            >
+              {hoursPerWeekday.map((hours, i) => (
+                <div key={i} className="flex min-w-0 flex-1 flex-col items-center gap-2">
+                  <div className="flex h-28 w-full items-end rounded-lg bg-white shadow-inner sm:h-32">
+                    <div
+                      className="w-full rounded-lg bg-gradient-to-t from-violet-600 to-fuchsia-400 transition-[height] duration-500"
+                      style={{ height: `${Math.max((hours / maxWeekdayHours) * 100, hours > 0 ? 4 : 0)}%` }}
+                    />
+                  </div>
+                  <span className="text-xs font-bold text-slate-950">
+                    {hours > 0 ? `${Math.round(hours * 10) / 10}h` : "—"}
+                  </span>
+                  <span className="text-[10px] font-semibold text-slate-400">{WEEKDAY_LABELS[i]}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Performance bar chart + ranking */}
       <section className={`${isVisible ? "grid" : "hidden"} gap-5 xl:grid 2xl:grid-cols-[minmax(0,1.1fr)_minmax(360px,0.9fr)]`}>
         {/* Bar chart */}
@@ -863,6 +919,38 @@ export function Exams({
             onUpdateObjective={(v) => onUpdateGoalObjective("questões", v)}
           />
         </div>
+
+        {/* Weekly progress */}
+        {(weeklyHoursTarget > 0 || weeklyQuestionsTarget > 0) && (
+          <div className="mt-4 grid grid-cols-2 gap-3">
+            {weeklyHoursTarget > 0 && (
+              <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-3">
+                <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-blue-500">Horas esta semana</p>
+                <p className="mt-1 text-2xl font-black text-blue-700">{weeklyHours}h</p>
+                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-blue-100">
+                  <div
+                    className="h-1.5 rounded-full bg-blue-500 transition-[width] duration-500"
+                    style={{ width: `${Math.min((weeklyHours / weeklyHoursTarget) * 100, 100)}%` }}
+                  />
+                </div>
+                <p className="mt-1 text-[10px] font-medium text-blue-500">meta {weeklyHoursTarget}h</p>
+              </div>
+            )}
+            {weeklyQuestionsTarget > 0 && (
+              <div className="rounded-xl border border-emerald-100 bg-emerald-50/60 p-3">
+                <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-emerald-500">Questões esta semana</p>
+                <p className="mt-1 text-2xl font-black text-emerald-700">{weeklyQuestions}</p>
+                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-emerald-100">
+                  <div
+                    className="h-1.5 rounded-full bg-emerald-500 transition-[width] duration-500"
+                    style={{ width: `${Math.min((weeklyQuestions / weeklyQuestionsTarget) * 100, 100)}%` }}
+                  />
+                </div>
+                <p className="mt-1 text-[10px] font-medium text-emerald-500">meta {weeklyQuestionsTarget} questões</p>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Exam registration */}
         <div className="mt-5 min-w-0 rounded-xl border border-slate-200 bg-slate-50/70 p-4">
