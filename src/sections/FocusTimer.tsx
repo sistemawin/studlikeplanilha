@@ -47,11 +47,11 @@ export function FocusTimer({
   onFinishSession,
 }: Props) {
   const [sessionType, setSessionType] = useState<"topico" | "revisao">("topico");
-  const initialSubjectId = defaultSubjectId ?? subjects[0]?.id ?? "";
-  const [sessionSubjectId, setSessionSubjectId] = useState(initialSubjectId);
-  const [sessionTopicId, setSessionTopicId] = useState(
-    () => defaultTopicId ?? topics.filter((t) => t.materiaId === initialSubjectId)[0]?.id ?? "",
-  );
+  const [sessionSubjectId, setSessionSubjectId] = useState<string>(() => defaultSubjectId ?? subjects[0]?.id ?? "");
+  const [sessionTopicId, setSessionTopicId] = useState<string>(() => {
+    const subjId = defaultSubjectId ?? subjects[0]?.id ?? "";
+    return defaultTopicId ?? topics.filter((t) => t.materiaId === subjId)[0]?.id ?? "";
+  });
   const [sessionReviewId, setSessionReviewId] = useState(pendingReviews[0]?.id ?? "");
   const [pomodoroMode, setPomodoroMode] = useState(false);
   const [pomodoroDuration, setPomodoroDuration] = useState<PomodoroDuration>(25);
@@ -60,15 +60,15 @@ export function FocusTimer({
   const pomodoroRemaining = Math.max(0, pomodoroDurationSecs - timerSeconds);
   const pomodoroComplete = pomodoroMode && timerSeconds >= pomodoroDurationSecs;
   const pomodoroProgress = pomodoroMode ? Math.min(timerSeconds / pomodoroDurationSecs, 1) : 0;
-  const defaultSubjectExists = subjects.some((subject) => subject.id === defaultSubjectId);
-  const fallbackSubjectId = defaultSubjectExists ? defaultSubjectId ?? "" : subjects[0]?.id ?? "";
-  const selectedSubjectExists = subjects.some((subject) => subject.id === sessionSubjectId);
-  const effectiveSubjectId = selectedSubjectExists ? sessionSubjectId : fallbackSubjectId;
-  const sessionTopics = topics.filter((topic) => topic.materiaId === effectiveSubjectId);
-  const defaultTopicExists = sessionTopics.some((topic) => topic.id === defaultTopicId);
-  const selectedTopicExists = sessionTopics.some((topic) => topic.id === sessionTopicId);
-  const fallbackTopicId = defaultTopicExists ? defaultTopicId ?? "" : sessionTopics[0]?.id ?? "";
-  const effectiveTopicId = selectedTopicExists ? sessionTopicId : fallbackTopicId;
+
+  // Effective IDs: sessionSubjectId/sessionTopicId if valid, else fall back to first available.
+  // Computed inline every render — no useEffect needed. This ensures the <select> value
+  // always matches an existing <option> (avoids iOS "no onChange when value has no option" bug).
+  const effectiveSubjectId =
+    (subjects.some((s) => s.id === sessionSubjectId) ? sessionSubjectId : subjects[0]?.id) ?? "";
+  const sessionTopics = topics.filter((t) => t.materiaId === effectiveSubjectId);
+  const effectiveTopicId =
+    (sessionTopics.some((t) => t.id === sessionTopicId) ? sessionTopicId : sessionTopics[0]?.id) ?? "";
 
   function handleSetPomodoroDuration(min: PomodoroDuration) {
     setPomodoroDuration(min);
@@ -79,24 +79,13 @@ export function FocusTimer({
     if (pomodoroComplete && timerRunning) onToggle();
   }, [pomodoroComplete, timerRunning, timerSeconds]);
 
-  useEffect(() => {
-    setSessionSubjectId((current) => {
-      if (subjects.some((subject) => subject.id === current)) return current;
-      return fallbackSubjectId;
-    });
-  }, [fallbackSubjectId, subjects]);
-
-  useEffect(() => {
-    setSessionTopicId((current) => {
-      if (sessionTopics.some((topic) => topic.id === current)) return current;
-      return fallbackTopicId;
-    });
-  }, [fallbackTopicId, sessionTopics]);
-
   function handleSubjectChange(subjectId: string) {
     setSessionSubjectId(subjectId);
-    const first = topics.filter((t) => t.materiaId === subjectId)[0];
-    setSessionTopicId(first?.id ?? "");
+    // Only reset topic when the current topic doesn't belong to the new subject
+    const topicsForSubject = topics.filter((t) => t.materiaId === subjectId);
+    if (!topicsForSubject.some((t) => t.id === sessionTopicId)) {
+      setSessionTopicId(topicsForSubject[0]?.id ?? "");
+    }
   }
 
   function handleFinish() {
