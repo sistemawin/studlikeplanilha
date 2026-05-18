@@ -1,9 +1,10 @@
-import { BarChart3, BookOpen, ChevronRight, Clock, FileText, Flag, Flame, ListChecks, Plus, RotateCcw, Save, Star, Target, Timer, Trophy, X, Zap } from "lucide-react";
+import { BarChart3, BookOpen, ChevronRight, Clock, FileText, Flag, Flame, ListChecks, RotateCcw, Star, Target, Timer, Trophy, Zap } from "lucide-react";
 import { motion } from "framer-motion";
-import { useState } from "react";
 import type { Goal, NavTarget, StudySession, StudySessionType, Subject, Topic } from "@/types";
 import { addDays, computeStreak, corToAccent, formatTimer, isoDate, pct } from "@/lib/utils";
 import { SessionHistoryModal } from "@/features/timer/components/SessionHistoryModal";
+import { ManualSessionForm } from "./ManualSessionForm";
+import { TodayPlanCard } from "./TodayPlanCard";
 
 type Props = {
   topics: Topic[];
@@ -64,35 +65,6 @@ export function Dashboard({
   historyOpen,
   onHistoryOpenChange,
 }: Props) {
-  const [manualOpen, setManualOpen] = useState(false);
-  const [manualTipo, setManualTipo] = useState<StudySessionType>("topico");
-  const [manualSubjectId, setManualSubjectId] = useState("");
-  const [manualTopicId, setManualTopicId] = useState("");
-  const [manualHours, setManualHours] = useState("0");
-  const [manualMinutes, setManualMinutes] = useState("30");
-  const [manualDate, setManualDate] = useState(() => isoDate(new Date()));
-
-  function submitManualSession() {
-    const h = Math.max(0, parseInt(manualHours) || 0);
-    const m = Math.max(0, Math.min(59, parseInt(manualMinutes) || 0));
-    const durationSeconds = h * 3600 + m * 60;
-    if (durationSeconds <= 0) return;
-    const subject = subjects.find((s) => s.id === manualSubjectId);
-    const topic = topics.find((t) => t.id === manualTopicId && t.materiaId === manualSubjectId);
-    onAddManualSession({
-      tipo: manualTipo,
-      materiaId: manualTipo !== "livre" ? subject?.id : undefined,
-      materiaNome: manualTipo !== "livre" ? subject?.nome : undefined,
-      topicoId: manualTipo === "topico" ? topic?.id : undefined,
-      topicoTitulo: manualTipo === "topico" ? topic?.titulo : undefined,
-      durationSeconds,
-      data: manualDate || isoDate(new Date()),
-    });
-    setManualOpen(false);
-    setManualHours("0");
-    setManualMinutes("30");
-    setManualDate(isoDate(new Date()));
-  }
   const completedTopics = topics.filter((t) => t.status === "Revisado").length;
 
   const subjectPerformance = subjects.map((subject) => {
@@ -327,85 +299,13 @@ export function Dashboard({
 
       {todayPlan.length > 0 && (
         <div className={`${isVisible ? "block" : "hidden"} xl:block`}>
-          <div className="rounded-2xl border border-white bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.07)] ring-1 ring-slate-900/5 sm:p-5">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#1877F2]">Plano de hoje</p>
-                <p className="mt-1 text-sm font-medium text-slate-500">
-                  {todayPlan.length === 1
-                    ? "Matéria programada para hoje no seu cronograma."
-                    : `${todayPlan.length} matérias programadas para hoje no seu cronograma.`}
-                </p>
-              </div>
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.97 }}
-                onClick={onOpenFocusTimer}
-                className="flex h-10 shrink-0 items-center gap-2 rounded-xl bg-[#1877F2] px-4 text-sm font-bold text-white shadow-md shadow-blue-600/20 hover:bg-[#1B74E4] focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
-              >
-                <Timer className="h-4 w-4" aria-hidden="true" />
-                Iniciar foco
-              </motion.button>
-            </div>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {todayPlan.map((subject) => {
-                const accent = corToAccent(subject.cor);
-                return (
-                  <button
-                    key={subject.id}
-                    type="button"
-                    onClick={() => onStudySubject(subject.id)}
-                    aria-label={`Estudar ${subject.nome}`}
-                    className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-semibold transition hover:opacity-80"
-                    style={{ backgroundColor: `${accent.chart}18`, color: accent.chart, border: `1px solid ${accent.chart}30` }}
-                  >
-                    <span className="h-2 w-2 rounded-full" style={{ backgroundColor: accent.chart }} aria-hidden="true" />
-                    {subject.nome}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Suggested next topics */}
-            {(() => {
-              const suggested = todayPlan.flatMap((subject) => {
-                const accent = corToAccent(subject.cor);
-                return topics
-                  .filter((t) => t.materiaId === subject.id && t.status === "Não Estudado")
-                  .slice(0, 2)
-                  .map((t) => ({ ...t, subjectNome: subject.nome, accent }));
-              }).slice(0, 4);
-              if (suggested.length === 0) return null;
-              return (
-                <div className="mt-3 border-t border-slate-100 pt-3">
-                  <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">
-                    Próximos tópicos
-                  </p>
-                  <div className="space-y-1.5">
-                    {suggested.map((topic) => (
-                      <button
-                        key={topic.id}
-                        type="button"
-                        onClick={() => onStudyTopic(topic.id, topic.materiaId)}
-                        aria-label={`Estudar ${topic.titulo}`}
-                        className="flex min-w-0 w-full items-center gap-2 rounded-lg px-1 py-0.5 text-left transition hover:bg-slate-50"
-                      >
-                        <span
-                          className="h-1.5 w-1.5 shrink-0 rounded-full"
-                          style={{ backgroundColor: topic.accent.chart }}
-                          aria-hidden="true"
-                        />
-                        <p className="min-w-0 truncate text-sm font-medium text-slate-700">{topic.titulo}</p>
-                        <span className="shrink-0 text-xs font-medium text-slate-400">
-                          {topic.subjectNome.replace("Direito ", "")}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              );
-            })()}
-          </div>
+          <TodayPlanCard
+            todayPlan={todayPlan}
+            topics={topics}
+            onOpenFocusTimer={onOpenFocusTimer}
+            onStudySubject={onStudySubject}
+            onStudyTopic={onStudyTopic}
+          />
         </div>
       )}
 
@@ -530,138 +430,11 @@ export function Dashboard({
           </div>
         </div>
 
-        {/* Manual session registration */}
-        {manualOpen ? (
-          <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50/70 p-4">
-            <div className="mb-3 flex items-center justify-between">
-              <p className="text-sm font-semibold text-slate-950">Registrar sessão manualmente</p>
-              <button
-                type="button"
-                onClick={() => setManualOpen(false)}
-                aria-label="Fechar formulário"
-                className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-200 hover:text-slate-700"
-              >
-                <X className="h-4 w-4" aria-hidden="true" />
-              </button>
-            </div>
-
-            {/* Tipo */}
-            <div className="flex gap-2">
-              {(["topico", "livre"] as StudySessionType[]).map((t) => (
-                <button
-                  key={t}
-                  type="button"
-                  aria-pressed={manualTipo === t}
-                  onClick={() => setManualTipo(t)}
-                  className={`rounded-xl px-3 py-2 text-xs font-bold transition ${
-                    manualTipo === t
-                      ? "bg-[#1877F2] text-white shadow-sm"
-                      : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
-                  }`}
-                >
-                  {t === "topico" ? "Tópico" : "Livre"}
-                </button>
-              ))}
-            </div>
-
-            <div className="mt-3 grid gap-2 sm:grid-cols-2">
-              {manualTipo !== "livre" && (
-                <>
-                  <div>
-                    <label className="sr-only" htmlFor="manual-subject">Matéria</label>
-                    <select
-                      id="manual-subject"
-                      value={manualSubjectId}
-                      onChange={(e) => { setManualSubjectId(e.target.value); setManualTopicId(""); }}
-                      className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-[#1877F2] focus:ring-2 focus:ring-blue-100"
-                    >
-                      <option value="">Selecione a matéria</option>
-                      {subjects.map((s) => <option key={s.id} value={s.id}>{s.nome}</option>)}
-                    </select>
-                  </div>
-                  {manualTipo === "topico" && (
-                    <div>
-                      <label className="sr-only" htmlFor="manual-topic">Tópico</label>
-                      <select
-                        id="manual-topic"
-                        value={manualTopicId}
-                        onChange={(e) => setManualTopicId(e.target.value)}
-                        className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-[#1877F2] focus:ring-2 focus:ring-blue-100"
-                      >
-                        <option value="">Selecione o tópico</option>
-                        {topics.filter((t) => t.materiaId === manualSubjectId).map((t) => (
-                          <option key={t.id} value={t.id}>{t.titulo}</option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
-                </>
-              )}
-
-              {/* Duration */}
-              <div className="flex items-center gap-2">
-                <div className="flex-1">
-                  <label className="sr-only" htmlFor="manual-hours">Horas</label>
-                  <input
-                    id="manual-hours"
-                    type="number"
-                    min={0}
-                    max={23}
-                    value={manualHours}
-                    onChange={(e) => setManualHours(e.target.value)}
-                    placeholder="0"
-                    className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-[#1877F2] focus:ring-2 focus:ring-blue-100"
-                  />
-                </div>
-                <span className="shrink-0 text-sm font-semibold text-slate-500">h</span>
-                <div className="flex-1">
-                  <label className="sr-only" htmlFor="manual-minutes">Minutos</label>
-                  <input
-                    id="manual-minutes"
-                    type="number"
-                    min={0}
-                    max={59}
-                    value={manualMinutes}
-                    onChange={(e) => setManualMinutes(e.target.value)}
-                    placeholder="30"
-                    className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-[#1877F2] focus:ring-2 focus:ring-blue-100"
-                  />
-                </div>
-                <span className="shrink-0 text-sm font-semibold text-slate-500">min</span>
-              </div>
-
-              {/* Date */}
-              <div>
-                <label className="sr-only" htmlFor="manual-date">Data</label>
-                <input
-                  id="manual-date"
-                  type="date"
-                  value={manualDate}
-                  onChange={(e) => setManualDate(e.target.value)}
-                  className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-[#1877F2] focus:ring-2 focus:ring-blue-100"
-                />
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={submitManualSession}
-              className="mt-3 flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-[#1877F2] text-sm font-bold text-white hover:bg-[#1B74E4] focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
-            >
-              <Save className="h-4 w-4" aria-hidden="true" />
-              Registrar sessão
-            </button>
-          </div>
-        ) : (
-          <button
-            type="button"
-            onClick={() => setManualOpen(true)}
-            className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-300 py-2.5 text-xs font-semibold text-slate-500 hover:border-[#1877F2] hover:text-[#1877F2]"
-          >
-            <Plus className="h-3.5 w-3.5" aria-hidden="true" />
-            Registrar sessão manualmente
-          </button>
-        )}
+        <ManualSessionForm
+          subjects={subjects}
+          topics={topics}
+          onAddManualSession={onAddManualSession}
+        />
 
         {recentSessions.length === 0 ? (
           <p className="mt-4 rounded-xl border border-dashed border-slate-300 px-4 py-6 text-center text-sm font-medium text-slate-500">

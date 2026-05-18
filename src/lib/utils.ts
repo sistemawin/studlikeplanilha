@@ -179,3 +179,22 @@ export function formatTimer(seconds: number) {
   const remaining = seconds % 60;
   return `${String(minutes).padStart(2, "0")}:${String(remaining).padStart(2, "0")}`;
 }
+
+const FEEDBACK_ERROR_WORDS = [
+  "não foi possível",
+  "erro",
+  "inválid",
+  "preencha",
+  "digite",
+  "informe",
+  "escolha",
+  "selecione",
+  "maior que",
+  "expirou",
+  "bloqueado",
+];
+
+export function feedbackToneFromMessage(message: string): "error" | "success" {
+  const normalized = message.toLocaleLowerCase("pt-BR");
+  return FEEDBACK_ERROR_WORDS.some((word) => normalized.includes(word)) ? "error" : "success";
+}

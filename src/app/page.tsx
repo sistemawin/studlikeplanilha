@@ -20,23 +20,27 @@ import {
 } from "lucide-react";
 import { StudlikeLogo } from "@/components/ui/StudlikeLogo";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { ComponentProps } from "react";
 import { createPortal } from "react-dom";
 import { getSupabaseBrowserClient, getSupabasePasswordVerifierClient } from "@/services/supabase/client";
 import { loadRemoteState, serializeAppState } from "@/services/supabase/sync";
 import { syncAppState } from "@/services/sync/coordinator";
 import { persistLocally, loadPersisted, clearPersisted } from "@/services/persistence/local";
 import { hasPendingSync } from "@/services/queue/syncQueue";
-import { addDays, formatTimer, isoDate, pct } from "@/lib/utils";
+import { addDays, feedbackToneFromMessage, formatTimer, isoDate, pct } from "@/lib/utils";
 import { useScrollLock } from "@/hooks/useScrollLock";
 import { useTimerStore } from "@/store/timer";
 import { useAuthState } from "@/hooks/useAuthState";
 import { useAdminActions } from "@/hooks/useAdminActions";
+import { useStudyActions } from "@/hooks/useStudyActions";
+import { useTimerController } from "@/hooks/useTimerController";
+import { useSubjectActions } from "@/hooks/useSubjectActions";
+import { useTopicActions } from "@/hooks/useTopicActions";
+import { useTopicMutations } from "@/hooks/useTopicMutations";
 import { defaultGoals, defaultSchedule } from "@/lib/seed";
-import type { ReadyEdital } from "@/lib/readyEditals";
 import type {
   AppState,
   ConfirmDialogState,
-  Difficulty,
   Goal,
   Exam,
   NavTarget,
@@ -44,12 +48,10 @@ import type {
   QuestionLog,
   ReadOnlyUser,
   Review,
-  ReviewType,
   StudySession,
   Subject,
   SyncStatus,
   Topic,
-  TopicStatus,
 } from "@/types";
 import { AuthScreen } from "@/features/auth/components/AuthScreen";
 import { ErrorBoundary } from "@/components/shared/ErrorBoundary";
@@ -66,32 +68,18 @@ import { ArchiveEditalModal } from "@/features/subjects/components/ArchiveEdital
 import { AdminPanel } from "@/features/admin/components/AdminPanel";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { GlobalSearch } from "@/components/shared/GlobalSearch";
-import { AppFeedbackToast, type AppFeedback, type FeedbackTone } from "@/components/shared/AppFeedbackToast";
+import { AppFeedbackToast, type AppFeedback } from "@/components/shared/AppFeedbackToast";
 
 const SYNC_DEBOUNCE_MS = 700;
+const DAY_KEYS = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
+const SECTION_TITLE: Record<string, string> = {
+  dashboard: "Hoje",
+  edital: "Edital",
+  revisoes: "Revisões",
+  cronograma: "Plano",
+  simulados: "Dados",
+};
 
-function feedbackToneFromMessage(message: string): FeedbackTone {
-  const normalized = message.toLocaleLowerCase("pt-BR");
-  const errorWords = [
-    "não foi possível",
-    "erro",
-    "inválid",
-    "preencha",
-    "digite",
-    "informe",
-    "escolha",
-    "selecione",
-    "maior que",
-    "expirou",
-    "bloqueado",
-  ];
-
-  if (errorWords.some((word) => normalized.includes(word))) {
-    return "error";
-  }
-
-  return "success";
-}
 export default function Home() {
   // Computed fresh every render — never stale if tab stays open overnight
   const todayIso = isoDate(new Date());
@@ -221,7 +209,7 @@ export default function Home() {
   const pendingSyncRef = useRef(false);
   const syncInFlightRef = useRef(false);
 
-  function setNotice(message: string, tone: FeedbackTone = feedbackToneFromMessage(message)) {
+  function setNotice(message: string, tone = feedbackToneFromMessage(message)) {
     setNoticeState(message);
     feedbackIdRef.current += 1;
     setFeedback({ id: feedbackIdRef.current, message, tone });
@@ -534,6 +522,8 @@ export default function Home() {
   const generalProgress = pct(completedTopics, topics.length);
   const pendingToday = reviews.filter((r) => !r.concluida && r.dataAgendada <= todayIso);
   const overdueCount = pendingToday.filter((r) => r.dataAgendada < todayIso).length;
+  const completedReviewsCount = reviews.filter((r) => r.concluida).length;
+  const totalQuestionsLogged = questionLogs.reduce((sum, q) => sum + q.quantidade, 0);
   const questionGoal = goals.find((g) => g.tipo === "questões") ?? { id: "", tipo: "questões" as const, valorObjetivo: 0, valorAtual: 0, dataReferencia: todayIso };
   const hourGoal = goals.find((g) => g.tipo === "horas") ?? { id: "", tipo: "horas" as const, valorObjetivo: 0, valorAtual: 0, dataReferencia: todayIso };
   const avgExam = Math.round(
@@ -549,7 +539,6 @@ export default function Home() {
     (r) => !r.concluida && r.dataAgendada > todayIso && r.dataAgendada <= next7DaysIso,
   ).length;
 
-  const DAY_KEYS = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
   const todayDayKey = DAY_KEYS[(new Date().getDay() + 6) % 7];
   const todayPlan: Subject[] =
     schedule.modo === "semanal"
@@ -581,14 +570,6 @@ export default function Home() {
     return notice;
   })();
 
-  const sectionTitle: Record<NavTarget, string> = {
-    dashboard: "Hoje",
-    edital: "Edital",
-    revisoes: "Revisões",
-    cronograma: "Plano",
-    simulados: "Dados",
-  };
-
   // ── Actions ───────────────────────────────────────────────────────────────
   function applyAppState(state: AppState) {
     setSubjects(state.subjects);
@@ -609,6 +590,74 @@ export default function Home() {
     return true;
   }
 
+  // ── Topic actions (hook) ──────────────────────────────────────────────────
+  const { updateTopicStatus, updateTopicDifficulty, moveTopic, editTopicTitle } = useTopicActions({
+    topics, subjects, todayIso,
+    setTopics, setReviews, setQuestionLogs,
+    setNotice, preventReadOnlyAction,
+  });
+
+  // ── Study actions (hook) ──────────────────────────────────────────────────
+  const {
+    completeReview,
+    addManualReview,
+    rescheduleReview,
+    completeAllTodayReviews,
+    autoOrganizeCiclo,
+    addExamDate,
+    deleteExamDate,
+    updateSemanal,
+    addExam,
+    deleteExam,
+    addManualSession,
+    deleteStudySession,
+    addQuestionLog,
+    deleteQuestionLog,
+    updateGoalObjective,
+  } = useStudyActions({
+    reviews, subjects, topics, exams, questionLogs, studySessions,
+    selectedManualTopic, manualDate, examDraft, todayIso,
+    setReviews, setGoals, setExams, setQuestionLogs, setStudySessions, setSchedule, setExamDraft,
+    setNotice, setConfirmDialog, preventReadOnlyAction, updateTopicStatus,
+  });
+
+  // ── Timer controller (hook) ───────────────────────────────────────────────
+  const {
+    openFocusTimer,
+    openFocusTimerWithSubject,
+    openFocusTimerWithTopic,
+    toggleTimer,
+    resetTimer,
+    closeFocusTimer,
+    finishSession,
+  } = useTimerController({
+    reviews, topicById, subjectById, todayIso,
+    setGoals, setStudySessions, setTopics,
+    setNotice, preventReadOnlyAction, completeReview,
+  });
+
+  // ── Subject actions (hook) ────────────────────────────────────────────────
+  const {
+    addSubject,
+    importReadyEdital,
+    updateSubject,
+    deleteSubject,
+  } = useSubjectActions({
+    subjects, topics, reviews, questionLogs,
+    selectedSubject, selectedManualTopic,
+    setSubjects, setTopics, setReviews, setQuestionLogs, setSchedule,
+    setSelectedSubject, setSelectedManualTopic, setSubjectModal,
+    setNotice, setConfirmDialog, preventReadOnlyAction,
+  });
+
+  // ── Topic mutations (hook) ────────────────────────────────────────────────
+  const { addTopicsFromText, deleteTopic } = useTopicMutations({
+    topics, reviews, questionLogs,
+    setTopics, setReviews, setQuestionLogs,
+    setNewTopicText, setSelectedManualTopic,
+    setNotice, setConfirmDialog, preventReadOnlyAction,
+  });
+
   async function exitReadOnlyMode() {
     if (!session) return;
     setRemoteLoading(true);
@@ -626,171 +675,6 @@ export default function Home() {
     }
   }
 
-  function scheduleReviews(topic: Topic) {
-    const base = new Date(`${todayIso}T12:00:00`);
-    const dayOffsets = [1, 7, 21, 30];
-    const diffOffsets = topic.dificuldade === "Difícil" ? [3, 10, 17] : topic.dificuldade === "Médio" ? [7, 21] : [14];
-
-    const spaced = dayOffsets.map((days) => ({
-      id: crypto.randomUUID(),
-      topicoId: topic.id,
-      dataAgendada: addDays(base, days),
-      concluida: false,
-      tipo: String(days) as ReviewType,
-    }));
-    const byDifficulty = diffOffsets.map((days) => ({
-      id: crypto.randomUUID(),
-      topicoId: topic.id,
-      dataAgendada: addDays(base, days),
-      concluida: false,
-      tipo: "dificuldade" as ReviewType,
-    }));
-
-    setReviews((current) => [
-      ...current.filter((r) => r.topicoId !== topic.id || r.concluida),
-      ...spaced,
-      ...byDifficulty,
-    ]);
-  }
-
-  function moveTopic(topicId: string, targetSubjectId: string) {
-    if (preventReadOnlyAction()) return;
-    const topic = topics.find((t) => t.id === topicId);
-    const targetSubject = subjects.find((s) => s.id === targetSubjectId);
-    if (!topic || !targetSubject) return;
-    setTopics((ts) => ts.map((t) => (t.id === topicId ? { ...t, materiaId: targetSubjectId } : t)));
-    setQuestionLogs((logs) => logs.map((log) => log.topicoId === topicId ? { ...log, materiaId: targetSubjectId } : log));
-    setNotice(`"${topic.titulo}" movido para ${targetSubject.nome}.`);
-  }
-
-  function completeAllTodayReviews() {
-    if (preventReadOnlyAction()) return;
-    const pending = reviews.filter((r) => !r.concluida && r.dataAgendada <= todayIso);
-    if (pending.length === 0) return;
-    setConfirmDialog({
-      title: "Concluir todas as revisões?",
-      description: `Você vai marcar ${pending.length} revisão${pending.length !== 1 ? "ões" : ""} como concluída${pending.length !== 1 ? "s" : ""}.`,
-      details: "Útil quando já estudou todos os tópicos do dia. Essa ação não pode ser desfeita.",
-      confirmLabel: "Concluir todas",
-      onConfirm: () => {
-        const ids = new Set(pending.map((r) => r.id));
-        setReviews((rs) => rs.map((r) => (ids.has(r.id) ? { ...r, concluida: true } : r)));
-        setNotice(`${pending.length} revisão${pending.length !== 1 ? "ões" : ""} concluída${pending.length !== 1 ? "s" : ""}.`);
-      },
-    });
-  }
-
-  function editTopicTitle(topicId: string, newTitle: string) {
-    if (preventReadOnlyAction()) return;
-    const trimmed = newTitle.trim();
-    if (!trimmed) return;
-    const topic = topics.find((t) => t.id === topicId);
-    if (!topic || topic.titulo === trimmed) return;
-    setTopics((ts) => ts.map((t) => (t.id === topicId ? { ...t, titulo: trimmed } : t)));
-    setNotice(`Tópico renomeado.`);
-  }
-
-  function updateTopicStatus(topicId: string, status: TopicStatus, options?: { silent?: boolean }) {
-    if (preventReadOnlyAction()) return;
-    const current = topics.find((t) => t.id === topicId);
-    if (!current) return;
-    const next = { ...current, status, estudadoEm: status === "Não Estudado" ? undefined : todayIso };
-    setTopics((ts) => ts.map((t) => (t.id === topicId ? next : t)));
-    if (status === "Questões Feitas" || status === "Revisado") scheduleReviews(next);
-    if (!options?.silent) {
-      setNotice(`Status de "${current.titulo}" atualizado para ${status}.`);
-    }
-  }
-
-  function updateTopicDifficulty(topicId: string, difficulty: Difficulty) {
-    if (preventReadOnlyAction()) return;
-    const topic = topics.find((t) => t.id === topicId);
-    setTopics((ts) => ts.map((t) => (t.id === topicId ? { ...t, dificuldade: difficulty } : t)));
-    setNotice(`Dificuldade${topic ? ` de "${topic.titulo}"` : ""} atualizada para ${difficulty}.`);
-  }
-
-  function addTopicsFromText() {
-    if (preventReadOnlyAction()) return;
-    const lines = newTopicText.split("\n").map((l) => l.trim()).filter(Boolean);
-    if (lines.length === 0) {
-      setNotice("Cole pelo menos um tópico antes de adicionar.");
-      return;
-    }
-    if (!selectedSubject) {
-      setNotice("Selecione uma matéria antes de adicionar tópicos.");
-      return;
-    }
-    setTopics((ts) => [
-      ...ts,
-      ...lines.map((line) => ({
-        id: crypto.randomUUID(),
-        materiaId: selectedSubject,
-        titulo: line.replace(/^[-*0-9. ]+/, ""),
-        status: "Não Estudado" as TopicStatus,
-        dificuldade: "Médio" as Difficulty,
-      })),
-    ]);
-    setNewTopicText("");
-    setNotice(`${lines.length} tópico${lines.length > 1 ? "s" : ""} adicionado${lines.length > 1 ? "s" : ""}.`);
-  }
-
-  function addManualReview() {
-    if (preventReadOnlyAction()) return;
-    if (!selectedManualTopic) {
-      setNotice("Escolha um tópico para agendar a revisão.");
-      return;
-    }
-    if (!manualDate) {
-      setNotice("Escolha uma data para a revisão.");
-      return;
-    }
-    setReviews((rs) => [
-      ...rs,
-      { id: crypto.randomUUID(), topicoId: selectedManualTopic, dataAgendada: manualDate, concluida: false, tipo: "manual" },
-    ]);
-    setNotice("Revisão manual agendada.");
-  }
-
-  function rescheduleReview(reviewId: string, days: number) {
-    if (preventReadOnlyAction()) return;
-    setReviews((rs) =>
-      rs.map((r) => {
-        if (r.id !== reviewId) return r;
-        const baseIso = r.dataAgendada < todayIso ? todayIso : r.dataAgendada;
-        return { ...r, dataAgendada: addDays(new Date(baseIso + "T12:00:00"), days) };
-      }),
-    );
-    setNotice(`Revisão adiada em ${days} dia${days !== 1 ? "s" : ""}.`);
-  }
-
-  function completeReview(reviewId: string) {
-    if (preventReadOnlyAction()) return;
-    setReviews((rs) => rs.map((r) => (r.id === reviewId ? { ...r, concluida: true } : r)));
-    setNotice("Revisão concluída.");
-  }
-
-  function addExam() {
-    if (preventReadOnlyAction()) return;
-    if (!examDraft.nome.trim()) {
-      setNotice("Preencha o nome do simulado.");
-      return;
-    }
-    if (examDraft.total <= 0) {
-      setNotice("Total de questões deve ser maior que zero.");
-      return;
-    }
-    if (examDraft.acertos > examDraft.total) {
-      setNotice("Acertos não podem ser maiores que o total de questões.");
-      return;
-    }
-    setExams((es) => [
-      { id: crypto.randomUUID(), nome: examDraft.nome.trim(), acertos: examDraft.acertos, total: examDraft.total, data: todayIso },
-      ...es,
-    ]);
-    setExamDraft({ nome: "", acertos: 0, total: 0 });
-    setNotice("Simulado salvo.");
-  }
-
   function closeConfirmDialog() {
     setConfirmDialog(null);
   }
@@ -799,272 +683,6 @@ export default function Home() {
     const action = confirmDialog?.onConfirm;
     setConfirmDialog(null);
     action?.();
-  }
-
-  function deleteTopic(topicId: string) {
-    if (preventReadOnlyAction()) return;
-    const topic = topics.find((t) => t.id === topicId);
-    if (!topic) return;
-    const reviewCount = reviews.filter((r) => r.topicoId === topicId).length;
-    const questionLogCount = questionLogs.filter((log) => log.topicoId === topicId).length;
-    const relatedEffects = [
-      reviewCount > 0 ? `${reviewCount} revisão${reviewCount !== 1 ? "ões" : ""} vinculada${reviewCount !== 1 ? "s" : ""}` : "",
-      questionLogCount > 0 ? `${questionLogCount} registro${questionLogCount !== 1 ? "s" : ""} de questões vinculado${questionLogCount !== 1 ? "s" : ""}` : "",
-    ].filter(Boolean).join(" e ");
-    setConfirmDialog({
-      title: "Excluir tópico?",
-      description: `Você vai excluir "${topic.titulo}".`,
-      details: relatedEffects
-        ? `${relatedEffects} serão removidos. Essa ação não pode ser desfeita.`
-        : "Essa ação não pode ser desfeita.",
-      confirmLabel: "Excluir tópico",
-      onConfirm: () => confirmDeleteTopic(topicId),
-    });
-  }
-
-  function confirmDeleteTopic(topicId: string) {
-    const topic = topics.find((t) => t.id === topicId);
-    if (!topic) return;
-    const remainingTopics = topics.filter((t) => t.id !== topicId);
-    setTopics(remainingTopics);
-    setReviews((rs) => rs.filter((r) => r.topicoId !== topicId));
-    setQuestionLogs((logs) => logs.filter((log) => log.topicoId !== topicId));
-    if (selectedManualTopic === topicId) setSelectedManualTopic(remainingTopics[0]?.id ?? "");
-    setNotice(`Tópico "${topic.titulo}" removido.`);
-  }
-
-  function deleteExam(examId: string) {
-    if (preventReadOnlyAction()) return;
-    const exam = exams.find((e) => e.id === examId);
-    if (!exam) return;
-    setConfirmDialog({
-      title: "Excluir simulado?",
-      description: `Você vai excluir "${exam.nome}".`,
-      details: `${exam.acertos}/${exam.total} acertos registrados em ${exam.data}. Essa ação não pode ser desfeita.`,
-      confirmLabel: "Excluir simulado",
-      onConfirm: () => confirmDeleteExam(examId),
-    });
-  }
-
-  function confirmDeleteExam(examId: string) {
-    setExams((es) => es.filter((e) => e.id !== examId));
-    setNotice("Simulado removido.");
-  }
-
-  function updateGoalObjective(tipo: "questões" | "horas", value: number) {
-    if (preventReadOnlyAction()) return;
-    if (value <= 0) return;
-    setGoals((gs) => {
-      const existing = gs.find((g) => g.tipo === tipo);
-      if (!existing) {
-        return [
-          ...gs,
-          {
-            id: crypto.randomUUID(),
-            tipo,
-            valorObjetivo: value,
-            valorAtual: 0,
-            dataReferencia: todayIso,
-          },
-        ];
-      }
-      return gs.map((g) => (g.tipo === tipo ? { ...g, valorObjetivo: value } : g));
-    });
-    setNotice(`Meta de ${tipo} atualizada para ${value}.`);
-  }
-
-  function autoOrganizeCiclo() {
-    if (preventReadOnlyAction()) return;
-    const sorted = [...subjects].sort((a, b) => b.peso - a.peso);
-    setSchedule((s) => ({ ...s, ciclos: sorted.map((sub) => sub.id) }));
-    setNotice("Ciclo organizado por peso das matérias.");
-  }
-
-  function addExamDate(nome: string, data: string) {
-    if (preventReadOnlyAction()) return;
-    setSchedule((s) => ({
-      ...s,
-      provas: [...(s.provas ?? []), { id: crypto.randomUUID(), nome, data }],
-    }));
-    setNotice(`Prova "${nome}" adicionada.`);
-  }
-
-  function deleteExamDate(id: string) {
-    if (preventReadOnlyAction()) return;
-    setSchedule((s) => ({
-      ...s,
-      provas: (s.provas ?? []).filter((p) => p.id !== id),
-    }));
-    setNotice("Prova removida.");
-  }
-
-  function updateSemanal(day: string, ids: string[]) {
-    if (preventReadOnlyAction()) return;
-    setSchedule((sc) => ({ ...sc, semanal: { ...sc.semanal, [day]: ids } }));
-    setNotice("Cronograma semanal atualizado.");
-  }
-
-  function addQuestionLog(data: { materiaId: string; topicoId: string; quantidade: number; acertos: number | null; data: string }) {
-    if (preventReadOnlyAction()) return;
-    const subject = subjects.find((s) => s.id === data.materiaId);
-    const topic = topics.find((t) => t.id === data.topicoId && t.materiaId === data.materiaId);
-    if (!subject || !topic) {
-      setNotice("Escolha uma matéria e um tópico válidos.");
-      return;
-    }
-    if (data.quantidade <= 0) {
-      setNotice("Informe a quantidade de questões feitas.");
-      return;
-    }
-    if (data.acertos !== null && (data.acertos < 0 || data.acertos > data.quantidade)) {
-      setNotice("Acertos não podem ser maiores que a quantidade de questões.");
-      return;
-    }
-
-    setQuestionLogs((logs) => [
-      {
-        id: crypto.randomUUID(),
-        materiaId: data.materiaId,
-        topicoId: data.topicoId,
-        quantidade: data.quantidade,
-        acertos: data.acertos,
-        data: data.data,
-      },
-      ...logs,
-    ]);
-
-    if (data.data === todayIso) {
-      setGoals((gs) => {
-        const existing = gs.find((g) => g.tipo === "questões");
-        if (!existing) {
-          return [
-            ...gs,
-            {
-              id: crypto.randomUUID(),
-              tipo: "questões",
-              valorObjetivo: data.quantidade,
-              valorAtual: data.quantidade,
-              dataReferencia: todayIso,
-            },
-          ];
-        }
-        return gs.map((g) =>
-          g.tipo === "questões"
-            ? { ...g, valorAtual: g.valorAtual + data.quantidade, dataReferencia: todayIso }
-            : g,
-        );
-      });
-    }
-
-    if (topic.status === "Não Estudado" || topic.status === "Teoria Lida") {
-      updateTopicStatus(topic.id, "Questões Feitas", { silent: true });
-    }
-
-    setNotice(`${data.quantidade} questão${data.quantidade !== 1 ? "ões" : ""} registrada${data.quantidade !== 1 ? "s" : ""} em ${subject.nome}.`);
-  }
-
-  function addManualSession(data: {
-    tipo: import("@/types").StudySessionType;
-    materiaId?: string;
-    materiaNome?: string;
-    topicoId?: string;
-    topicoTitulo?: string;
-    durationSeconds: number;
-    data: string;
-  }) {
-    if (preventReadOnlyAction()) return;
-    if (data.durationSeconds <= 0) {
-      setNotice("Informe uma duração maior que zero.");
-      return;
-    }
-    const sessionHours = Math.round((data.durationSeconds / 3600) * 100) / 100;
-    setStudySessions((ss) => [
-      {
-        id: crypto.randomUUID(),
-        tipo: data.tipo,
-        data: data.data || todayIso,
-        endedAt: new Date().toISOString(),
-        durationSeconds: data.durationSeconds,
-        materiaId: data.materiaId,
-        materiaNome: data.materiaNome,
-        topicoId: data.topicoId,
-        topicoTitulo: data.topicoTitulo,
-      },
-      ...ss,
-    ]);
-    if (data.data === todayIso) {
-      setGoals((gs) =>
-        gs.map((g) =>
-          g.tipo === "horas"
-            ? { ...g, valorAtual: Math.round((g.valorAtual + sessionHours) * 100) / 100 }
-            : g,
-        ),
-      );
-    }
-    setNotice(`Sessão de ${formatTimer(data.durationSeconds)} registrada.`);
-  }
-
-  function deleteStudySession(sessionId: string) {
-    if (preventReadOnlyAction()) return;
-    const target = studySessions.find((s) => s.id === sessionId);
-    if (!target) return;
-    setConfirmDialog({
-      title: "Excluir sessão?",
-      description: `Sessão de ${formatTimer(target.durationSeconds)} registrada em ${target.data}.`,
-      details: target.data === todayIso
-        ? "O tempo acumulado na meta diária de horas será ajustado. Essa ação não pode ser desfeita."
-        : "Essa ação não pode ser desfeita.",
-      confirmLabel: "Excluir sessão",
-      onConfirm: () => confirmDeleteStudySession(sessionId),
-    });
-  }
-
-  function confirmDeleteStudySession(sessionId: string) {
-    const target = studySessions.find((s) => s.id === sessionId);
-    if (!target) return;
-    setStudySessions((ss) => ss.filter((s) => s.id !== sessionId));
-    if (target.data === todayIso) {
-      const sessionHours = Math.round((target.durationSeconds / 3600) * 100) / 100;
-      setGoals((gs) =>
-        gs.map((g) =>
-          g.tipo === "horas"
-            ? { ...g, valorAtual: Math.max(0, Math.round((g.valorAtual - sessionHours) * 100) / 100) }
-            : g,
-        ),
-      );
-    }
-    setNotice("Sessão removida.");
-  }
-
-  function deleteQuestionLog(logId: string) {
-    if (preventReadOnlyAction()) return;
-    const log = questionLogs.find((q) => q.id === logId);
-    if (!log) return;
-    const subject = subjects.find((item) => item.id === log.materiaId);
-    const topic = topics.find((item) => item.id === log.topicoId);
-    setConfirmDialog({
-      title: "Excluir registro de questões?",
-      description: `Você vai excluir ${log.quantidade} questão${log.quantidade !== 1 ? "ões" : ""} de "${topic?.titulo ?? "tópico removido"}".`,
-      details: `${subject?.nome ?? "Matéria removida"} · ${log.data}${log.acertos !== null ? ` · ${log.acertos} acerto${log.acertos !== 1 ? "s" : ""}` : ""}. Se for de hoje, a meta diária será ajustada.`,
-      confirmLabel: "Excluir registro",
-      onConfirm: () => confirmDeleteQuestionLog(logId),
-    });
-  }
-
-  function confirmDeleteQuestionLog(logId: string) {
-    const log = questionLogs.find((q) => q.id === logId);
-    if (!log) return;
-    setQuestionLogs((logs) => logs.filter((q) => q.id !== logId));
-    if (log?.data === todayIso) {
-      setGoals((gs) =>
-        gs.map((g) =>
-          g.tipo === "questões"
-            ? { ...g, valorAtual: Math.max(0, g.valorAtual - log.quantidade), dataReferencia: todayIso }
-            : g,
-        ),
-      );
-    }
-    setNotice("Registro de questões removido.");
   }
 
   async function submitSuggestion() {
@@ -1127,119 +745,6 @@ export default function Home() {
     }
   }
 
-  function addSubject(data: { nome: string; peso: number; cor: string; topicos: string[] }) {
-    if (preventReadOnlyAction()) return;
-    const newSubject: Subject = { id: crypto.randomUUID(), nome: data.nome, peso: data.peso, cor: data.cor };
-    setSubjects((ss) => [...ss, newSubject]);
-    setSelectedSubject(newSubject.id);
-    if (data.topicos.length > 0) {
-      setTopics((ts) => [
-        ...ts,
-        ...data.topicos.map((titulo) => ({
-          id: crypto.randomUUID(),
-          materiaId: newSubject.id,
-          titulo: titulo.replace(/^[-*0-9. ]+/, ""),
-          status: "Não Estudado" as TopicStatus,
-          dificuldade: "Médio" as Difficulty,
-        })),
-      ]);
-    }
-    setSubjectModal({ open: false });
-    const topMsg = data.topicos.length > 0 ? ` com ${data.topicos.length} tópico${data.topicos.length !== 1 ? "s" : ""}` : "";
-    setNotice(`Matéria "${data.nome}" criada${topMsg}.`);
-  }
-
-  function importReadyEdital(edital: ReadyEdital) {
-    if (preventReadOnlyAction()) return;
-
-    const importedSubjects: Subject[] = edital.subjects.map((subject) => ({
-      id: crypto.randomUUID(),
-      nome: subject.nome,
-      peso: subject.peso,
-      cor: subject.cor,
-    }));
-    const importedTopics: Topic[] = importedSubjects.flatMap((subject, subjectIndex) =>
-      edital.subjects[subjectIndex].topicos.map((titulo) => ({
-        id: crypto.randomUUID(),
-        materiaId: subject.id,
-        titulo,
-        status: "Não Estudado" as TopicStatus,
-        dificuldade: edital.subjects[subjectIndex].dificuldade ?? ("Médio" as Difficulty),
-      })),
-    );
-
-    setSubjects((items) => [...items, ...importedSubjects]);
-    setTopics((items) => [...items, ...importedTopics]);
-    setSelectedSubject(importedSubjects[0]?.id ?? "");
-    setSelectedManualTopic(importedTopics[0]?.id ?? "");
-    setSchedule((current) => ({
-      ...current,
-      ciclos: [...current.ciclos, ...importedSubjects.map((subject) => subject.id)],
-    }));
-    setNotice(
-      `${edital.title} importado com ${importedSubjects.length} matéria${importedSubjects.length !== 1 ? "s" : ""} e ${importedTopics.length} tópico${importedTopics.length !== 1 ? "s" : ""}.`,
-    );
-  }
-
-  function updateSubject(id: string, data: { nome: string; peso: number; cor: string; topicos: string[] }) {
-    if (preventReadOnlyAction()) return;
-    setSubjects((ss) => ss.map((s) => (s.id === id ? { ...s, ...data } : s)));
-    setSubjectModal({ open: false });
-    setNotice(`Matéria "${data.nome}" atualizada.`);
-  }
-
-  function deleteSubject(subjectId: string) {
-    if (preventReadOnlyAction()) return;
-    const subject = subjects.find((s) => s.id === subjectId);
-    if (!subject) return;
-    const topicsInSubject = topics.filter((t) => t.materiaId === subjectId);
-    const reviewCount = reviews.filter((r) => topicsInSubject.some((topic) => topic.id === r.topicoId)).length;
-    const questionLogCount = questionLogs.filter((log) => log.materiaId === subjectId).length;
-
-    setConfirmDialog({
-      title: "Excluir matéria?",
-      description: `Você vai excluir "${subject.nome}".`,
-      details: [
-        `${topicsInSubject.length} tópico${topicsInSubject.length !== 1 ? "s" : ""}`,
-        `${reviewCount} revisão${reviewCount !== 1 ? "ões" : ""}`,
-        `${questionLogCount} registro${questionLogCount !== 1 ? "s" : ""} de questões`,
-        "serão removidos. Essa ação não pode ser desfeita.",
-      ].join(" "),
-      confirmLabel: "Excluir matéria",
-      onConfirm: () => confirmDeleteSubject(subjectId),
-    });
-  }
-
-  function confirmDeleteSubject(subjectId: string) {
-    const subject = subjects.find((s) => s.id === subjectId);
-    const topicsInSubject = topics.filter((t) => t.materiaId === subjectId);
-    const topicIds = new Set(topicsInSubject.map((t) => t.id));
-    const label = subject?.nome ?? "matéria";
-    const remainingSubjects = subjects.filter((s) => s.id !== subjectId);
-    const remainingTopics = topics.filter((t) => t.materiaId !== subjectId);
-
-    setSubjects(remainingSubjects);
-    setTopics(remainingTopics);
-    setReviews((rs) => rs.filter((r) => !topicIds.has(r.topicoId)));
-    setQuestionLogs((logs) => logs.filter((log) => log.materiaId !== subjectId));
-    setSchedule((sc) => ({
-      ...sc,
-      ciclos: sc.ciclos.filter((id) => id !== subjectId),
-      semanal: Object.fromEntries(
-        Object.entries(sc.semanal).map(([day, ids]) => [day, ids.filter((id) => id !== subjectId)]),
-      ),
-    }));
-
-    // Reset stale selectors to avoid orphan references
-    if (selectedSubject === subjectId) {
-      setSelectedSubject(remainingSubjects[0]?.id ?? "");
-    }
-    if (topicIds.has(selectedManualTopic)) {
-      setSelectedManualTopic(remainingTopics[0]?.id ?? "");
-    }
-
-    setNotice(`Matéria "${label}" excluída.`);
-  }
 
   function openArchiveModal() {
     if (preventReadOnlyAction()) return;
@@ -1301,95 +806,6 @@ export default function Home() {
     }
   }
 
-  function openFocusTimer() {
-    useTimerStore.getState().open();
-    setNotice("Modo foco iniciado.");
-  }
-
-  function openFocusTimerWithSubject(subjectId: string) {
-    useTimerStore.getState().open(subjectId, undefined);
-    setNotice("Modo foco iniciado.");
-  }
-
-  function openFocusTimerWithTopic(topicId: string, subjectId: string) {
-    useTimerStore.getState().open(subjectId, topicId);
-    setNotice("Modo foco iniciado.");
-  }
-
-  function toggleTimer() {
-    const ts = useTimerStore.getState();
-    const next = !ts.running;
-    ts.setRunning(next);
-    setNotice(next ? "Cronômetro iniciado." : `Cronômetro pausado em ${formatTimer(ts.seconds)}.`);
-  }
-
-  function resetTimer() {
-    useTimerStore.getState().reset();
-    setNotice("Cronômetro reiniciado.");
-  }
-
-  function closeFocusTimer() {
-    const { seconds } = useTimerStore.getState();
-    setNotice(`Sessão em ${formatTimer(seconds)}.`);
-    useTimerStore.getState().closeView();
-  }
-
-  function finishSession({ topicId, reviewId }: { topicId?: string; reviewId?: string }) {
-    if (preventReadOnlyAction()) return;
-    const { seconds } = useTimerStore.getState();
-    useTimerStore.getState().finish();
-
-    const sessionHours = Math.round((seconds / 3600) * 100) / 100;
-    const timeStr = formatTimer(seconds);
-    const topic = topicId ? topicById[topicId] : undefined;
-    const review = reviewId ? reviews.find((r) => r.id === reviewId) : undefined;
-    const reviewTopic = review ? topicById[review.topicoId] : undefined;
-    const sessionTopic = topic ?? reviewTopic;
-    const sessionSubject = sessionTopic ? subjectById[sessionTopic.materiaId] : undefined;
-
-    if (seconds > 0) {
-      setGoals((gs) =>
-        gs.map((g) =>
-          g.tipo === "horas"
-            ? { ...g, valorAtual: Math.round((g.valorAtual + sessionHours) * 100) / 100 }
-            : g,
-        ),
-      );
-      setStudySessions((sessions) => [
-        {
-          id: crypto.randomUUID(),
-          tipo: topicId ? "topico" : reviewId ? "revisao" : "livre",
-          data: todayIso,
-          endedAt: new Date().toISOString(),
-          durationSeconds: seconds,
-          materiaId: sessionSubject?.id,
-          materiaNome: sessionSubject?.nome,
-          topicoId: sessionTopic?.id,
-          topicoTitulo: sessionTopic?.titulo,
-          reviewId,
-        },
-        ...sessions,
-      ]);
-    }
-
-    if (reviewId) {
-      completeReview(reviewId);
-    }
-
-    if (topicId) {
-      setTopics((ts) =>
-        ts.map((t) =>
-          t.id === topicId ? { ...t, estudadoEm: t.estudadoEm ?? todayIso } : t,
-        ),
-      );
-      const label = topic?.titulo ?? "tópico";
-      setNotice(`${timeStr} registrado — ${label}.`);
-    } else if (reviewId) {
-      setNotice(`${timeStr} registrado · revisão "${reviewTopic?.titulo ?? ""}" concluída.`);
-    } else {
-      setNotice(`Sessão de ${timeStr} registrada.`);
-    }
-  }
 
   function scrollToSection(target: NavTarget) {
     setAdminView(false);
@@ -1410,6 +826,28 @@ export default function Home() {
       return;
     }
     openMobileSection(target);
+  }
+
+  function openAddSubjectModal() {
+    if (preventReadOnlyAction()) return;
+    setSubjectModal({ open: true });
+  }
+
+  function openEditSubjectModal(subject: Subject) {
+    if (preventReadOnlyAction()) return;
+    setSubjectModal({ open: true, subject });
+  }
+
+  function handleModeChange(mode: PlanningMode) {
+    if (preventReadOnlyAction()) return;
+    setSchedule((s) => ({ ...s, modo: mode }));
+    setNotice(`Planejamento alterado para ${mode === "semanal" ? "semanal" : "ciclos"}.`);
+  }
+
+  function handleHorasChange(h: number) {
+    if (preventReadOnlyAction()) return;
+    setSchedule((s) => ({ ...s, horasDia: h }));
+    setNotice(`Meta diária atualizada para ${h} hora${h !== 1 ? "s" : ""}.`);
   }
 
   const feedbackToast = <AppFeedbackToast feedback={feedback} onClose={closeFeedback} />;
@@ -1568,6 +1006,94 @@ export default function Home() {
       )
     : null;
 
+  const dashboardProps: ComponentProps<typeof Dashboard> = {
+    topics,
+    subjects,
+    reviews: { pendingCount: pendingToday.length, overdueCount, totalCompleted: completedReviewsCount },
+    questionGoal,
+    avgExam,
+    generalProgress,
+    timerRunning,
+    timerLabel: formatTimer(timerSeconds),
+    studySessions,
+    notice: homeNotice,
+    activeSection,
+    onOpenFocusTimer: openFocusTimer,
+    onStudySubject: openFocusTimerWithSubject,
+    onStudyTopic: openFocusTimerWithTopic,
+    onNavigate: navigateFromDashboard,
+    onDeleteSession: deleteStudySession,
+    onAddManualSession: addManualSession,
+    nextExam,
+    todayPlan,
+    examCount: exams.length,
+    totalQuestionsLogged,
+    historyOpen: sessionHistoryOpen,
+    onHistoryOpenChange: setSessionHistoryOpen,
+  };
+
+  const editalProps: ComponentProps<typeof Edital> = {
+    subjects,
+    topics,
+    newTopicText,
+    selectedSubject,
+    activeSection,
+    onTopicTextChange: setNewTopicText,
+    onSubjectChange: setSelectedSubject,
+    onStatusChange: updateTopicStatus,
+    onDifficultyChange: updateTopicDifficulty,
+    onAddTopics: () => addTopicsFromText(newTopicText, selectedSubject),
+    onDeleteTopic: (topicId: string) => deleteTopic(topicId, selectedManualTopic),
+    onEditTopic: editTopicTitle,
+    onMoveTopic: moveTopic,
+    onAddSubject: openAddSubjectModal,
+    onEditSubject: openEditSubjectModal,
+    onDeleteSubject: deleteSubject,
+    onImportReadyEdital: importReadyEdital,
+  };
+
+  const scheduleProps: ComponentProps<typeof Schedule> = {
+    schedule,
+    subjects,
+    subjectById,
+    activeSection,
+    onModeChange: handleModeChange,
+    onHorasChange: handleHorasChange,
+    onUpdateSemanal: updateSemanal,
+    onAddExamDate: addExamDate,
+    onDeleteExamDate: deleteExamDate,
+    onAutoOrganizeCiclo: autoOrganizeCiclo,
+    reminderEnabled,
+    reminderTime,
+    onReminderEnabledChange: updateReminderEnabled,
+    onReminderTimeChange: updateReminderTime,
+  };
+
+  const examsProps: ComponentProps<typeof Exams> = {
+    subjects,
+    topics,
+    exams,
+    questionLogs,
+    goals,
+    examDraft,
+    selectedManualTopic,
+    manualDate,
+    activeSection,
+    onExamDraftChange: setExamDraft,
+    onAddExam: addExam,
+    onDeleteExam: deleteExam,
+    onManualTopicChange: setSelectedManualTopic,
+    onManualDateChange: setManualDate,
+    onAddManualReview: addManualReview,
+    onUpdateGoalObjective: updateGoalObjective,
+    onAddQuestionLog: addQuestionLog,
+    onDeleteQuestionLog: deleteQuestionLog,
+    reviews,
+    todayIso,
+    studySessions,
+    onDifficultyChange: updateTopicDifficulty,
+  };
+
   return (
     <main className="min-h-dvh w-full max-w-full bg-[#F0F2F5] text-[#111827]">
       {subjectModal.open && (
@@ -1705,7 +1231,7 @@ export default function Home() {
                 <StudlikeLogo size={40} className="shrink-0 rounded-xl xl:hidden" />
                 <div className="min-w-0">
                   <p className="bg-gradient-to-r from-[#1877F2] via-[#1B74E4] to-[#0F172A] bg-clip-text text-[11px] font-bold uppercase tracking-[0.14em] text-transparent">
-                    {adminView ? "Admin" : readOnlyUser ? "Modo leitura" : sectionTitle[activeSection]}
+                    {adminView ? "Admin" : readOnlyUser ? "Modo leitura" : SECTION_TITLE[activeSection]}
                   </p>
                   <h1 className="mt-0.5 truncate text-xl font-semibold tracking-normal text-slate-950 sm:text-2xl md:text-3xl">
                     {adminView ? "Área admin" : readOnlyUser ? readOnlyUser.email : "Studlike"}
@@ -1863,59 +1389,11 @@ export default function Home() {
           ) : (
             <>
               <ErrorBoundary label="Dashboard">
-                <Dashboard
-                  topics={topics}
-                  subjects={subjects}
-                  reviews={{ pendingCount: pendingToday.length, overdueCount, totalCompleted: reviews.filter((r) => r.concluida).length }}
-                  questionGoal={questionGoal}
-                  avgExam={avgExam}
-                  generalProgress={generalProgress}
-                  timerRunning={timerRunning}
-                  timerLabel={formatTimer(timerSeconds)}
-                  studySessions={studySessions}
-                  notice={homeNotice}
-                  activeSection={activeSection}
-                  onOpenFocusTimer={openFocusTimer}
-                  onStudySubject={openFocusTimerWithSubject}
-                  onStudyTopic={openFocusTimerWithTopic}
-                  onNavigate={navigateFromDashboard}
-                  onDeleteSession={deleteStudySession}
-                  onAddManualSession={addManualSession}
-                  nextExam={nextExam}
-                  todayPlan={todayPlan}
-                  examCount={exams.length}
-                  totalQuestionsLogged={questionLogs.reduce((sum, q) => sum + q.quantidade, 0)}
-                  historyOpen={sessionHistoryOpen}
-                  onHistoryOpenChange={setSessionHistoryOpen}
-                />
+                <Dashboard {...dashboardProps} />
               </ErrorBoundary>
 
               <ErrorBoundary label="Edital">
-                <Edital
-                  subjects={subjects}
-                  topics={topics}
-                  newTopicText={newTopicText}
-                  selectedSubject={selectedSubject}
-                  activeSection={activeSection}
-                  onTopicTextChange={setNewTopicText}
-                  onSubjectChange={setSelectedSubject}
-                  onStatusChange={updateTopicStatus}
-                  onDifficultyChange={updateTopicDifficulty}
-                  onAddTopics={addTopicsFromText}
-                  onDeleteTopic={deleteTopic}
-                  onEditTopic={editTopicTitle}
-                  onMoveTopic={moveTopic}
-                  onAddSubject={() => {
-                    if (preventReadOnlyAction()) return;
-                    setSubjectModal({ open: true });
-                  }}
-                  onEditSubject={(subject) => {
-                    if (preventReadOnlyAction()) return;
-                    setSubjectModal({ open: true, subject });
-                  }}
-                  onDeleteSubject={deleteSubject}
-                  onImportReadyEdital={importReadyEdital}
-                />
+                <Edital {...editalProps} />
               </ErrorBoundary>
 
               {(activeSection === "edital" || activeSection === "revisoes") && (
@@ -1941,57 +1419,11 @@ export default function Home() {
                 } min-w-0 w-full max-w-full gap-5 overflow-hidden xl:grid 2xl:grid-cols-2`}
               >
                 <ErrorBoundary label="Cronograma">
-                  <Schedule
-                    schedule={schedule}
-                    subjects={subjects}
-                    subjectById={subjectById}
-                    activeSection={activeSection}
-                    onModeChange={(mode: PlanningMode) => {
-                      if (preventReadOnlyAction()) return;
-                      setSchedule((s) => ({ ...s, modo: mode }));
-                      setNotice(`Planejamento alterado para ${mode === "semanal" ? "semanal" : "ciclos"}.`);
-                    }}
-                    onHorasChange={(h: number) => {
-                      if (preventReadOnlyAction()) return;
-                      setSchedule((s) => ({ ...s, horasDia: h }));
-                      setNotice(`Meta diária atualizada para ${h} hora${h !== 1 ? "s" : ""}.`);
-                    }}
-                    onUpdateSemanal={updateSemanal}
-                    onAddExamDate={addExamDate}
-                    onDeleteExamDate={deleteExamDate}
-                    onAutoOrganizeCiclo={autoOrganizeCiclo}
-                    reminderEnabled={reminderEnabled}
-                    reminderTime={reminderTime}
-                    onReminderEnabledChange={updateReminderEnabled}
-                    onReminderTimeChange={updateReminderTime}
-                  />
+                  <Schedule {...scheduleProps} />
                 </ErrorBoundary>
 
                 <ErrorBoundary label="Simulados">
-                  <Exams
-                    subjects={subjects}
-                    topics={topics}
-                    exams={exams}
-                    questionLogs={questionLogs}
-                    goals={goals}
-                    examDraft={examDraft}
-                    selectedManualTopic={selectedManualTopic}
-                    manualDate={manualDate}
-                    activeSection={activeSection}
-                    onExamDraftChange={setExamDraft}
-                    onAddExam={addExam}
-                    onDeleteExam={deleteExam}
-                    onManualTopicChange={setSelectedManualTopic}
-                    onManualDateChange={setManualDate}
-                    onAddManualReview={addManualReview}
-                    onUpdateGoalObjective={updateGoalObjective}
-                    onAddQuestionLog={addQuestionLog}
-                    onDeleteQuestionLog={deleteQuestionLog}
-                    reviews={reviews}
-                    todayIso={todayIso}
-                    studySessions={studySessions}
-                    onDifficultyChange={updateTopicDifficulty}
-                  />
+                  <Exams {...examsProps} />
                 </ErrorBoundary>
               </section>
             </>

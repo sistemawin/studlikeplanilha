@@ -49,101 +49,84 @@ Data: 2026-05-17
 
 Alto. `page.tsx` é o orchestrador central com closure sobre todos os estados. Qualquer extração errada cria state stale ou quebra sync.
 
-### O que foi extraído nesta sessão
+### O que foi extraído
 
 - `hooks/useAuthState.ts` — auth state + init effect + changeAuthMode/submitAuth/signOut
 - `hooks/useAdminActions.ts` — admin state + admin check effect + todas as funções admin
+- `hooks/useStudyActions.ts` — reviews, planner, exams, sessions, question logs, goals (14 funções)
+- `hooks/useTimerController.ts` — todas as 7 funções do timer incluindo finishSession
+- `hooks/useSubjectActions.ts` — addSubject, importReadyEdital, updateSubject, deleteSubject
+- `hooks/useTopicActions.ts` — updateTopicStatus, updateTopicDifficulty, moveTopic, editTopicTitle (+ scheduleReviews interno)
+- `hooks/useTopicMutations.ts` — addTopicsFromText, deleteTopic (+ confirmDeleteTopic interno)
 
-### Redução estimada
+### Resultado atual
 
 - Antes: **2.388 linhas**
-- Depois das extrações: **~2.030 linhas** (~358 linhas removidas)
+- Depois: **1.437 linhas** (~951 linhas removidas, -40%)
 
 ### O que NÃO deve ser extraído de page.tsx
 
-- Estado principal (subjects, topics, reviews, schedule, goals, exams) — é a fonte de verdade do app
-- Efeito de sync — crítico para offline-first, não mexer
+- Estado principal (subjects, topics, reviews, schedule, goals, exams) — fonte de verdade do app
+- Efeito de sync — crítico para offline-first, não alterar
 - Efeito de load — crítico para carregamento inicial
-- Funções de negócio (scheduleReviews, finishSession, etc.) — fechamento sobre múltiplos estados
+- `addTopicsFromText` — usa `newTopicText` + `selectedSubject` (UI state adicional, passaria do limite de 8 deps)
+- `deleteTopic`/`confirmDeleteTopic` — dependem de `reviews`, `questionLogs`, `selectedManualTopic`, `setConfirmDialog` (deps demais)
+- `exitReadOnlyMode` — usa Supabase/auth diretamente
 - Derived state — calculado inline é mais simples que hooks separados
 
 ---
 
-## 2. `src/features/statistics/components/Exams.tsx` — 1.116 linhas
+## 2. `src/features/statistics/components/Exams.tsx` — 435 linhas (era 1.116)
 
-### Responsabilidades misturadas
+### O que foi extraído
 
-- Painel de metas (Goals)
-- Registro de questões por tópico (QuestionLog)
-- Registro de simulados (Exams)
-- Histórico de simulados
-- Gráficos de desempenho
-- Revisões manuais
-- Histórico de sessões de estudo
+- `GoalCard.tsx` — card de meta com edição inline (~80 linhas)
+- `QuestionLogForm.tsx` — formulário + histórico de questões por tópico (~140 linhas, tem estado próprio)
+- `ExamRegistrationForm.tsx` — formulário + lista de simulados (~80 linhas)
+- `StatisticsCharts.tsx` — toda a seção de gráficos/analytics (6 props, ~412 linhas de JSX)
 
-### Sugestão de extração
+### Risco de mexer no restante
 
-Dividir em:
-- `Exams/GoalsSection.tsx` — metas diárias
-- `Exams/QuestionLogForm.tsx` — formulário de registro de questões
-- `Exams/ExamHistory.tsx` — lista e gráficos de simulados
-- `Exams/index.tsx` — compose das seções
+Baixo. O que resta em Exams.tsx: computação derivada (220 linhas), seção de metas/formulários (120 linhas), montagem das props do StatisticsCharts. Tudo display ou cálculo puro.
 
-### Risco de mexer
+### StatisticsCharts tem responsabilidade clara
 
-Médio. O componente recebe props claros, sem sync. A extração é segura mas trabalhosa.
-
-### Prioridade
-
-2 — próxima grande refatoração.
+Recebe 2 objetos de dados tipados (`charts` e `diagnosis`) + 4 props escalares. É puramente presentacional — zero estado próprio, zero chamadas a setters.
 
 ---
 
-## 3. `src/features/subjects/components/Edital.tsx` — 790 linhas
+## 3. `src/features/subjects/components/Edital.tsx` — 502 linhas (era 790)
 
-### Responsabilidades misturadas
+### O que foi extraído
 
-- Lista de matérias (sidebar)
-- Lista de tópicos com filtros
-- Formulários inline de adição de tópicos
-- Filtros de status e dificuldade
-- Import de editais prontos
-- Export de edital
+- `SubjectCard.tsx` — card de matéria com actions editar/excluir (~90 linhas)
+- `editalConstants.ts` — constantes compartilhadas STATUS_COLORS, DIFFICULTY_COLORS, STATUS_CYCLE, DIFFICULTY_CYCLE, STATUS_ORDER, DIFFICULTY_ORDER
+- `TopicRow.tsx` — linha de tópico com estado próprio de edição e mover (7 props)
+- `ReadyEditalsPanel.tsx` — seção de editais prontos para importar (1 prop)
 
-### Sugestão de extração
+### Por que SubjectDetailPanel NÃO foi extraído
 
-- `Edital/SubjectList.tsx` — sidebar de matérias
-- `Edital/TopicList.tsx` — lista de tópicos com filtros
-- `Edital/TopicFilters.tsx` — filtros de status/dificuldade
-- Manter `Edital.tsx` como compose
+`search`, `statusFilter`, `difficultyFilter` são compartilhados com `subjectMatchesFilters` (list view). Mover para dentro do painel criaria comportamento diferente OU exigiria 12+ props — ambos violam as regras.
 
-### Risco de mexer
+### O que NÃO deve ser extraído de Edital.tsx
 
-Médio. Tem estado local com resetagem baseada em subject change (padrão "adjust during render" — já corrigido).
+- `EditalFilters` — STATUS_CYCLE/DIFFICULTY_CYCLE compartilhados com detail view; extrair criaria dependência invertida
+- View de detalhe completa — filtros compartilhados com list view impedem extração limpa
 
 ---
 
-## 4. `src/features/dashboard/components/Dashboard.tsx` — 707 linhas
+## 4. `src/features/dashboard/components/Dashboard.tsx` — 480 linhas (era 707)
 
-### Responsabilidades misturadas
+### O que foi extraído
 
-- Header com stats de hoje
-- Seção de progresso
-- Seção de matérias do dia
-- Seção de revisões pendentes
-- Timer card
-- Gráfico de heatmap
+- `ManualSessionForm.tsx` — formulário de sessão manual com 7 estados próprios + submit logic (~155 linhas)
+- `TodayPlanCard.tsx` — card de plano do dia com matérias e tópicos sugeridos (~83 linhas)
 
-### Sugestão de extração
+### Risco de mexer no restante
 
-- `Dashboard/TodaySummary.tsx` — resumo do dia
-- `Dashboard/SubjectsToday.tsx` — matérias do dia
-- `Dashboard/StudyTimerCard.tsx` — card do timer
-- Manter `Dashboard.tsx` como compose
+Baixo. O que resta são: KPI cards (array de objetos), strip de matérias mobile, next exam banner, achievements, stats strip, e lista de sessões recentes. Todos são display puro sem estado local.
 
-### Risco de mexer
-
-Médio. Recebe props e delega callbacks, sem sync.
+### Dashboard.tsx está abaixo do threshold de aviso (500 linhas)
 
 ---
 
@@ -153,3 +136,14 @@ Médio. Recebe props e delega callbacks, sem sync.
 |---|---|---|---|
 | 2026-05-17 | page.tsx | Extração de useAuthState | -~160 linhas |
 | 2026-05-17 | page.tsx | Extração de useAdminActions | -~200 linhas |
+| 2026-05-17 | page.tsx | Extração de useStudyActions | -~290 linhas |
+| 2026-05-17 | page.tsx | Extração de useTimerController | -~100 linhas |
+| 2026-05-17 | page.tsx | Extração de useSubjectActions | -~115 linhas |
+| 2026-05-17 | Exams.tsx | Extração de GoalCard, QuestionLogForm, ExamRegistrationForm | 1.116 → 826 linhas |
+| 2026-05-17 | Edital.tsx | Extração de SubjectCard | 790 → 698 linhas |
+| 2026-05-17 | Edital.tsx | Extração de TopicRow, ReadyEditalsPanel, editalConstants | 698 → 502 linhas |
+| 2026-05-17 | Dashboard.tsx | Extração de ManualSessionForm, TodayPlanCard | 707 → 480 linhas |
+| 2026-05-17 | page.tsx | Extração de useTopicActions | 1.527 → 1.468 linhas |
+| 2026-05-17 | page.tsx | Prop objects tipados + named functions/variables | JSX principal -90 linhas de ruído |
+| 2026-05-18 | Exams.tsx | Extração de StatisticsCharts | 826 → 435 linhas |
+| 2026-05-18 | page.tsx | Extração de useTopicMutations | 1.487 → 1.437 linhas |
