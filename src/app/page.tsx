@@ -1072,7 +1072,7 @@ export default function Home() {
 
           <nav
             aria-label="Navegação mobile"
-            className={`${hideMobileBottomNav ? "hidden" : "grid"} mobile-bottom-nav grid-cols-5 overflow-hidden border-t border-white/70 bg-white/[0.92] px-2 pb-[calc(0.45rem+env(safe-area-inset-bottom))] pt-2 shadow-[0_-14px_34px_rgba(15,23,42,0.14)] backdrop-blur-xl xl:hidden`}
+            className={`${hideMobileBottomNav ? "hidden" : "grid"} mobile-bottom-nav h-[calc(72px+env(safe-area-inset-bottom))] grid-cols-5 overflow-hidden border-t border-white/70 bg-white/[0.92] px-2 pb-[calc(0.45rem+env(safe-area-inset-bottom))] pt-2 shadow-[0_-14px_34px_rgba(15,23,42,0.14)] backdrop-blur-xl xl:hidden`}
           >
             {mobileNavItems.map((item) => {
               const Icon = item.icon;
@@ -1083,14 +1083,14 @@ export default function Home() {
                   type="button"
                   onClick={item.action}
                   aria-current={active ? "page" : undefined}
-                  className={`flex h-14 min-w-0 flex-col items-center justify-center gap-0.5 overflow-hidden rounded-2xl px-0.5 py-2 text-[6px] font-semibold leading-none tracking-normal transition sm:text-[7px] ${
+                  className={`flex h-full min-w-0 flex-1 flex-col items-center justify-center gap-1 overflow-hidden rounded-2xl px-0.5 py-2 transition ${
                     active
                       ? "bg-blue-50 text-[#1877F2] shadow-sm ring-1 ring-blue-100"
                       : "text-slate-500 hover:bg-slate-100 hover:text-[#1877F2]"
                   }`}
                 >
-                  <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
-                  <span className="w-full truncate whitespace-nowrap text-center">{item.label}</span>
+                  <Icon className="h-6 w-6 shrink-0" aria-hidden="true" />
+                  <span className="w-full truncate whitespace-nowrap text-center text-[11px] font-medium leading-none tracking-normal">{item.label}</span>
                 </button>
               );
             })}
@@ -1100,14 +1100,14 @@ export default function Home() {
               onClick={() => setMobileMoreOpen((open) => !open)}
               aria-expanded={mobileMoreOpen}
               aria-label="Abrir mais opções"
-              className={`flex h-14 min-w-0 flex-col items-center justify-center gap-0.5 overflow-hidden rounded-2xl px-0.5 py-2 text-[6px] font-semibold leading-none tracking-normal transition sm:text-[7px] ${
+              className={`flex h-full min-w-0 flex-1 flex-col items-center justify-center gap-1 overflow-hidden rounded-2xl px-0.5 py-2 transition ${
                 mobileMoreOpen || activeSection === "simulados"
                   ? "bg-blue-50 text-[#1877F2] shadow-sm ring-1 ring-blue-100"
                   : "text-slate-500 hover:bg-slate-100 hover:text-[#1877F2]"
               }`}
             >
-              <Menu className="h-5 w-5 shrink-0" aria-hidden="true" />
-              <span className="w-full truncate whitespace-nowrap text-center">Mais</span>
+              <Menu className="h-6 w-6 shrink-0" aria-hidden="true" />
+              <span className="w-full truncate whitespace-nowrap text-center text-[11px] font-medium leading-none tracking-normal">Mais</span>
             </button>
           </nav>
         </>,
