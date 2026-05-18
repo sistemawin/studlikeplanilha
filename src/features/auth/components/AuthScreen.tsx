@@ -49,11 +49,11 @@ export function AuthScreen({
       <section className="grid w-full max-w-5xl overflow-hidden rounded-2xl border border-white bg-white shadow-[0_24px_70px_rgba(15,23,42,0.14)] ring-1 ring-slate-900/5 lg:grid-cols-[0.92fr_1.08fr]">
         <div className="flex min-h-0 flex-col justify-between bg-[linear-gradient(150deg,#0F172A_0%,#153A77_52%,#1877F2_118%)] p-5 text-white sm:p-8 lg:min-h-[560px] lg:p-10">
           <div>
-            <StudlikeLogo size={44} className="rounded-xl shadow-lg shadow-blue-950/25 ring-1 ring-white/15" />
-            <p className="mt-5 text-[11px] font-bold uppercase tracking-[0.16em] text-blue-100/60 lg:mt-8">
-              Studlike
+            <StudlikeLogo size={48} className="rounded-xl shadow-lg shadow-blue-950/25 ring-1 ring-white/15" />
+            <p className="mt-5 text-[11px] font-bold uppercase tracking-[0.18em] text-blue-100/60 lg:mt-8">
+              StudLike Foco
             </p>
-            <h1 className="mt-2 max-w-md text-2xl font-semibold tracking-normal sm:mt-3 sm:text-4xl lg:text-5xl">
+            <h1 className="mt-2 max-w-md text-2xl font-extrabold tracking-tight sm:mt-3 sm:text-4xl lg:text-5xl">
               Controle real do seu plano de estudos.
             </h1>
             <p className="mt-3 max-w-md text-sm leading-6 text-blue-50/75 sm:mt-4 sm:text-base sm:leading-7">

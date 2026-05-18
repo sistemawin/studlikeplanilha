@@ -11,7 +11,7 @@ export function StudlikeLogo({ className = "", size = 40 }: Props) {
       src="/studlike-logo.png"
       width={size}
       height={size}
-      alt="Studlike"
+      alt="StudLike Foco"
       priority={size >= 44}
       className={`object-cover ${className}`}
     />

@@ -33,7 +33,7 @@ const toneStyles: Record<FeedbackTone, { icon: typeof CheckCircle2; shell: strin
     icon: Info,
     shell: "border-blue-200 bg-white text-slate-950 shadow-blue-950/12",
     iconWrap: "bg-blue-50 text-[#1877F2] ring-blue-100",
-    title: "Studlike",
+    title: "StudLike Foco",
   },
 };
 

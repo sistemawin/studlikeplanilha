@@ -19,6 +19,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { StudlikeLogo } from "@/components/ui/StudlikeLogo";
+import { AppBrand } from "@/components/ui/AppBrand";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ComponentProps } from "react";
 import { createPortal } from "react-dom";
@@ -270,7 +271,7 @@ export default function Home() {
     if (pendingCount === 0) return;
 
     function showNotification() {
-      new Notification("Studlike — Revisões pendentes", {
+      new Notification("StudLike Foco — Revisões pendentes", {
         body: `Você tem ${pendingCount} revisão${pendingCount !== 1 ? "ões" : ""} pendente${pendingCount !== 1 ? "s" : ""} para hoje.`,
         icon: "/icon-192.png",
         tag: "studlike-review-reminder",
@@ -977,7 +978,7 @@ export default function Home() {
           <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#1877F2]">Você está offline</p>
           <h1 className="mt-2 text-xl font-bold text-slate-950">Não encontramos dados salvos neste dispositivo</h1>
           <p className="mt-2 text-sm leading-6 text-slate-500">
-            Entre online ao menos uma vez para salvar seus dados locais e usar o Studlike sem conexão.
+            Entre online ao menos uma vez para salvar seus dados locais e usar o StudLike Foco sem conexão.
           </p>
           <button
             type="button"
@@ -1287,12 +1288,8 @@ export default function Home() {
 
       {/* Desktop sidebar */}
       <aside className="fixed left-0 top-0 hidden h-screen w-64 border-r border-white/70 bg-white/[0.92] p-3 text-slate-950 shadow-2xl shadow-slate-950/10 backdrop-blur-xl xl:block">
-        <div className="mb-6 flex items-center gap-3 rounded-2xl bg-slate-50 px-3 py-3 ring-1 ring-slate-900/5">
-          <StudlikeLogo size={40} className="rounded-xl shadow-sm shadow-slate-900/10 ring-1 ring-slate-900/5" />
-          <div>
-            <p className="text-sm font-bold leading-5 text-slate-950">Studlike</p>
-            <p className="text-xs font-semibold leading-4 text-slate-500">Plano de estudos</p>
-          </div>
+        <div className="mb-6 rounded-2xl bg-slate-50 px-3 py-3.5 ring-1 ring-slate-900/5">
+          <AppBrand logoSize={44} showSubtitle />
         </div>
         <nav aria-label="Navegação principal" className="space-y-2">
           <NavButton icon={HomeIcon} label="Início" active={activeSection === "dashboard"} onClick={() => scrollToSection("dashboard")} />
@@ -1336,13 +1333,13 @@ export default function Home() {
           <div className="mx-auto flex max-w-[1600px] flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
             <div className="min-w-0">
               <div className="flex items-center gap-3">
-                <StudlikeLogo size={40} className="shrink-0 rounded-xl xl:hidden" />
+                <StudlikeLogo size={44} className="shrink-0 rounded-xl shadow-sm shadow-slate-900/10 ring-1 ring-slate-900/5 xl:hidden" />
                 <div className="min-w-0">
-                  <p className="bg-gradient-to-r from-[#1877F2] via-[#1B74E4] to-[#0F172A] bg-clip-text text-[11px] font-bold uppercase tracking-[0.14em] text-transparent">
+                  <p className="bg-gradient-to-r from-[#1877F2] via-[#1B74E4] to-[#0F172A] bg-clip-text text-[11px] font-bold uppercase tracking-[0.16em] text-transparent">
                     {adminView ? "Admin" : readOnlyUser ? "Modo leitura" : SECTION_TITLE[activeSection]}
                   </p>
-                  <h1 className="mt-0.5 truncate text-xl font-semibold tracking-normal text-slate-950 sm:text-2xl md:text-3xl">
-                    {adminView ? "Área admin" : readOnlyUser ? readOnlyUser.email : "Studlike"}
+                  <h1 className="mt-0.5 truncate text-2xl font-extrabold tracking-tight text-slate-950 sm:text-3xl">
+                    {adminView ? "Área admin" : readOnlyUser ? readOnlyUser.email : "StudLike Foco"}
                   </h1>
                 </div>
               </div>

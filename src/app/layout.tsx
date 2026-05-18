@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Studlike | Plano de estudos",
+  title: "StudLike Foco | Plano de estudos",
   description: "Dashboard para edital verticalizado, cronograma, revisões e simulados.",
   manifest: "/manifest.json",
   icons: {
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   },
   appleWebApp: {
     capable: true,
-    title: "Studlike",
+    title: "StudLike Foco",
     statusBarStyle: "black-translucent",
   },
 };
