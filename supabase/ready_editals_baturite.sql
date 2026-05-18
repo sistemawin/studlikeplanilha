@@ -28,9 +28,25 @@ create table if not exists public.editais_prontos (
   ano integer not null,
   fonte text not null,
   source_url text not null,
+  categoria text not null default 'geral',
+  badges text[] not null default '{}',
+  popularidade integer not null default 0,
+  nivel text,
+  atualizado_em date,
+  destaque boolean not null default false,
+  publicado boolean not null default true,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.editais_prontos
+  add column if not exists categoria text not null default 'geral',
+  add column if not exists badges text[] not null default '{}',
+  add column if not exists popularidade integer not null default 0,
+  add column if not exists nivel text,
+  add column if not exists atualizado_em date,
+  add column if not exists destaque boolean not null default false,
+  add column if not exists publicado boolean not null default true;
 
 create table if not exists public.editais_prontos_materias (
   id text primary key,
@@ -62,15 +78,30 @@ grant select on public.editais_prontos_topicos to authenticated;
 
 drop policy if exists "usuarios leem editais prontos" on public.editais_prontos;
 create policy "usuarios leem editais prontos" on public.editais_prontos
-  for select using (true);
+  for select using (publicado = true);
 
 drop policy if exists "usuarios leem materias de editais prontos" on public.editais_prontos_materias;
 create policy "usuarios leem materias de editais prontos" on public.editais_prontos_materias
-  for select using (true);
+  for select using (
+    exists (
+      select 1
+      from public.editais_prontos
+      where editais_prontos.id = editais_prontos_materias.edital_id
+        and editais_prontos.publicado = true
+    )
+  );
 
 drop policy if exists "usuarios leem topicos de editais prontos" on public.editais_prontos_topicos;
 create policy "usuarios leem topicos de editais prontos" on public.editais_prontos_topicos
-  for select using (true);
+  for select using (
+    exists (
+      select 1
+      from public.editais_prontos_materias
+      join public.editais_prontos on editais_prontos.id = editais_prontos_materias.edital_id
+      where editais_prontos_materias.id = editais_prontos_topicos.materia_id
+        and editais_prontos.publicado = true
+    )
+  );
 
 insert into public.editais_prontos (
   id,
@@ -80,7 +111,14 @@ insert into public.editais_prontos (
   cargo,
   ano,
   fonte,
-  source_url
+  source_url,
+  categoria,
+  badges,
+  popularidade,
+  nivel,
+  atualizado_em,
+  destaque,
+  publicado
 ) values (
   'guarda-municipal-baturite-ce-2026',
   'Guarda Municipal de Baturité CE',
@@ -89,7 +127,14 @@ insert into public.editais_prontos (
   'Guarda Municipal',
   2026,
   'Edital oficial publicado pela Prefeitura Municipal de Baturité',
-  'https://focoenem.com.br/wp-content/uploads/2026/02/concurso-gcm-baturite-oferece-20-vagas-imediatas-p-20260203-195757-125430.pdf'
+  'https://focoenem.com.br/wp-content/uploads/2026/02/concurso-gcm-baturite-oferece-20-vagas-imediatas-p-20260203-195757-125430.pdf',
+  'policia',
+  array['Mais estudado', 'Polícia'],
+  87,
+  'Intermediário',
+  date '2026-05-17',
+  true,
+  true
 ) on conflict (id) do update set
   titulo = excluded.titulo,
   subtitulo = excluded.subtitulo,
@@ -98,6 +143,13 @@ insert into public.editais_prontos (
   ano = excluded.ano,
   fonte = excluded.fonte,
   source_url = excluded.source_url,
+  categoria = excluded.categoria,
+  badges = excluded.badges,
+  popularidade = excluded.popularidade,
+  nivel = excluded.nivel,
+  atualizado_em = excluded.atualizado_em,
+  destaque = excluded.destaque,
+  publicado = excluded.publicado,
   updated_at = now();
 
 insert into public.editais_prontos_materias (
@@ -270,7 +322,8 @@ begin
     'modo', coalesce(v_schedule->>'modo', 'ciclos'),
     'horasDia', coalesce(v_schedule->'horasDia', '0'::jsonb),
     'semanal', coalesce(v_schedule->'semanal', '{}'::jsonb),
-    'ciclos', v_cycles
+    'ciclos', v_cycles,
+    'provas', coalesce(v_schedule->'provas', '[]'::jsonb)
   );
 
   if v_schedule_id is null then

@@ -33,11 +33,13 @@ import { useScrollLock } from "@/hooks/useScrollLock";
 import { useTimerStore } from "@/store/timer";
 import { useAuthState } from "@/hooks/useAuthState";
 import { useAdminActions } from "@/hooks/useAdminActions";
+import { useReadyEditals } from "@/hooks/useReadyEditals";
 import { useStudyActions } from "@/hooks/useStudyActions";
 import { useTimerController } from "@/hooks/useTimerController";
 import { useSubjectActions } from "@/hooks/useSubjectActions";
 import { useTopicActions } from "@/hooks/useTopicActions";
 import { useTopicMutations } from "@/hooks/useTopicMutations";
+import { importOfficialReadyEdital } from "@/services/supabase/readyEditals";
 import { defaultGoals, defaultSchedule } from "@/lib/seed";
 import type {
   AppState,
@@ -54,6 +56,7 @@ import type {
   SyncStatus,
   Topic,
 } from "@/types";
+import type { ReadyEdital } from "@/lib/readyEditals";
 import { AuthScreen } from "@/features/auth/components/AuthScreen";
 import { ErrorBoundary } from "@/components/shared/ErrorBoundary";
 import { NavButton } from "@/components/ui/NavButton";
@@ -130,6 +133,13 @@ export default function Home() {
     submitAuth,
     signOut: signOutAuth,
   } = useAuthState(setNotice);
+
+  const {
+    readyEditals,
+    readyEditalsLoading,
+    readyEditalsError,
+    reloadReadyEditals,
+  } = useReadyEditals(Boolean(session));
 
   // Wrap signOut to clear persisted local data on explicit logout.
   // clearPersisted() must NOT be called anywhere else (e.g. when session
@@ -677,6 +687,39 @@ export default function Home() {
     return true;
   }
 
+  async function importReadyEdital(edital: ReadyEdital) {
+    if (preventReadOnlyAction()) return;
+    if (!session) {
+      setNotice("Entre na sua conta para importar editais oficiais.");
+      throw new Error("Usuário não autenticado.");
+    }
+
+    const supabase = getSupabaseBrowserClient();
+    try {
+      setSyncStatus("saving");
+      await importOfficialReadyEdital(supabase, edital.id);
+      const remote = await loadRemoteState(supabase, session.user.id);
+      applyAppState(remote);
+      persistLocally(session.user.id, remote);
+      setOfflineUserId(null);
+      lastSyncedStateRef.current = serializeAppState(remote);
+      latestStateRef.current = remote;
+      latestSerializedStateRef.current = lastSyncedStateRef.current;
+      setRemoteReady(true);
+      setRemoteError("");
+      setSyncStatus("saved");
+      setNotice(`${edital.title} importado com segurança.`);
+      if (savedTimeoutRef.current) window.clearTimeout(savedTimeoutRef.current);
+      savedTimeoutRef.current = setTimeout(() => setSyncStatus("idle"), 2000);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Não foi possível importar o edital oficial.";
+      setSyncStatus("error");
+      setRemoteError(message);
+      setNotice(message);
+      throw err;
+    }
+  }
+
   // ── Topic actions (hook) ──────────────────────────────────────────────────
   const { updateTopicStatus, updateTopicDifficulty, moveTopic, editTopicTitle } = useTopicActions({
     topics, subjects, todayIso,
@@ -726,7 +769,6 @@ export default function Home() {
   // ── Subject actions (hook) ────────────────────────────────────────────────
   const {
     addSubject,
-    importReadyEdital,
     updateSubject,
     deleteSubject,
   } = useSubjectActions({
@@ -1158,6 +1200,10 @@ export default function Home() {
     onAddSubject: openAddSubjectModal,
     onEditSubject: openEditSubjectModal,
     onDeleteSubject: deleteSubject,
+    readyEditals,
+    readyEditalsLoading,
+    readyEditalsError,
+    onRetryReadyEditals: reloadReadyEditals,
     onImportReadyEdital: importReadyEdital,
   };
 

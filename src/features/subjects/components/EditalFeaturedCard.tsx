@@ -8,7 +8,7 @@ import { CATEGORIA_ICON, CATEGORIA_SOFT_ICON, NIVEL_CLASS } from "./editalCatego
 
 type Props = {
   edital: ReadyEdital;
-  onImport: (edital: ReadyEdital) => void;
+  onImport: (edital: ReadyEdital) => void | Promise<void>;
   index?: number;
 };
 
@@ -20,11 +20,15 @@ export function EditalFeaturedCard({ edital, onImport, index = 0 }: Props) {
   const Icon = CATEGORIA_ICON[cat];
   const softIcon = CATEGORIA_SOFT_ICON[cat];
 
-  function handleImport() {
+  async function handleImport() {
     if (done) return;
-    onImport(edital);
-    setDone(true);
-    window.setTimeout(() => setDone(false), 3000);
+    try {
+      await onImport(edital);
+      setDone(true);
+      window.setTimeout(() => setDone(false), 3000);
+    } catch {
+      // Error feedback is handled by the parent action.
+    }
   }
 
   return (

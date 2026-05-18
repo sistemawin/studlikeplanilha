@@ -33,7 +33,11 @@ type Props = {
   onAddSubject: () => void;
   onEditSubject: (subject: Subject) => void;
   onDeleteSubject: (subjectId: string) => void;
-  onImportReadyEdital: (edital: ReadyEdital) => void;
+  readyEditals: ReadyEdital[];
+  readyEditalsLoading: boolean;
+  readyEditalsError: string;
+  onRetryReadyEditals: () => void;
+  onImportReadyEdital: (edital: ReadyEdital) => void | Promise<void>;
 };
 
 
@@ -133,6 +137,10 @@ export function Edital({
   onAddSubject,
   onEditSubject,
   onDeleteSubject,
+  readyEditals,
+  readyEditalsLoading,
+  readyEditalsError,
+  onRetryReadyEditals,
   onImportReadyEdital,
 }: Props) {
   const [activeSubjectId, setActiveSubjectId] = useState<string | null>(null);
@@ -443,7 +451,13 @@ export function Edital({
         </div>
       </div>
 
-      <ReadyEditalsPanel onImportReadyEdital={onImportReadyEdital} />
+      <ReadyEditalsPanel
+        editais={readyEditals}
+        loading={readyEditalsLoading}
+        error={readyEditalsError}
+        onRetry={onRetryReadyEditals}
+        onImportReadyEdital={onImportReadyEdital}
+      />
 
       <EditalFilters
         search={search}

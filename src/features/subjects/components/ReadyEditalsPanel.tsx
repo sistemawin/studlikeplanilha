@@ -2,9 +2,8 @@
 
 import { useState, useMemo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Search, Sparkles, X } from "lucide-react";
+import { Loader2, RefreshCw, Search, Sparkles, X } from "lucide-react";
 import type { ReadyEdital, EditalCategoria } from "@/lib/readyEditals";
-import { readyEditals } from "@/lib/readyEditals";
 import { EditalCard } from "./EditalCard";
 import { EditalFeaturedCard } from "./EditalFeaturedCard";
 import { CATEGORIA_SECTION } from "./editalCategoryConfig";
@@ -12,7 +11,11 @@ import { CATEGORIA_SECTION } from "./editalCategoryConfig";
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 type Props = {
-  onImportReadyEdital: (edital: ReadyEdital) => void;
+  editais: ReadyEdital[];
+  loading: boolean;
+  error: string;
+  onRetry: () => void;
+  onImportReadyEdital: (edital: ReadyEdital) => void | Promise<void>;
 };
 
 type FilterValue = "todos" | EditalCategoria;
@@ -42,20 +45,20 @@ function SectionHeader({ label }: { label: string }) {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export function ReadyEditalsPanel({ onImportReadyEdital }: Props) {
+export function ReadyEditalsPanel({ editais, loading, error, onRetry, onImportReadyEdital }: Props) {
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState<FilterValue>("todos");
 
   const isFiltering = search.trim() !== "" || activeFilter !== "todos";
 
   const featured = useMemo(
-    () => readyEditals.filter((e) => e.destaque),
-    []
+    () => editais.filter((e) => e.destaque),
+    [editais],
   );
 
   const rest = useMemo(
-    () => readyEditals.filter((e) => !e.destaque),
-    []
+    () => editais.filter((e) => !e.destaque),
+    [editais],
   );
 
   // Group non-featured by category for category sections
@@ -71,7 +74,7 @@ export function ReadyEditalsPanel({ onImportReadyEdital }: Props) {
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
-    return readyEditals.filter((e) => {
+    return editais.filter((e) => {
       const matchesSearch =
         !q ||
         e.title.toLowerCase().includes(q) ||
@@ -81,7 +84,7 @@ export function ReadyEditalsPanel({ onImportReadyEdital }: Props) {
         activeFilter === "todos" || e.categoria === activeFilter;
       return matchesSearch && matchesFilter;
     });
-  }, [search, activeFilter]);
+  }, [search, activeFilter, editais]);
 
   function clearFilters() {
     setSearch("");
@@ -151,9 +154,40 @@ export function ReadyEditalsPanel({ onImportReadyEdital }: Props) {
 
       {/* ── Content ───────────────────────────────────────────────────────── */}
       <div className="space-y-6 p-4 sm:p-5">
+        {loading && (
+          <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-slate-200 bg-slate-50/70 py-10 text-center">
+            <Loader2 className="h-5 w-5 animate-spin text-slate-400" aria-hidden="true" />
+            <p className="font-bold text-slate-950">Carregando editais oficiais</p>
+            <p className="text-sm font-medium text-slate-500">Buscando o catálogo publicado no Supabase.</p>
+          </div>
+        )}
+
+        {!loading && error && (
+          <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-rose-200 bg-rose-50/60 py-10 text-center">
+            <Search className="h-5 w-5 text-rose-300" aria-hidden="true" />
+            <p className="font-bold text-slate-950">Não foi possível carregar o catálogo</p>
+            <p className="max-w-sm px-4 text-sm font-medium text-slate-500">{error}</p>
+            <button
+              type="button"
+              onClick={onRetry}
+              className="mt-1 flex h-9 items-center justify-center gap-2 rounded-xl bg-[#1877F2] px-4 text-xs font-bold text-white hover:bg-[#1B74E4]"
+            >
+              <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
+              Tentar novamente
+            </button>
+          </div>
+        )}
+
+        {!loading && !error && editais.length === 0 && (
+          <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-slate-200 bg-slate-50/70 py-10 text-center">
+            <Search className="h-5 w-5 text-slate-300" aria-hidden="true" />
+            <p className="font-bold text-slate-950">Nenhum edital oficial publicado</p>
+            <p className="text-sm font-medium text-slate-500">Assim que um edital for publicado, ele aparecerá aqui.</p>
+          </div>
+        )}
 
         {/* ── Filtered results ─────────────────────────────────────────── */}
-        {isFiltering && (
+        {!loading && !error && editais.length > 0 && isFiltering && (
           <div>
             <div className="mb-3 flex items-center justify-between">
               <SectionHeader label={`${filtered.length} resultado${filtered.length !== 1 ? "s" : ""}`} />
@@ -202,7 +236,7 @@ export function ReadyEditalsPanel({ onImportReadyEdital }: Props) {
         )}
 
         {/* ── Normal catalog view ───────────────────────────────────────── */}
-        {!isFiltering && (
+        {!loading && !error && editais.length > 0 && !isFiltering && (
           <>
             {/* Em Alta — horizontal carousel */}
             {featured.length > 0 && (
