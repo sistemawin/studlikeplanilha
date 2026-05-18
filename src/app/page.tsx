@@ -381,7 +381,10 @@ export default function Home() {
       setRemoteError("");
       setReadOnlyUser(null);
       lastSyncedStateRef.current = "";
-      clearPersisted();
+      // Guard: only clear persisted data after auth has resolved.
+      // On the initial render session is null (auth not yet ready), so clearing here
+      // would wipe localStorage before loadPersisted() can serve the offline fallback.
+      if (authReady) clearPersisted();
       return;
     }
 
@@ -440,7 +443,7 @@ export default function Home() {
 
     void load();
     return () => { cancelled = true; };
-  }, [session]);
+  }, [session, authReady]);
 
   // ── Debounced sync ────────────────────────────────────────────────────────
   // isOnlineState is in deps so the effect re-fires on reconnect, triggering
