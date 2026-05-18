@@ -25,6 +25,17 @@ export function useAuthState(setNotice: SetNotice) {
       const urlMarksPasswordRecovery =
         window.location.hash.includes("type=recovery") || window.location.search.includes("type=recovery");
 
+      // Timeout so getSession() never hangs forever when offline (e.g. Supabase
+      // tries to refresh an expired token via network). 6 s is enough for slow
+      // connections online; genuinely offline fetches fail within ~1 s on most OSes.
+      let authReadySignaled = false;
+      const timeoutId = window.setTimeout(() => {
+        if (!authReadySignaled) {
+          authReadySignaled = true;
+          setAuthReady(true);
+        }
+      }, 6000);
+
       supabase.auth
         .getSession()
         .then(({ data }) => {
@@ -41,7 +52,13 @@ export function useAuthState(setNotice: SetNotice) {
         .catch((err: unknown) => {
           setAuthError(err instanceof Error ? err.message : "Não foi possível carregar a sessão.");
         })
-        .finally(() => setAuthReady(true));
+        .finally(() => {
+          window.clearTimeout(timeoutId);
+          if (!authReadySignaled) {
+            authReadySignaled = true;
+            setAuthReady(true);
+          }
+        });
 
       const { data: { subscription } } = supabase.auth.onAuthStateChange((event, next) => {
         if (event === "PASSWORD_RECOVERY") {
@@ -55,11 +72,18 @@ export function useAuthState(setNotice: SetNotice) {
             setAuthError("Link de recuperação expirado ou inválido. Solicite um novo e-mail.");
           }
         }
+        // Ignore automatic SIGNED_OUT when offline: it is likely a failed token
+        // refresh, not an intentional logout. Explicit logouts call setSession(null)
+        // directly via signOut(), so ignoring this event is safe.
+        if (event === "SIGNED_OUT" && !navigator.onLine) return;
         setSession(next);
         setAuthReady(true);
       });
 
-      return () => subscription.unsubscribe();
+      return () => {
+        window.clearTimeout(timeoutId);
+        subscription.unsubscribe();
+      };
     } catch (err) {
       queueMicrotask(() => {
         setAuthReady(true);

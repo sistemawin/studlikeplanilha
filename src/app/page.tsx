@@ -127,8 +127,16 @@ export default function Home() {
     authMessage,
     changeAuthMode,
     submitAuth,
-    signOut,
+    signOut: signOutAuth,
   } = useAuthState(setNotice);
+
+  // Wrap signOut to clear persisted local data on explicit logout.
+  // clearPersisted() must NOT be called anywhere else (e.g. when session
+  // becomes null offline) because it would destroy the offline fallback data.
+  function signOut() {
+    clearPersisted();
+    void signOutAuth();
+  }
 
   // ── Archive modal state ──────────────────────────────────────────────────
   const [archiveModalOpen, setArchiveModalOpen] = useState(false);
@@ -381,10 +389,10 @@ export default function Home() {
       setRemoteError("");
       setReadOnlyUser(null);
       lastSyncedStateRef.current = "";
-      // Guard: only clear persisted data after auth has resolved.
-      // On the initial render session is null (auth not yet ready), so clearing here
-      // would wipe localStorage before loadPersisted() can serve the offline fallback.
-      if (authReady) clearPersisted();
+      // clearPersisted() is intentionally NOT called here.
+      // It is only called from signOut() so that offline data survives
+      // whenever session becomes null for non-logout reasons (token refresh
+      // failure, getSession() timeout, etc.).
       return;
     }
 
@@ -443,7 +451,7 @@ export default function Home() {
 
     void load();
     return () => { cancelled = true; };
-  }, [session, authReady]);
+  }, [session]);
 
   // ── Debounced sync ────────────────────────────────────────────────────────
   // isOnlineState is in deps so the effect re-fires on reconnect, triggering
