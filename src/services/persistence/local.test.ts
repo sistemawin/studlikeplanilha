@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { persistLocally, loadPersisted, clearPersisted } from "./local";
+import { persistLocally, loadPersisted, loadLastPersisted, clearPersisted } from "./local";
 import type { AppState } from "@/types";
 import { defaultSchedule, defaultGoals } from "@/lib/seed";
 
@@ -75,6 +75,22 @@ describe("persistLocally + loadPersisted", () => {
     persistLocally("user-2", stateWithData);
     expect(loadPersisted("user-1")).toBeNull(); // overwritten by user-2
     expect(loadPersisted("user-2")).toEqual(stateWithData);
+  });
+});
+
+describe("loadLastPersisted", () => {
+  it("returns the latest stored state without requiring userId", () => {
+    persistLocally("user-1", stateWithData);
+    expect(loadLastPersisted()).toEqual({
+      userId: "user-1",
+      state: stateWithData,
+      savedAt: expect.any(String),
+    });
+  });
+
+  it("returns null when the latest stored data is invalid", () => {
+    store.set("studlike_state_v1", JSON.stringify({ version: 0, userId: "user-1", state: stateWithData }));
+    expect(loadLastPersisted()).toBeNull();
   });
 });
 

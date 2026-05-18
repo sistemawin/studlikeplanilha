@@ -24,41 +24,55 @@ export function useAuthState(setNotice: SetNotice) {
       const supabase = getSupabaseBrowserClient();
       const urlMarksPasswordRecovery =
         window.location.hash.includes("type=recovery") || window.location.search.includes("type=recovery");
+      const startsOffline = typeof navigator !== "undefined" && !navigator.onLine;
 
       // Timeout so getSession() never hangs forever when offline (e.g. Supabase
       // tries to refresh an expired token via network). 6 s is enough for slow
       // connections online; genuinely offline fetches fail within ~1 s on most OSes.
       let authReadySignaled = false;
-      const timeoutId = window.setTimeout(() => {
+      const signalAuthReady = () => {
         if (!authReadySignaled) {
           authReadySignaled = true;
           setAuthReady(true);
         }
-      }, 6000);
+      };
+      const timeoutId = window.setTimeout(signalAuthReady, 6000);
 
-      supabase.auth
-        .getSession()
-        .then(({ data }) => {
-          if (urlMarksPasswordRecovery && data.session) {
-            setAuthMode("reset");
-            setAuthPassword("");
-            setAuthMessage("Digite sua nova senha para concluir a recuperação.");
-          } else if (urlMarksPasswordRecovery) {
-            setAuthMode("forgot");
-            setAuthError("Link de recuperação expirado ou inválido. Solicite um novo e-mail.");
-          }
-          setSession(data.session);
-        })
-        .catch((err: unknown) => {
-          setAuthError(err instanceof Error ? err.message : "Não foi possível carregar a sessão.");
-        })
-        .finally(() => {
-          window.clearTimeout(timeoutId);
-          if (!authReadySignaled) {
-            authReadySignaled = true;
-            setAuthReady(true);
-          }
-        });
+      function restoreSession() {
+        supabase.auth
+          .getSession()
+          .then(({ data }) => {
+            if (urlMarksPasswordRecovery && data.session) {
+              setAuthMode("reset");
+              setAuthPassword("");
+              setAuthMessage("Digite sua nova senha para concluir a recuperação.");
+            } else if (urlMarksPasswordRecovery) {
+              setAuthMode("forgot");
+              setAuthError("Link de recuperação expirado ou inválido. Solicite um novo e-mail.");
+            }
+            setSession(data.session);
+          })
+          .catch((err: unknown) => {
+            setAuthError(err instanceof Error ? err.message : "Não foi possível carregar a sessão.");
+          })
+          .finally(() => {
+            window.clearTimeout(timeoutId);
+            signalAuthReady();
+          });
+      }
+
+      if (startsOffline) {
+        window.clearTimeout(timeoutId);
+        signalAuthReady();
+      } else {
+        restoreSession();
+      }
+
+      function restoreWhenOnline() {
+        restoreSession();
+      }
+
+      window.addEventListener("online", restoreWhenOnline);
 
       const { data: { subscription } } = supabase.auth.onAuthStateChange((event, next) => {
         if (event === "PASSWORD_RECOVERY") {
@@ -82,6 +96,7 @@ export function useAuthState(setNotice: SetNotice) {
 
       return () => {
         window.clearTimeout(timeoutId);
+        window.removeEventListener("online", restoreWhenOnline);
         subscription.unsubscribe();
       };
     } catch (err) {
@@ -209,4 +224,3 @@ export function useAuthState(setNotice: SetNotice) {
     signOut,
   };
 }
-

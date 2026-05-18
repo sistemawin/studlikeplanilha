@@ -25,7 +25,7 @@ import { createPortal } from "react-dom";
 import { getSupabaseBrowserClient, getSupabasePasswordVerifierClient } from "@/services/supabase/client";
 import { loadRemoteState, serializeAppState } from "@/services/supabase/sync";
 import { syncAppState } from "@/services/sync/coordinator";
-import { persistLocally, loadPersisted, clearPersisted } from "@/services/persistence/local";
+import { persistLocally, loadPersisted, loadLastPersisted, clearPersisted } from "@/services/persistence/local";
 import { hasPendingSync } from "@/services/queue/syncQueue";
 import { addDays, feedbackToneFromMessage, formatTimer, isoDate, pct } from "@/lib/utils";
 import { useScrollLock } from "@/hooks/useScrollLock";
@@ -211,6 +211,7 @@ export default function Home() {
   const [remoteReady, setRemoteReady] = useState(false);
   const [remoteLoading, setRemoteLoading] = useState(false);
   const [remoteError, setRemoteError] = useState("");
+  const [offlineUserId, setOfflineUserId] = useState<string | null>(null);
   const lastSyncedStateRef = useRef("");
   const latestStateRef = useRef<AppState | null>(null);
   const latestSerializedStateRef = useRef("");
@@ -226,6 +227,27 @@ export default function Home() {
   const closeFeedback = useCallback(() => {
     setFeedback(null);
   }, []);
+
+  function bootFromPersisted(userId: string, state: AppState, message: string) {
+    applyAppState(state);
+    setOfflineUserId(userId);
+    setRemoteError("");
+    setRemoteLoading(false);
+    setRemoteReady(true);
+    lastSyncedStateRef.current = "";
+    latestStateRef.current = state;
+    latestSerializedStateRef.current = serializeAppState(state);
+    setNotice(message);
+  }
+
+  function retryOfflineBoot() {
+    const persisted = loadLastPersisted();
+    if (persisted) {
+      bootFromPersisted(persisted.userId, persisted.state, "Você está offline. Usando dados locais.");
+      return;
+    }
+    window.location.reload();
+  }
 
   // ── Load reminder prefs from localStorage (SSR-safe: must be in effect) ──
   useEffect(() => {
@@ -303,6 +325,32 @@ export default function Home() {
       window.removeEventListener("offline", handleOffline);
     };
   }, []);
+
+  // ── Offline-first boot ───────────────────────────────────────────────────
+  useEffect(() => {
+    if (session || offlineUserId || remoteReady) return;
+
+    let cancelled = false;
+    function tryLoadLocal(message: string) {
+      const persisted = loadLastPersisted();
+      if (cancelled || !persisted) return false;
+      bootFromPersisted(persisted.userId, persisted.state, message);
+      return true;
+    }
+
+    if (!isOnlineState) {
+      tryLoadLocal("Você está offline. Usando dados locais.");
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      tryLoadLocal("Conexão instável. Usando dados locais.");
+    }, 6000);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeoutId);
+    };
+  }, [session, offlineUserId, remoteReady, isOnlineState]);
 
   // ── App update detection ─────────────────────────────────────────────────
   useEffect(() => {
@@ -384,6 +432,7 @@ export default function Home() {
   // ── Load remote data on login ─────────────────────────────────────────────
   useEffect(() => {
     if (!session) {
+      if (offlineUserId) return;
       // eslint-disable-next-line react-hooks/set-state-in-effect -- reset on logout is intentional
       setRemoteReady(false);
       setRemoteError("");
@@ -401,6 +450,22 @@ export default function Home() {
     const userId = session.user.id;
 
     async function load() {
+      if (offlineUserId === userId) {
+        const localState = loadPersisted(userId);
+        if (localState) {
+          applyAppState(localState);
+          lastSyncedStateRef.current = "";
+          latestStateRef.current = localState;
+          latestSerializedStateRef.current = serializeAppState(localState);
+          setOfflineUserId(null);
+          setRemoteReady(true);
+          setRemoteLoading(false);
+          setRemoteError("");
+          setNotice("Conexão restaurada. Sincronizando dados locais.");
+          return;
+        }
+      }
+
       setRemoteLoading(true);
       setRemoteReady(false);
       setRemoteError("");
@@ -418,6 +483,7 @@ export default function Home() {
         setSelectedSubject(remote.subjects[0]?.id ?? "");
         setSelectedManualTopic(remote.topics[0]?.id ?? "");
         persistLocally(userId, remote);
+        setOfflineUserId(null);
         lastSyncedStateRef.current = serializeAppState(remote);
         setNotice("Dados carregados com segurança.");
         setRemoteReady(true);
@@ -451,13 +517,14 @@ export default function Home() {
 
     void load();
     return () => { cancelled = true; };
-  }, [session]);
+  }, [session, offlineUserId]);
 
   // ── Debounced sync ────────────────────────────────────────────────────────
   // isOnlineState is in deps so the effect re-fires on reconnect, triggering
   // a sync flush when there are unsynced changes (lastSyncedStateRef stale).
   useEffect(() => {
-    if (!session || !remoteReady) return;
+    const syncUserId = session?.user.id ?? offlineUserId;
+    if (!syncUserId || !remoteReady) return;
     if (readOnlyUser) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- guard: no sync in read-only mode
       setSyncStatus("idle");
@@ -470,10 +537,16 @@ export default function Home() {
     latestSerializedStateRef.current = serialized;
 
     const hasUnsyncedChanges = serialized !== lastSyncedStateRef.current;
-    const hasPending = session && hasPendingSync(session.user.id);
+    const hasPending = session ? hasPendingSync(session.user.id) : false;
 
     if (!hasUnsyncedChanges && !hasPending) {
       setSyncStatus("idle");
+      return;
+    }
+
+    if (!session || !isOnlineState) {
+      persistLocally(syncUserId, state);
+      setSyncStatus("pending");
       return;
     }
 
@@ -517,7 +590,7 @@ export default function Home() {
 
     const id = window.setTimeout(() => void runSync(), SYNC_DEBOUNCE_MS);
     return () => window.clearTimeout(id);
-  }, [subjects, topics, reviews, schedule, goals, exams, questionLogs, studySessions, session, remoteReady, readOnlyUser, isOnlineState]);
+  }, [subjects, topics, reviews, schedule, goals, exams, questionLogs, studySessions, session, offlineUserId, remoteReady, readOnlyUser, isOnlineState]);
 
   // ── Derived state ─────────────────────────────────────────────────────────
   const topicById = useMemo(
@@ -537,6 +610,8 @@ export default function Home() {
   const totalQuestionsLogged = questionLogs.reduce((sum, q) => sum + q.quantidade, 0);
   const questionGoal = goals.find((g) => g.tipo === "questões") ?? { id: "", tipo: "questões" as const, valorObjetivo: 0, valorAtual: 0, dataReferencia: todayIso };
   const hourGoal = goals.find((g) => g.tipo === "horas") ?? { id: "", tipo: "horas" as const, valorObjetivo: 0, valorAtual: 0, dataReferencia: todayIso };
+  const currentUserId = session?.user.id ?? offlineUserId ?? "";
+  const currentUserEmail = session?.user.email ?? (offlineUserId ? "Modo offline" : "");
   const avgExam = Math.round(
     exams.reduce((sum, e) => sum + (e.acertos / e.total) * 100, 0) / exams.length,
   );
@@ -892,6 +967,28 @@ export default function Home() {
         />
         {feedbackToast}
       </>
+    );
+  }
+
+  if (!session && !offlineUserId && !isOnlineState) {
+    return (
+      <main className="flex min-h-dvh w-full items-center justify-center bg-[#F0F2F5] px-4 text-slate-950">
+        <div className="w-full max-w-sm rounded-2xl border border-white bg-white p-5 text-center shadow-[0_18px_45px_rgba(15,23,42,0.08)] ring-1 ring-slate-900/5">
+          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#1877F2]">Você está offline</p>
+          <h1 className="mt-2 text-xl font-bold text-slate-950">Não encontramos dados salvos neste dispositivo</h1>
+          <p className="mt-2 text-sm leading-6 text-slate-500">
+            Entre online ao menos uma vez para salvar seus dados locais e usar o Studlike sem conexão.
+          </p>
+          <button
+            type="button"
+            onClick={retryOfflineBoot}
+            className="mt-4 h-11 rounded-xl bg-[#1877F2] px-4 text-sm font-bold text-white shadow-sm hover:bg-[#1B74E4] focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
+          >
+            Tentar novamente
+          </button>
+        </div>
+        {feedbackToast}
+      </main>
     );
   }
 
@@ -1253,7 +1350,7 @@ export default function Home() {
                 Alertas, edital verticalizado e metas do dia em uma tela.
               </p>
               <p className="mt-1 truncate text-xs font-medium text-slate-400 sm:mt-2">
-                {session.user.email}
+                {currentUserEmail}
               </p>
             </div>
             <div className="flex min-w-0 flex-wrap items-center gap-2">
@@ -1394,7 +1491,7 @@ export default function Home() {
                 onUsersSearchChange={searchAdminUsers}
                 onUserAction={manageAdminUser}
                 onViewUser={viewUserApp}
-                currentUserId={session.user.id}
+                currentUserId={currentUserId}
               />
             </ErrorBoundary>
           ) : (

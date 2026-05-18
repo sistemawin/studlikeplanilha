@@ -10,6 +10,12 @@ type StoredEntry = {
   savedAt: string;
 };
 
+export type PersistedStateEntry = {
+  userId: string;
+  state: AppState;
+  savedAt: string;
+};
+
 /**
  * Persists the full AppState to localStorage, scoped to userId.
  * Silent on quota errors or private browsing restrictions.
@@ -40,6 +46,22 @@ export function loadPersisted(userId: string): AppState | null {
     const entry = JSON.parse(raw) as StoredEntry;
     if (entry.version !== VERSION || entry.userId !== userId) return null;
     return entry.state;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Loads the latest persisted state regardless of userId.
+ * Used only for offline boot, when Supabase may be unable to restore a session.
+ */
+export function loadLastPersisted(): PersistedStateEntry | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const entry = JSON.parse(raw) as StoredEntry;
+    if (entry.version !== VERSION || !entry.userId || !entry.state) return null;
+    return { userId: entry.userId, state: entry.state, savedAt: entry.savedAt };
   } catch {
     return null;
   }
