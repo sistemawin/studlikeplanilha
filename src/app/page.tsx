@@ -855,7 +855,7 @@ export default function Home() {
     setSchedule(defaultSchedule);
     // Reset selectors — topics no longer exist
     setSelectedManualTopic("");
-    setNotice("Edital arquivado. Dados principais foram limpos.");
+    setNotice("Edital apagado. Dados principais foram limpos.");
   }
 
   async function confirmArchiveAll() {
@@ -1304,11 +1304,11 @@ export default function Home() {
         <button
           type="button"
           onClick={openArchiveModal}
-          aria-label="Arquivar edital atual"
+          aria-label="Apagar edital atual"
           className="absolute bottom-4 left-3 right-3 flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/10 px-3 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-950/20 hover:bg-white/[0.16] focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
         >
           <Archive className="h-4 w-4" aria-hidden="true" />
-          <span className="hidden xl:inline">Arquivar edital</span>
+          <span className="hidden xl:inline">Apagar edital</span>
         </button>
       </aside>
 
@@ -1400,11 +1400,11 @@ export default function Home() {
                 type="button"
                 onClick={openArchiveModal}
                 disabled={Boolean(readOnlyUser)}
-                aria-label="Arquivar edital atual"
+                aria-label="Apagar edital atual"
                 className="flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm shadow-slate-900/5 hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500 disabled:cursor-not-allowed disabled:opacity-40 xl:hidden"
               >
                 <Archive className="h-4 w-4" aria-hidden="true" />
-                <span className="truncate">Arquivar edital</span>
+                <span className="truncate">Apagar edital</span>
               </button>
 
               {isAdmin && (

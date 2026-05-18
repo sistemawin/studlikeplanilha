@@ -57,7 +57,7 @@ export function ArchiveEditalModal({
             </span>
             <div>
               <h2 id="archive-edital-title" className="text-lg font-semibold text-slate-950">
-                Arquivar edital
+                Apagar edital
               </h2>
               <p className="text-sm text-slate-500">
                 Revise o que será limpo antes de confirmar.
@@ -68,7 +68,7 @@ export function ArchiveEditalModal({
             type="button"
             onClick={onClose}
             disabled={loading}
-            aria-label="Fechar arquivamento"
+            aria-label="Fechar exclusão do edital"
             className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <X className="h-5 w-5" aria-hidden="true" />

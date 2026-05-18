@@ -30,5 +30,5 @@ Admin pode visualizar estado de qualquer usuário (read-only mode via `adminView
 ## Segurança
 
 - Senhas nunca armazenadas no frontend
-- Confirmação de ação destrutiva (arquivar edital) requer re-autenticação via `getSupabasePasswordVerifierClient()`
+- Confirmação de ação destrutiva (apagar edital) requer re-autenticação via `getSupabasePasswordVerifierClient()`
 - RLS no Supabase garante que usuário só acessa seu próprio `app_state`
