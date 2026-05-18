@@ -35,8 +35,8 @@ const FILTERS: { value: FilterValue; label: string }[] = [
 function SectionHeader({ label, muted = false }: { label: string; muted?: boolean }) {
   return (
     <p
-      className={`mb-3 text-[11px] font-bold uppercase tracking-[0.14em] ${
-        muted ? "text-slate-300" : "text-slate-500"
+      className={`mb-3 text-[10px] font-bold uppercase leading-4 tracking-[0.08em] ${
+        muted ? "text-slate-400" : "text-slate-500"
       }`}
     >
       {label}
@@ -104,17 +104,17 @@ export function ReadyEditalsPanel({ onImportReadyEdital }: Props) {
   }
 
   return (
-    <section className="mb-4 overflow-hidden rounded-2xl border border-white bg-white shadow-[0_18px_45px_rgba(15,23,42,0.07)] ring-1 ring-slate-900/5">
+    <section className="mb-4 overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-[0_14px_36px_rgba(15,23,42,0.055)] ring-1 ring-slate-900/[0.035]">
 
       {/* ── Header ────────────────────────────────────────────────────────── */}
-      <div className="border-b border-slate-100 p-5 sm:p-6">
+      <div className="border-b border-slate-100 bg-white p-4 sm:p-5">
         <div className="flex items-center gap-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#1877F2] text-white shadow-lg shadow-blue-600/20">
-            <Sparkles className="h-4.5 w-4.5 h-[18px] w-[18px]" aria-hidden="true" />
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-[#1877F2] ring-1 ring-blue-100">
+            <Sparkles className="h-4 w-4" aria-hidden="true" />
           </span>
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#1877F2]">Catálogo</p>
-            <h2 className="mt-0.5 text-base font-extrabold tracking-tight text-slate-950">
+            <p className="text-[10px] font-bold uppercase leading-4 tracking-[0.08em] text-[#1877F2]">Catálogo</p>
+            <h2 className="mt-0.5 text-base font-bold leading-5 text-slate-950">
               Explorar editais
             </h2>
           </div>
@@ -123,7 +123,7 @@ export function ReadyEditalsPanel({ onImportReadyEdital }: Props) {
         {/* Search */}
         <div className="relative mt-4">
           <Search
-            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+            className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400"
             aria-hidden="true"
           />
           <input
@@ -131,7 +131,7 @@ export function ReadyEditalsPanel({ onImportReadyEdital }: Props) {
             placeholder="Buscar concurso, banca ou cargo…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="h-10 w-full rounded-xl border border-slate-200 bg-[#F7F8FA] pl-9 pr-9 text-sm text-slate-950 placeholder:text-slate-400 focus:border-[#1877F2] focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100"
+            className="h-9 w-full rounded-xl border border-slate-200 bg-slate-50 pl-8 pr-8 text-[13px] font-medium text-slate-950 placeholder:text-slate-400 focus:border-[#1877F2] focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100"
           />
           {search && (
             <button
@@ -146,16 +146,16 @@ export function ReadyEditalsPanel({ onImportReadyEdital }: Props) {
         </div>
 
         {/* Filter pills */}
-        <div className="mt-3 flex gap-2 overflow-x-auto pb-0.5 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        <div className="mt-3 flex gap-1.5 overflow-x-auto pb-0.5 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           {FILTERS.map((f) => (
             <button
               key={f.value}
               type="button"
               onClick={() => setActiveFilter(f.value)}
-              className={`shrink-0 rounded-full px-3 py-1.5 text-[11px] font-bold transition-colors duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500 ${
+              className={`h-8 shrink-0 rounded-full px-3 text-[11px] font-bold transition-colors duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500 ${
                 activeFilter === f.value
                   ? "bg-[#1877F2] text-white shadow-sm shadow-blue-600/20"
-                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  : "bg-slate-50 text-slate-600 ring-1 ring-slate-200 hover:bg-slate-100"
               }`}
             >
               {f.label}
@@ -165,7 +165,7 @@ export function ReadyEditalsPanel({ onImportReadyEdital }: Props) {
       </div>
 
       {/* ── Content ───────────────────────────────────────────────────────── */}
-      <div className="space-y-7 p-5 sm:p-6">
+      <div className="space-y-6 p-4 sm:p-5">
 
         {/* ── Filtered results ─────────────────────────────────────────── */}
         {isFiltering && (
@@ -182,7 +182,7 @@ export function ReadyEditalsPanel({ onImportReadyEdital }: Props) {
             </div>
             <AnimatePresence mode="popLayout">
               {filtered.length > 0 ? (
-                <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
                   {filtered.map((edital, i) => (
                     <EditalCard
                       key={edital.id}
@@ -198,15 +198,15 @@ export function ReadyEditalsPanel({ onImportReadyEdital }: Props) {
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0 }}
-                  className="flex flex-col items-center gap-3 py-10 text-center"
+                  className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-slate-200 bg-slate-50/70 py-10 text-center"
                 >
-                  <span className="text-3xl" aria-hidden="true">🔍</span>
-                  <p className="font-extrabold tracking-tight text-slate-950">Nenhum edital encontrado</p>
-                  <p className="text-sm text-slate-500">Tente outro termo ou categoria.</p>
+                  <Search className="h-5 w-5 text-slate-300" aria-hidden="true" />
+                  <p className="font-bold text-slate-950">Nenhum edital encontrado</p>
+                  <p className="text-sm font-medium text-slate-500">Tente outro termo ou categoria.</p>
                   <button
                     type="button"
                     onClick={clearFilters}
-                    className="mt-1 rounded-xl bg-[#1877F2] px-4 py-2 text-xs font-bold text-white hover:bg-[#1B74E4]"
+                    className="mt-1 h-9 rounded-xl bg-[#1877F2] px-4 text-xs font-bold text-white hover:bg-[#1B74E4]"
                   >
                     Ver todos
                   </button>
@@ -219,13 +219,12 @@ export function ReadyEditalsPanel({ onImportReadyEdital }: Props) {
         {/* ── Normal catalog view ───────────────────────────────────────── */}
         {!isFiltering && (
           <>
-            {/* 🔥 Em Alta — horizontal carousel */}
+            {/* Em Alta — horizontal carousel */}
             {featured.length > 0 && (
               <div>
-                <SectionHeader label="🔥 Em alta" />
-                {/* Negative margin trick: extends carousel edge-to-edge on mobile */}
-                <div className="-mx-5 sm:-mx-6 overflow-x-auto snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                  <div className="flex gap-3 px-5 sm:px-6 pb-1">
+                <SectionHeader label="Em alta" />
+                <div className="-mx-4 overflow-x-auto snap-x snap-mandatory px-4 sm:-mx-5 sm:px-5 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                  <div className="flex gap-3 pb-1">
                     {featured.map((edital, i) => (
                       <EditalFeaturedCard
                         key={edital.id}
@@ -248,7 +247,7 @@ export function ReadyEditalsPanel({ onImportReadyEdital }: Props) {
               return (
                 <div key={cat}>
                   <SectionHeader label={`${config.emoji} ${config.label}`} />
-                  <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
                     {editais.map((edital, i) => (
                       <EditalCard
                         key={edital.id}
@@ -262,11 +261,11 @@ export function ReadyEditalsPanel({ onImportReadyEdital }: Props) {
               );
             })}
 
-            {/* 🔜 Em breve — mini compact grid */}
+            {/* Em breve — mini compact grid */}
             {comingSoon.length > 0 && (
               <div>
-                <SectionHeader label="🔜 Em breve" muted />
-                <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-5">
+                <SectionHeader label="Em breve" muted />
+                <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 lg:grid-cols-5">
                   {comingSoon.map((edital, i) => (
                     <EditalCard
                       key={edital.id}

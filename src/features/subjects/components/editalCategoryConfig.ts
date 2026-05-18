@@ -37,6 +37,17 @@ export const CATEGORIA_BG: Record<EditalCategoria, string> = {
   geral:    "bg-slate-400",
 };
 
+export const CATEGORIA_SOFT_ICON: Record<EditalCategoria, string> = {
+  policia:  "bg-blue-50 text-blue-600 ring-blue-100",
+  tribunal: "bg-purple-50 text-purple-600 ring-purple-100",
+  fiscal:   "bg-emerald-50 text-emerald-600 ring-emerald-100",
+  bancario: "bg-amber-50 text-amber-600 ring-amber-100",
+  militar:  "bg-slate-100 text-slate-600 ring-slate-200",
+  enem:     "bg-rose-50 text-rose-600 ring-rose-100",
+  oab:      "bg-violet-50 text-violet-600 ring-violet-100",
+  geral:    "bg-slate-100 text-slate-500 ring-slate-200",
+};
+
 // ── Section labels shown in the catalog ──────────────────────────────────────
 
 export const CATEGORIA_SECTION: Record<EditalCategoria, { emoji: string; label: string }> = {
