@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { BookOpenCheck, Check, Layers, ListChecks, Zap } from "lucide-react";
+import { BookOpenCheck, Check, Clock, Layers, ListChecks, Zap } from "lucide-react";
 import type { ReadyEdital, EditalCategoria, EditalBadge, EditalNivel } from "@/lib/readyEditals";
 
 // ── Color maps ────────────────────────────────────────────────────────────────
@@ -47,16 +47,68 @@ type Props = {
 export function EditalCard({ edital, onImport, index = 0 }: Props) {
   const [done, setDone] = useState(false);
 
+  const isAvailable = edital.disponivel !== false;
   const totalTopics = edital.subjects.reduce((sum, s) => sum + s.topicos.length, 0);
   const accent = edital.categoria ? CATEGORIA_ACCENT[edital.categoria] : CATEGORIA_ACCENT.geral;
 
   function handleImport() {
-    if (done) return;
+    if (!isAvailable || done) return;
     onImport(edital);
     setDone(true);
     window.setTimeout(() => setDone(false), 3000);
   }
 
+  // ── "Em breve" card ───────────────────────────────────────────────────────
+  if (!isAvailable) {
+    return (
+      <motion.article
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.28, delay: index * 0.07, ease: "easeOut" }}
+        className="flex flex-col overflow-hidden rounded-2xl bg-slate-50 ring-1 ring-slate-900/[0.05]"
+        aria-label={`${edital.title} — em breve`}
+      >
+        {/* Muted accent bar */}
+        <div className="h-1 w-full bg-slate-200 shrink-0" aria-hidden="true" />
+
+        <div className="flex flex-1 flex-col gap-3 p-5">
+          {/* Em breve badge */}
+          <div>
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-500 ring-1 ring-slate-200">
+              <Clock className="h-3 w-3" aria-hidden="true" />
+              Em breve
+            </span>
+          </div>
+
+          {/* Title + cargo */}
+          <div className="min-w-0 flex-1">
+            <h3 className="line-clamp-2 text-base font-extrabold leading-snug tracking-tight text-slate-400">
+              {edital.title}
+            </h3>
+            <p className="mt-1 text-sm font-medium text-slate-400">{edital.cargo}</p>
+          </div>
+
+          {/* Banca + ano */}
+          <div className="flex items-center gap-2 text-xs font-semibold text-slate-300">
+            <span className="min-w-0 truncate">{edital.banca}</span>
+            {edital.ano && (
+              <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-slate-400">
+                {edital.ano}
+              </span>
+            )}
+          </div>
+
+          {/* Disabled button */}
+          <div className="mt-auto flex h-10 w-full cursor-not-allowed items-center justify-center gap-2 rounded-xl bg-slate-100 text-sm font-bold text-slate-400 ring-1 ring-slate-200">
+            <Clock className="h-4 w-4" aria-hidden="true" />
+            Em breve
+          </div>
+        </div>
+      </motion.article>
+    );
+  }
+
+  // ── Available card ────────────────────────────────────────────────────────
   return (
     <motion.article
       initial={{ opacity: 0, y: 16 }}

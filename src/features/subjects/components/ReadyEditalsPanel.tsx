@@ -36,19 +36,30 @@ export function ReadyEditalsPanel({ onImportReadyEdital }: Props) {
 
   const isFiltering = search.trim() !== "" || activeFilter !== "todos";
 
-  const featured = useMemo(
-    () => readyEditals.filter((e) => e.destaque),
+  // Only disponivel:true (or undefined) items are searchable and importable.
+  const available = useMemo(
+    () => readyEditals.filter((e) => e.disponivel !== false),
     []
   );
 
-  const rest = useMemo(
-    () => readyEditals.filter((e) => !e.destaque),
+  const comingSoon = useMemo(
+    () => readyEditals.filter((e) => e.disponivel === false),
     []
+  );
+
+  const featured = useMemo(
+    () => available.filter((e) => e.destaque),
+    [available]
+  );
+
+  const rest = useMemo(
+    () => available.filter((e) => !e.destaque),
+    [available]
   );
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
-    return readyEditals.filter((e) => {
+    return available.filter((e) => {
       const matchesSearch =
         !q ||
         e.title.toLowerCase().includes(q) ||
@@ -58,7 +69,7 @@ export function ReadyEditalsPanel({ onImportReadyEdital }: Props) {
         activeFilter === "todos" || e.categoria === activeFilter;
       return matchesSearch && matchesFilter;
     });
-  }, [search, activeFilter]);
+  }, [search, activeFilter, available]);
 
   function clearFilters() {
     setSearch("");
@@ -220,6 +231,25 @@ export function ReadyEditalsPanel({ onImportReadyEdital }: Props) {
                 </p>
                 <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                   {rest.map((edital, i) => (
+                    <EditalCard
+                      key={edital.id}
+                      edital={edital}
+                      onImport={onImportReadyEdital}
+                      index={i}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Em breve */}
+            {comingSoon.length > 0 && (
+              <div>
+                <p className="mb-3 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-slate-300">
+                  🔜 Em breve
+                </p>
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                  {comingSoon.map((edital, i) => (
                     <EditalCard
                       key={edital.id}
                       edital={edital}
