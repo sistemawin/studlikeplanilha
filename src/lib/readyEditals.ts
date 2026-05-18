@@ -52,10 +52,6 @@ export type ReadyEdital = {
   nivel?: EditalNivel;
   atualizadoEm?: string; // "YYYY-MM-DD"
   destaque?: boolean;
-  // false = shown as "em breve" — cannot be imported. Omit or set true to enable.
-  // REGRA: só mudar para true (ou omitir) após conferir edital oficial completo e
-  // preencher subjects/topicos com o conteúdo exato do documento, com fonte real.
-  disponivel?: boolean;
 };
 
 // ── Catalog ───────────────────────────────────────────────────────────────────
@@ -81,7 +77,6 @@ export const readyEditals: ReadyEdital[] = [
     nivel: "Intermediário",
     atualizadoEm: "2026-05-17",
     destaque: true,
-    disponivel: true,
     subjects: [
       {
         nome: "Lingua Portuguesa",
@@ -172,52 +167,4 @@ export const readyEditals: ReadyEdital[] = [
     ],
   },
 
-  // ── Em breve — aguardando edital oficial conferido ───────────────────────────
-  // Para tornar disponível: preencher subjects[] com dados do edital oficial,
-  // definir fonte e sourceUrl reais, e mudar disponivel para true (ou omitir).
-
-  {
-    id: "enem-em-breve",
-    title: "ENEM",
-    subtitle: "Em breve no catálogo",
-    banca: "INEP / MEC",
-    cargo: "Candidato ao Ensino Superior",
-    ano: 2025,
-    fonte: "",
-    sourceUrl: "",
-    categoria: "enem",
-    badges: ["ENEM"],
-    disponivel: false,
-    subjects: [],
-  },
-
-  {
-    id: "policia-civil-ce-em-breve",
-    title: "Polícia Civil do Ceará",
-    subtitle: "Em breve no catálogo",
-    banca: "A confirmar",
-    cargo: "Investigador / Escrivão",
-    ano: 2024,
-    fonte: "",
-    sourceUrl: "",
-    categoria: "policia",
-    badges: ["Polícia"],
-    disponivel: false,
-    subjects: [],
-  },
-
-  {
-    id: "banco-brasil-em-breve",
-    title: "Banco do Brasil",
-    subtitle: "Em breve no catálogo",
-    banca: "A confirmar",
-    cargo: "Escriturário",
-    ano: 2023,
-    fonte: "",
-    sourceUrl: "",
-    categoria: "bancario",
-    badges: ["Bancário"],
-    disponivel: false,
-    subjects: [],
-  },
 ];

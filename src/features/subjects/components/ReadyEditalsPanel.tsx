@@ -32,13 +32,9 @@ const FILTERS: { value: FilterValue; label: string }[] = [
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
-function SectionHeader({ label, muted = false }: { label: string; muted?: boolean }) {
+function SectionHeader({ label }: { label: string }) {
   return (
-    <p
-      className={`mb-3 text-[10px] font-bold uppercase leading-4 tracking-[0.08em] ${
-        muted ? "text-slate-400" : "text-slate-500"
-      }`}
-    >
+    <p className="mb-3 text-[10px] font-bold uppercase leading-4 tracking-[0.08em] text-slate-500">
       {label}
     </p>
   );
@@ -52,24 +48,14 @@ export function ReadyEditalsPanel({ onImportReadyEdital }: Props) {
 
   const isFiltering = search.trim() !== "" || activeFilter !== "todos";
 
-  const available = useMemo(
-    () => readyEditals.filter((e) => e.disponivel !== false),
-    []
-  );
-
-  const comingSoon = useMemo(
-    () => readyEditals.filter((e) => e.disponivel === false),
-    []
-  );
-
   const featured = useMemo(
-    () => available.filter((e) => e.destaque),
-    [available]
+    () => readyEditals.filter((e) => e.destaque),
+    []
   );
 
   const rest = useMemo(
-    () => available.filter((e) => !e.destaque),
-    [available]
+    () => readyEditals.filter((e) => !e.destaque),
+    []
   );
 
   // Group non-featured by category for category sections
@@ -83,10 +69,9 @@ export function ReadyEditalsPanel({ onImportReadyEdital }: Props) {
     return groups;
   }, [rest]);
 
-  // Search + filter over available items only (em breve are not searchable)
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
-    return available.filter((e) => {
+    return readyEditals.filter((e) => {
       const matchesSearch =
         !q ||
         e.title.toLowerCase().includes(q) ||
@@ -96,7 +81,7 @@ export function ReadyEditalsPanel({ onImportReadyEdital }: Props) {
         activeFilter === "todos" || e.categoria === activeFilter;
       return matchesSearch && matchesFilter;
     });
-  }, [search, activeFilter, available]);
+  }, [search, activeFilter]);
 
   function clearFilters() {
     setSearch("");
@@ -240,7 +225,7 @@ export function ReadyEditalsPanel({ onImportReadyEdital }: Props) {
               </div>
             )}
 
-            {/* Category sections (non-featured available items) */}
+            {/* Category sections (non-featured items) */}
             {Object.entries(byCategory).map(([cat, editais]) => {
               const config = CATEGORIA_SECTION[cat as EditalCategoria];
               if (!editais || editais.length === 0) return null;
@@ -261,22 +246,6 @@ export function ReadyEditalsPanel({ onImportReadyEdital }: Props) {
               );
             })}
 
-            {/* Em breve — mini compact grid */}
-            {comingSoon.length > 0 && (
-              <div>
-                <SectionHeader label="Em breve" muted />
-                <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 lg:grid-cols-5">
-                  {comingSoon.map((edital, i) => (
-                    <EditalCard
-                      key={edital.id}
-                      edital={edital}
-                      onImport={onImportReadyEdital}
-                      index={i}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
           </>
         )}
       </div>
