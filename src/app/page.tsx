@@ -1083,14 +1083,14 @@ export default function Home() {
                   type="button"
                   onClick={item.action}
                   aria-current={active ? "page" : undefined}
-                  className={`flex min-h-14 flex-col items-center justify-center gap-1 rounded-2xl px-1 py-1 text-[9px] font-bold leading-none transition sm:text-[10px] ${
+                  className={`flex h-14 min-w-0 flex-col items-center justify-center gap-0.5 overflow-hidden rounded-2xl px-0.5 py-2 text-[9px] font-bold leading-none transition ${
                     active
                       ? "bg-blue-50 text-[#1877F2] shadow-sm ring-1 ring-blue-100"
                       : "text-slate-500 hover:bg-slate-100 hover:text-[#1877F2]"
                   }`}
                 >
                   <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
-                  <span className="max-w-full truncate">{item.label}</span>
+                  <span className="w-full truncate whitespace-nowrap text-center">{item.label}</span>
                 </button>
               );
             })}
@@ -1100,14 +1100,14 @@ export default function Home() {
               onClick={() => setMobileMoreOpen((open) => !open)}
               aria-expanded={mobileMoreOpen}
               aria-label="Abrir mais opções"
-              className={`flex min-h-14 flex-col items-center justify-center gap-1 rounded-2xl px-1 py-1 text-[9px] font-bold leading-none transition sm:text-[10px] ${
+              className={`flex h-14 min-w-0 flex-col items-center justify-center gap-0.5 overflow-hidden rounded-2xl px-0.5 py-2 text-[9px] font-bold leading-none transition ${
                 mobileMoreOpen || activeSection === "simulados"
                   ? "bg-blue-50 text-[#1877F2] shadow-sm ring-1 ring-blue-100"
                   : "text-slate-500 hover:bg-slate-100 hover:text-[#1877F2]"
               }`}
             >
               <Menu className="h-5 w-5 shrink-0" aria-hidden="true" />
-              <span className="max-w-full truncate">Mais</span>
+              <span className="w-full truncate whitespace-nowrap text-center">Mais</span>
             </button>
           </nav>
         </>,
