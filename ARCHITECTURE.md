@@ -90,9 +90,14 @@ app/page.tsx                ← estado global (useState para tudo)
 2. React re-render → useEffect[appState] dispara com debounce 700ms
 3. serializeAppState(state) → JSON string
 4. Se mudou desde último sync → saveRemoteState(userId, state)
-5. Supabase upsert na tabela `app_state` (coluna JSONB)
+5. Supabase upsert/delete nas tabelas relacionais (`materias`, `topicos`, `revisoes`, etc.)
 6. SyncStatus: idle → saving → saved (ou error)
 ```
+
+Importação de edital oficial é uma exceção controlada: o app chama a RPC
+`import_ready_edital(p_edital_id)` no Supabase, recarrega `loadRemoteState()` e
+então atualiza o estado local. O catálogo oficial vem das tabelas
+`editais_prontos`, `editais_prontos_materias` e `editais_prontos_topicos`.
 
 ---
 

@@ -119,6 +119,35 @@ isOnlineState: false → true
   → runSync() → coordinator vê online → tenta sync
 ```
 
+### Importação de edital oficial
+
+A importação de um edital oficial é uma exceção controlada ao fluxo normal de mutação local.
+
+Ela é feita primeiro no Supabase via RPC e só depois o estado local é atualizado:
+
+```text
+ReadyEditalsPanel
+  ↓
+page.tsx importReadyEdital()
+  ↓
+services/supabase/readyEditals.ts
+  importOfficialReadyEdital()
+  ↓
+rpc import_ready_edital(p_edital_id)
+  ↓
+loadRemoteState()
+  ↓
+applyAppState()
+  ↓
+persistLocally()
+  ↓
+lastSyncedStateRef = estado remoto serializado
+```
+
+Motivo: o catálogo oficial tem fonte de verdade no banco. A RPC usa `auth.uid()` e cria `materias`, `topicos` e atualização de `cronograma` de forma atômica do ponto de vista da aplicação.
+
+Depois do reload remoto, `lastSyncedStateRef` é atualizado para evitar que o sync full-state sobrescreva imediatamente o resultado da RPC.
+
 ## Invariantes do sistema
 
 1. `persistLocally` é sempre chamado ANTES de qualquer tentativa de rede
@@ -126,3 +155,4 @@ isOnlineState: false → true
 3. `syncInFlightRef` garante no máximo uma sync em voo por vez
 4. `pendingSyncRef` enfileira próxima sync enquanto uma está em voo
 5. Toda operação em `saveRemoteState` é idempotente (retry é seguro)
+6. Importação de edital oficial passa por RPC e recarrega o estado remoto antes de atualizar o backup local

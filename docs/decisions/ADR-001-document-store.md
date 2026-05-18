@@ -1,7 +1,18 @@
 # ADR-001 — Document Store (JSONB) em vez de tabelas relacionais
 
-**Status:** Aceito  
+**Status:** Superado  
 **Data:** 2025
+**Superado por:** schema relacional atual em `materias`, `topicos`, `revisoes`, `cronograma`, `metas`, `simulados`, `questoes` e `sessoes_estudo`.
+
+## Nota de 2026
+
+Este ADR registra uma decisão histórica. A implementação atual não usa mais `app_state` como fonte principal de persistência.
+
+O sync atual está documentado em:
+
+- `docs/flows/sync.md`
+- `docs/synchronization/ARCHITECTURE.md`
+- `docs/database/schema-overview.md`
 
 ## Contexto
 
