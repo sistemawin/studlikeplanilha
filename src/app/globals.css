@@ -53,6 +53,9 @@ body {
     "cv05" 1,
     "cv08" 1;
   font-optical-sizing: auto;
+  font-size: 15px;
+  line-height: 1.5;
+  letter-spacing: 0;
   -webkit-font-smoothing: antialiased;
   text-rendering: geometricPrecision;
   overflow-x: hidden;
@@ -84,10 +87,39 @@ button:active {
 }
 
 @layer base {
+  h1,
+  h2,
+  h3 {
+    letter-spacing: 0;
+    line-height: 1.15;
+    font-weight: 750;
+  }
+
+  p,
+  span,
+  label,
+  button,
+  input,
+  select,
+  textarea {
+    letter-spacing: 0;
+  }
+
   input,
   select,
   textarea {
     background-color: #ffffff;
+    line-height: 1.35;
+  }
+
+  label {
+    line-height: 1.35;
+  }
+
+  ::placeholder {
+    color: #94a3b8;
+    font-weight: 500;
+    opacity: 1;
   }
 }
 

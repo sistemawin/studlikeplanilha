@@ -1286,26 +1286,26 @@ export default function Home() {
       />
 
       {/* Desktop sidebar */}
-      <aside className="fixed left-0 top-0 hidden h-screen w-64 border-r border-white/10 bg-[linear-gradient(180deg,#0F172A_0%,#102A5C_58%,#1877F2_140%)] p-3 text-white shadow-2xl shadow-blue-950/20 xl:block">
-        <div className="mb-8 flex items-center gap-3 px-2 py-3">
-          <StudlikeLogo size={40} className="rounded-xl shadow-lg shadow-blue-950/25 ring-1 ring-white/15" />
+      <aside className="fixed left-0 top-0 hidden h-screen w-64 border-r border-white/70 bg-white/[0.92] p-3 text-slate-950 shadow-2xl shadow-slate-950/10 backdrop-blur-xl xl:block">
+        <div className="mb-6 flex items-center gap-3 rounded-2xl bg-slate-50 px-3 py-3 ring-1 ring-slate-900/5">
+          <StudlikeLogo size={40} className="rounded-xl shadow-sm shadow-slate-900/10 ring-1 ring-slate-900/5" />
           <div>
-            <p className="text-sm font-bold">Studlike</p>
-            <p className="text-xs font-medium text-blue-100/60">Plano de estudos</p>
+            <p className="text-sm font-bold leading-5 text-slate-950">Studlike</p>
+            <p className="text-xs font-semibold leading-4 text-slate-500">Plano de estudos</p>
           </div>
         </div>
-        <nav aria-label="Navegação principal">
-          <NavButton icon={HomeIcon} label="Dashboard" active={activeSection === "dashboard"} onClick={() => scrollToSection("dashboard")} />
+        <nav aria-label="Navegação principal" className="space-y-2">
+          <NavButton icon={HomeIcon} label="Início" active={activeSection === "dashboard"} onClick={() => scrollToSection("dashboard")} />
           <NavButton icon={ClipboardList} label="Edital" active={activeSection === "edital"} onClick={() => scrollToSection("edital")} />
-          <NavButton icon={RotateCcw} label="Revisões" active={activeSection === "revisoes"} onClick={() => scrollToSection("revisoes")} />
-          <NavButton icon={CalendarDays} label="Cronograma" active={activeSection === "cronograma"} onClick={() => scrollToSection("cronograma")} />
-          <NavButton icon={BarChart3} label="Simulados" active={activeSection === "simulados"} onClick={() => scrollToSection("simulados")} />
+          <NavButton icon={RotateCcw} label="Revisar" active={activeSection === "revisoes"} onClick={() => scrollToSection("revisoes")} />
+          <NavButton icon={CalendarDays} label="Plano" active={activeSection === "cronograma"} onClick={() => scrollToSection("cronograma")} />
+          <NavButton icon={BarChart3} label="Dados" active={activeSection === "simulados"} onClick={() => scrollToSection("simulados")} />
         </nav>
         <button
           type="button"
           onClick={openArchiveModal}
           aria-label="Apagar edital atual"
-          className="absolute bottom-4 left-3 right-3 flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/10 px-3 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-950/20 hover:bg-white/[0.16] focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+          className="absolute bottom-4 left-3 right-3 flex h-12 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 text-sm font-bold text-slate-600 shadow-sm shadow-slate-900/5 transition hover:bg-slate-100 hover:text-[#1877F2] focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
         >
           <Archive className="h-4 w-4" aria-hidden="true" />
           <span className="hidden xl:inline">Apagar edital</span>
