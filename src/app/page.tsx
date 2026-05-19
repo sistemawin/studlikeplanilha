@@ -4,9 +4,11 @@ import {
   Archive,
   AppWindow,
   BarChart3,
+  Calendar,
   CalendarDays,
   Check,
   ClipboardList,
+  Home,
   HomeIcon,
   Loader2,
   Menu,
@@ -1100,10 +1102,10 @@ export default function Home() {
   }
 
   const mobileNavItems = [
-    { icon: HomeIcon, label: "Início", target: "dashboard" as NavTarget, action: () => openMobileSection("dashboard") },
+    { icon: Home, label: "Início", target: "dashboard" as NavTarget, action: () => openMobileSection("dashboard") },
     { icon: ClipboardList, label: "Edital", target: "edital" as NavTarget, action: () => openMobileSection("edital") },
     { icon: RotateCcw, label: "Revisar", target: "revisoes" as NavTarget, action: () => openMobileSection("revisoes") },
-    { icon: CalendarDays, label: "Plano", target: "cronograma" as NavTarget, action: () => openMobileSection("cronograma") },
+    { icon: Calendar, label: "Plano", target: "cronograma" as NavTarget, action: () => openMobileSection("cronograma") },
   ];
   const hideMobileBottomNav =
     adminView ||
@@ -1132,7 +1134,7 @@ export default function Home() {
                 }`}
               >
                 <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${activeSection === "simulados" ? "bg-blue-50/70" : ""}`}>
-                  <BarChart3 className="h-5 w-5" strokeWidth={1.8} aria-hidden="true" />
+                  <BarChart3 size={22} strokeWidth={1.5} aria-hidden="true" />
                 </span>
                 <span className="min-w-0 truncate">Dados</span>
               </button>
@@ -1159,7 +1161,7 @@ export default function Home() {
                   }`}
                 >
                   <span className={`flex h-9 w-9 items-center justify-center rounded-full transition ${active ? "bg-blue-50/70" : "bg-transparent"}`}>
-                    <Icon className="h-6 w-6 shrink-0" strokeWidth={1.8} aria-hidden="true" />
+                    <Icon size={22} strokeWidth={1.5} aria-hidden="true" />
                   </span>
                   <span className={`w-full truncate whitespace-nowrap text-center text-[10px] leading-none tracking-normal ${active ? "font-semibold" : "font-medium"}`}>{item.label}</span>
                 </button>
@@ -1178,7 +1180,7 @@ export default function Home() {
               }`}
             >
               <span className={`flex h-9 w-9 items-center justify-center rounded-full transition ${mobileMoreOpen || activeSection === "simulados" ? "bg-blue-50/70" : "bg-transparent"}`}>
-                <Menu className="h-6 w-6 shrink-0" strokeWidth={1.8} aria-hidden="true" />
+                <Menu size={22} strokeWidth={1.5} aria-hidden="true" />
               </span>
               <span className={`w-full truncate whitespace-nowrap text-center text-[10px] leading-none tracking-normal ${mobileMoreOpen || activeSection === "simulados" ? "font-semibold" : "font-medium"}`}>Mais</span>
             </button>
