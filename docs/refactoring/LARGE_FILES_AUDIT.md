@@ -55,7 +55,7 @@ Alto. `page.tsx` é o orchestrador central com closure sobre todos os estados. Q
 - `hooks/useAdminActions.ts` — admin state + admin check effect + todas as funções admin
 - `hooks/useStudyActions.ts` — reviews, planner, exams, sessions, question logs, goals (14 funções)
 - `hooks/useTimerController.ts` — todas as 7 funções do timer incluindo finishSession
-- `hooks/useSubjectActions.ts` — addSubject, importReadyEdital, updateSubject, deleteSubject
+- `hooks/useSubjectActions.ts` — addSubject, updateSubject, deleteSubject
 - `hooks/useTopicActions.ts` — updateTopicStatus, updateTopicDifficulty, moveTopic, editTopicTitle (+ scheduleReviews interno)
 - `hooks/useTopicMutations.ts` — addTopicsFromText, deleteTopic (+ confirmDeleteTopic interno)
 

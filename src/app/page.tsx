@@ -39,7 +39,7 @@ import { useTimerController } from "@/hooks/useTimerController";
 import { useSubjectActions } from "@/hooks/useSubjectActions";
 import { useTopicActions } from "@/hooks/useTopicActions";
 import { useTopicMutations } from "@/hooks/useTopicMutations";
-import { importOfficialReadyEdital } from "@/services/supabase/readyEditals";
+import { replaceOfficialReadyEdital } from "@/services/supabase/readyEditals";
 import { defaultGoals, defaultSchedule } from "@/lib/seed";
 import type {
   AppState,
@@ -155,6 +155,9 @@ export default function Home() {
   const [archiveLoading, setArchiveLoading] = useState(false);
   const [archiveError, setArchiveError] = useState("");
   const [confirmDialog, setConfirmDialog] = useState<ConfirmDialogState | null>(null);
+  const [pendingReadyEdital, setPendingReadyEdital] = useState<ReadyEdital | null>(null);
+  const [replaceReadyEditalLoading, setReplaceReadyEditalLoading] = useState(false);
+  const [replaceReadyEditalError, setReplaceReadyEditalError] = useState("");
 
   // ── Subject modal state ───────────────────────────────────────────────────
   const [subjectModal, setSubjectModal] = useState<{ open: boolean; subject?: Subject }>({ open: false });
@@ -687,17 +690,36 @@ export default function Home() {
     return true;
   }
 
-  async function importReadyEdital(edital: ReadyEdital) {
+  function requestReplaceReadyEdital(edital: ReadyEdital) {
     if (preventReadOnlyAction()) return;
     if (!session) {
       setNotice("Entre na sua conta para importar editais oficiais.");
-      throw new Error("Usuário não autenticado.");
+      return;
+    }
+    setReplaceReadyEditalError("");
+    setPendingReadyEdital(edital);
+  }
+
+  function closeReplaceReadyEditalDialog() {
+    if (replaceReadyEditalLoading) return;
+    setPendingReadyEdital(null);
+    setReplaceReadyEditalError("");
+  }
+
+  async function confirmReplaceReadyEdital() {
+    if (!pendingReadyEdital) return;
+    if (!session) {
+      setNotice("Entre na sua conta para substituir editais oficiais.");
+      return;
     }
 
+    const edital = pendingReadyEdital;
     const supabase = getSupabaseBrowserClient();
+    setReplaceReadyEditalLoading(true);
+    setReplaceReadyEditalError("");
     try {
       setSyncStatus("saving");
-      await importOfficialReadyEdital(supabase, edital.id);
+      await replaceOfficialReadyEdital(supabase, edital.id);
       const remote = await loadRemoteState(supabase, session.user.id);
       applyAppState(remote);
       persistLocally(session.user.id, remote);
@@ -708,15 +730,18 @@ export default function Home() {
       setRemoteReady(true);
       setRemoteError("");
       setSyncStatus("saved");
-      setNotice(`${edital.title} importado com segurança.`);
+      setPendingReadyEdital(null);
+      setNotice("Edital substituído com sucesso.");
       if (savedTimeoutRef.current) window.clearTimeout(savedTimeoutRef.current);
       savedTimeoutRef.current = setTimeout(() => setSyncStatus("idle"), 2000);
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Não foi possível importar o edital oficial.";
+      const message = err instanceof Error ? err.message : "Não foi possível substituir o edital oficial.";
       setSyncStatus("error");
       setRemoteError(message);
+      setReplaceReadyEditalError(message);
       setNotice(message);
-      throw err;
+    } finally {
+      setReplaceReadyEditalLoading(false);
     }
   }
 
@@ -1086,6 +1111,7 @@ export default function Home() {
     subjectModal.open ||
     suggestionOpen ||
     archiveModalOpen ||
+    Boolean(pendingReadyEdital) ||
     Boolean(confirmDialog) ||
     searchOpen ||
     sessionHistoryOpen ||
@@ -1204,7 +1230,7 @@ export default function Home() {
     readyEditalsLoading,
     readyEditalsError,
     onRetryReadyEditals: reloadReadyEditals,
-    onImportReadyEdital: importReadyEdital,
+    onImportReadyEdital: requestReplaceReadyEdital,
   };
 
   const scheduleProps: ComponentProps<typeof Schedule> = {
@@ -1330,6 +1356,22 @@ export default function Home() {
         confirmLabel={confirmDialog?.confirmLabel}
         onConfirm={confirmPendingAction}
         onClose={closeConfirmDialog}
+      />
+
+      <ConfirmDialog
+        open={Boolean(pendingReadyEdital)}
+        title="Substituir edital atual?"
+        description="Ao adicionar este edital, seu plano atual será substituído. As matérias, tópicos, progresso e revisões do edital anterior serão apagados para manter apenas um edital ativo por vez."
+        details={[
+          "Também serão removidos cronograma, ciclos, questões e sessões de estudo vinculadas ao edital anterior.",
+          "Simulados e metas configuradas serão preservados; o progresso diário das metas será reiniciado.",
+          replaceReadyEditalError ? `Erro: ${replaceReadyEditalError}` : "",
+        ].filter(Boolean).join("\n\n")}
+        confirmLabel="Substituir edital"
+        cancelLabel="Cancelar"
+        loading={replaceReadyEditalLoading}
+        onConfirm={() => { void confirmReplaceReadyEdital(); }}
+        onClose={closeReplaceReadyEditalDialog}
       />
 
       {/* Desktop sidebar */}

@@ -58,9 +58,9 @@ for select using (
 )
 ```
 
-## Importação segura
+## Substituição segura
 
-A RPC `import_ready_edital(p_edital_id text)` usa:
+A RPC `replace_ready_edital(p_edital_id text)` usa:
 
 ```sql
 v_user_id uuid := auth.uid();
@@ -68,7 +68,7 @@ v_user_id uuid := auth.uid();
 
 O cliente nunca envia `user_id`.
 
-Isso evita importação para outro usuário e mantém a regra de posse dentro do banco.
+Isso evita substituição para outro usuário e mantém a regra de posse dentro do banco.
 
 ## Regras de manutenção
 

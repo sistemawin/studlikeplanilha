@@ -94,10 +94,11 @@ app/page.tsx                ← estado global (useState para tudo)
 6. SyncStatus: idle → saving → saved (ou error)
 ```
 
-Importação de edital oficial é uma exceção controlada: o app chama a RPC
-`import_ready_edital(p_edital_id)` no Supabase, recarrega `loadRemoteState()` e
-então atualiza o estado local. O catálogo oficial vem das tabelas
+Substituição de edital oficial é uma exceção controlada: o app confirma a troca
+com o usuário, chama a RPC `replace_ready_edital(p_edital_id)` no Supabase,
+recarrega `loadRemoteState()` e então atualiza o estado local. O catálogo oficial vem das tabelas
 `editais_prontos`, `editais_prontos_materias` e `editais_prontos_topicos`.
+O StudLike Foco mantém apenas um edital ativo por usuário.
 
 ---
 

@@ -119,21 +119,21 @@ isOnlineState: false → true
   → runSync() → coordinator vê online → tenta sync
 ```
 
-### Importação de edital oficial
+### Substituição de edital oficial
 
-A importação de um edital oficial é uma exceção controlada ao fluxo normal de mutação local.
+A troca de um edital oficial é uma exceção controlada ao fluxo normal de mutação local.
 
-Ela é feita primeiro no Supabase via RPC e só depois o estado local é atualizado:
+Ela é confirmada pelo usuário, feita primeiro no Supabase via RPC e só depois o estado local é atualizado:
 
 ```text
 ReadyEditalsPanel
   ↓
-page.tsx importReadyEdital()
+page.tsx confirmReplaceReadyEdital()
   ↓
 services/supabase/readyEditals.ts
-  importOfficialReadyEdital()
+  replaceOfficialReadyEdital()
   ↓
-rpc import_ready_edital(p_edital_id)
+rpc replace_ready_edital(p_edital_id)
   ↓
 loadRemoteState()
   ↓
@@ -144,7 +144,7 @@ persistLocally()
 lastSyncedStateRef = estado remoto serializado
 ```
 
-Motivo: o catálogo oficial tem fonte de verdade no banco. A RPC usa `auth.uid()` e cria `materias`, `topicos` e atualização de `cronograma` de forma atômica do ponto de vista da aplicação.
+Motivo: o catálogo oficial tem fonte de verdade no banco e o produto permite apenas um edital ativo por usuário. A RPC usa `auth.uid()`, remove os dados vinculados ao edital anterior, cria `materias`/`topicos` do novo edital e atualiza o `cronograma` de forma transacional.
 
 Depois do reload remoto, `lastSyncedStateRef` é atualizado para evitar que o sync full-state sobrescreva imediatamente o resultado da RPC.
 

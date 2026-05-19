@@ -160,8 +160,8 @@ export async function listReadyEditals(supabase: SupabaseClient): Promise<ReadyE
   );
 }
 
-export async function importOfficialReadyEdital(supabase: SupabaseClient, editalId: string) {
-  const { data, error } = await supabase.rpc("import_ready_edital", { p_edital_id: editalId });
+export async function replaceOfficialReadyEdital(supabase: SupabaseClient, editalId: string) {
+  const { data, error } = await supabase.rpc("replace_ready_edital", { p_edital_id: editalId });
   if (error) throw error;
   return data as { editalId: string; materias: number; topicos: number } | null;
 }

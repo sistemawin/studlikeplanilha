@@ -75,17 +75,19 @@ Tópicos oficiais por matéria:
 
 ## RPCs
 
-### `import_ready_edital(p_edital_id text)`
+### `replace_ready_edital(p_edital_id text)`
 
-Importa um edital oficial para o usuário autenticado.
+Substitui o edital ativo do usuário autenticado por um edital oficial.
 
 Responsabilidades:
 
 - Usa `auth.uid()` internamente.
 - Lê matérias/tópicos oficiais do catálogo.
+- Remove matérias, tópicos, revisões, questões e sessões vinculadas ao edital anterior.
 - Cria novas linhas em `materias` e `topicos`.
-- Acrescenta as novas matérias em `cronograma.configuracao.ciclos`.
-- Preserva `cronograma.configuracao.provas`.
+- Recria `cronograma.configuracao.ciclos` apenas com as novas matérias.
+- Limpa provas antigas do cronograma.
+- Reseta o progresso diário das metas, preservando os objetivos.
 - Retorna contagem de matérias e tópicos importados.
 
 O cliente não deve inserir matérias/tópicos oficiais manualmente quando a origem é o catálogo oficial. Use a RPC.

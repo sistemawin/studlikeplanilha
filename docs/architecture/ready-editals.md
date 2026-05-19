@@ -39,19 +39,21 @@ ReadyEditalsPanel
 EditalCard / EditalFeaturedCard
 ```
 
-A importação usa RPC:
+A substituição do edital ativo usa RPC:
 
 ```text
-Usuário clica em "Adicionar"
+Usuário clica em "Adicionar ao plano"
   ↓
-page.tsx importReadyEdital(edital)
+Modal "Substituir edital atual?"
+  ↓
+page.tsx confirmReplaceReadyEdital()
   ↓
 services/supabase/readyEditals.ts
-  importOfficialReadyEdital()
+  replaceOfficialReadyEdital()
   ↓
-Supabase RPC import_ready_edital(p_edital_id)
+Supabase RPC replace_ready_edital(p_edital_id)
   ↓
-materias + topicos + cronograma
+limpeza do edital atual + materias + topicos + cronograma
   ↓
 loadRemoteState()
   ↓
@@ -62,12 +64,12 @@ applyAppState() + persistLocally()
 
 | Camada | Responsabilidade |
 |---|---|
-| `supabase/ready_editals_baturite.sql` | Schema, seed, RLS e RPC do catálogo oficial |
+| `supabase/ready_editals_baturite.sql` | Schema, seed, RLS e RPC de substituição do catálogo oficial |
 | `src/services/supabase/readyEditals.ts` | Queries, RPC e mapper Supabase → `ReadyEdital` |
 | `src/hooks/useReadyEditals.ts` | Estado de carregamento/erro/retry do catálogo |
 | `ReadyEditalsPanel` | Busca local, filtros, agrupamento visual e renderização |
 | `EditalCard` / `EditalFeaturedCard` | Exibir edital e disparar callback de importação |
-| `page.tsx` | Orquestrar importação, recarregar estado remoto e persistir localmente |
+| `page.tsx` | Confirmar substituição, recarregar estado remoto e persistir localmente |
 | `src/lib/readyEditals.ts` | Apenas contratos TypeScript; não contém dados oficiais |
 
 ## Schema do catálogo
@@ -93,25 +95,32 @@ editais_prontos_topicos
 
 Somente editais com `publicado = true` devem aparecer no catálogo.
 
-## Importação por RPC
+## Substituição por RPC
 
-A RPC `import_ready_edital(p_edital_id text)` é a única entrada oficial de importação.
+A RPC `replace_ready_edital(p_edital_id text)` é a única entrada oficial para trocar o edital ativo.
 
 Motivos:
 
 - Usa `auth.uid()` internamente.
 - O cliente não envia `user_id`.
+- Remove o edital atual do usuário antes de importar o novo.
 - Cria matérias e tópicos dentro do banco.
 - Gera IDs novos.
-- Preserva dados existentes.
-- Atualiza o ciclo do cronograma.
-- Reduz risco de importação parcial client-side.
+- Mantém apenas um edital ativo por usuário.
+- Recria o ciclo do cronograma com as novas matérias.
+- Reduz risco de estado parcial ou mistura de editais no cliente.
 
 Depois da RPC, o frontend chama `loadRemoteState()` e reaplica todo o estado do usuário. Isso mantém a UI consistente com o banco e evita duplicar lógica de criação de matérias/tópicos no cliente.
 
+## Regra de produto
+
+O StudLike Foco mantém apenas um edital ativo por usuário.
+
+Ao escolher outro edital oficial, o app abre uma confirmação explícita antes da troca. A RPC remove matérias, tópicos, revisões, questões e sessões de estudo vinculadas ao edital anterior, reseta o progresso diário das metas e recria o cronograma para o novo edital. Configurações independentes, como o objetivo das metas e simulados registrados, são preservadas.
+
 ## Sync após importação
 
-A importação oficial não depende do debounce normal de sync para gravar os dados principais, porque a RPC já grava no Supabase.
+A substituição oficial não depende do debounce normal de sync para gravar os dados principais, porque a RPC já grava no Supabase.
 
 Depois da RPC:
 
@@ -120,7 +129,7 @@ Depois da RPC:
 3. `persistLocally()` atualiza o backup offline.
 4. `lastSyncedStateRef` recebe o estado serializado.
 
-Isso evita que o próximo sync tente sobrescrever imediatamente o resultado recém-importado.
+Isso evita que o próximo sync tente sobrescrever imediatamente o resultado recém-substituído.
 
 ## Fallback e offline
 
@@ -142,7 +151,7 @@ Estratégia futura: cache local separado do catálogo oficial, com metadados de 
 3. Inserir tópicos em `editais_prontos_topicos`.
 4. Marcar `publicado = true`.
 5. Validar listagem no app.
-6. Validar importação por RPC.
+6. Validar substituição por RPC.
 
 Não adicionar editais oficiais em TypeScript.
 
@@ -150,7 +159,7 @@ Não adicionar editais oficiais em TypeScript.
 
 - A UI depende de colunas visuais existirem no Supabase (`categoria`, `badges`, `popularidade`, etc.).
 - O hook não mantém cache offline do catálogo remoto.
-- A RPC atualmente importa novamente se o usuário clicar duas vezes no mesmo edital; isso é permitido, mas pode ser refinado futuramente.
+- A substituição apaga o edital anterior por design; ações de undo exigiriam histórico/versionamento futuro.
 - O painel admin de catálogo ainda não existe.
 
 ## Próximos passos
@@ -158,5 +167,5 @@ Não adicionar editais oficiais em TypeScript.
 - Criar painel admin para publicar/despublicar editais.
 - Adicionar cache versionado do catálogo oficial para leitura offline.
 - Criar testes de mapper e service.
-- Criar proteção opcional contra importação duplicada do mesmo edital por usuário.
+- Criar histórico de trocas de edital, se o produto precisar de auditoria ou desfazer.
 - Evoluir o RPC para retornar IDs criados, se a UI precisar de navegação pós-importação mais precisa.

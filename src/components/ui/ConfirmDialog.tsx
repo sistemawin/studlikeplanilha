@@ -73,7 +73,7 @@ export function ConfirmDialog({
         </div>
 
         {details && (
-          <p className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-3 text-sm font-medium leading-6 text-amber-900">
+          <p className="mt-4 whitespace-pre-line rounded-2xl border border-amber-200 bg-amber-50 p-3 text-sm font-medium leading-6 text-amber-900">
             {details}
           </p>
         )}

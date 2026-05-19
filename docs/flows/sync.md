@@ -58,20 +58,22 @@ persistLocally()
 
 Se o remoto falhar, o app tenta `loadPersisted(userId)`.
 
-## Importação de edital oficial
+## Substituição de edital oficial
 
-Importação de edital oficial não usa o fluxo client-side antigo de criar matérias/tópicos no React.
+Substituição de edital oficial não usa o fluxo client-side antigo de criar matérias/tópicos no React.
 
 Fluxo atual:
 
 ```text
 ReadyEditalsPanel
   ↓
-page.tsx importReadyEdital(edital)
+page.tsx abre confirmação
   ↓
-importOfficialReadyEdital(supabase, edital.id)
+confirmReplaceReadyEdital()
   ↓
-rpc import_ready_edital(p_edital_id)
+replaceOfficialReadyEdital(supabase, edital.id)
+  ↓
+rpc replace_ready_edital(p_edital_id)
   ↓
 loadRemoteState()
   ↓
@@ -82,7 +84,7 @@ persistLocally()
 lastSyncedStateRef = serializeAppState(remote)
 ```
 
-Esse caminho evita inconsistência: o banco grava a importação e o frontend recarrega o estado canônico.
+Esse caminho evita inconsistência: o banco remove o edital atual, importa o novo edital de forma atômica para o usuário autenticado e o frontend recarrega o estado canônico.
 
 ## Offline
 

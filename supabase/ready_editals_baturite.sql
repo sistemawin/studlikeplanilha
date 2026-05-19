@@ -249,7 +249,9 @@ insert into public.editais_prontos_topicos (
   ('gcm-baturite-2026-especificos-016', 'gcm-baturite-2026-especificos', 'Políticas públicas de segurança cidadã e prevenção da violência', 'Difícil', 16),
   ('gcm-baturite-2026-especificos-017', 'gcm-baturite-2026-especificos', 'Legislação municipal pertinente ao exercício do cargo', 'Difícil', 17);
 
-create or replace function public.import_ready_edital(p_edital_id text)
+drop function if exists public.import_ready_edital(text);
+
+create or replace function public.replace_ready_edital(p_edital_id text)
 returns jsonb
 language plpgsql
 security invoker
@@ -260,6 +262,9 @@ declare
   v_subject record;
   v_subject_id uuid;
   v_subject_ids uuid[] := '{}';
+  v_previous_subject_ids uuid[] := '{}';
+  v_previous_topic_ids uuid[] := '{}';
+  v_previous_review_ids uuid[] := '{}';
   v_subject_count integer := 0;
   v_topic_count integer := 0;
   v_inserted_topics integer := 0;
@@ -271,9 +276,48 @@ begin
     raise exception 'Usuário não autenticado.';
   end if;
 
-  if not exists (select 1 from public.editais_prontos where id = p_edital_id) then
+  if not exists (
+    select 1
+    from public.editais_prontos
+    where id = p_edital_id
+      and publicado = true
+  ) then
     raise exception 'Edital pronto não encontrado: %', p_edital_id;
   end if;
+
+  select coalesce(array_agg(id), '{}'::uuid[])
+    into v_previous_subject_ids
+  from public.materias
+  where user_id = v_user_id;
+
+  select coalesce(array_agg(t.id), '{}'::uuid[])
+    into v_previous_topic_ids
+  from public.topicos as t
+  join public.materias as m on m.id = t.materia_id
+  where m.user_id = v_user_id;
+
+  select coalesce(array_agg(r.id), '{}'::uuid[])
+    into v_previous_review_ids
+  from public.revisoes as r
+  join public.topicos as t on t.id = r.topico_id
+  join public.materias as m on m.id = t.materia_id
+  where m.user_id = v_user_id;
+
+  delete from public.sessoes_estudo
+  where user_id = v_user_id
+    and (
+      materia_id = any(v_previous_subject_ids)
+      or topico_id = any(v_previous_topic_ids)
+      or review_id = any(v_previous_review_ids)
+    );
+
+  delete from public.materias
+  where user_id = v_user_id;
+
+  update public.metas
+  set valor_atual = 0,
+      data_referencia = current_date
+  where user_id = v_user_id;
 
   for v_subject in
     select *
@@ -313,17 +357,15 @@ begin
   select coalesce(jsonb_agg(value), '[]'::jsonb)
     into v_cycles
   from (
-    select jsonb_array_elements_text(coalesce(v_schedule->'ciclos', '[]'::jsonb)) as value
-    union all
     select unnest(v_subject_ids)::text as value
   ) as cycle_values;
 
   v_schedule := jsonb_build_object(
     'modo', coalesce(v_schedule->>'modo', 'ciclos'),
     'horasDia', coalesce(v_schedule->'horasDia', '0'::jsonb),
-    'semanal', coalesce(v_schedule->'semanal', '{}'::jsonb),
+    'semanal', '{}'::jsonb,
     'ciclos', v_cycles,
-    'provas', coalesce(v_schedule->'provas', '[]'::jsonb)
+    'provas', '[]'::jsonb
   );
 
   if v_schedule_id is null then
@@ -345,5 +387,5 @@ begin
 end;
 $$;
 
-revoke all on function public.import_ready_edital(text) from public;
-grant execute on function public.import_ready_edital(text) to authenticated;
+revoke all on function public.replace_ready_edital(text) from public;
+grant execute on function public.replace_ready_edital(text) to authenticated;
