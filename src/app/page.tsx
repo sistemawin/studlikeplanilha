@@ -1120,18 +1120,20 @@ export default function Home() {
     ? createPortal(
         <>
           {!hideMobileBottomNav && mobileMoreOpen && (
-            <div className="fixed inset-x-3 bottom-[calc(5.4rem+env(safe-area-inset-bottom))] z-40 rounded-2xl border border-white/80 bg-white/95 p-2 shadow-2xl shadow-slate-950/16 ring-1 ring-slate-900/5 backdrop-blur-xl xl:hidden">
+            <div className="fixed bottom-[calc(6.35rem+env(safe-area-inset-bottom))] left-1/2 z-40 w-[92%] max-w-md -translate-x-1/2 rounded-[24px] border border-white/40 bg-white/75 p-2 shadow-[0_8px_32px_0_rgba(0,0,0,0.06)] ring-1 ring-black/[0.04] backdrop-blur-xl xl:hidden">
               <button
                 type="button"
                 onClick={() => openMobileSection("simulados")}
                 aria-current={activeSection === "simulados" ? "page" : undefined}
-                className={`flex h-12 w-full items-center gap-3 rounded-xl px-3 text-left text-sm font-bold transition ${
+                className={`flex h-12 w-full items-center gap-3 rounded-2xl px-3 text-left text-sm font-semibold transition ${
                   activeSection === "simulados"
-                    ? "bg-blue-50 text-[#1877F2] ring-1 ring-blue-100"
-                    : "text-slate-600 hover:bg-slate-100 hover:text-[#1877F2]"
+                    ? "text-[#1877F2]"
+                    : "text-slate-500 hover:bg-white/50 hover:text-[#1877F2]"
                 }`}
               >
-                <BarChart3 className="h-5 w-5 shrink-0" aria-hidden="true" />
+                <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${activeSection === "simulados" ? "bg-blue-50/70" : ""}`}>
+                  <BarChart3 className="h-5 w-5" strokeWidth={1.8} aria-hidden="true" />
+                </span>
                 <span className="min-w-0 truncate">Dados</span>
               </button>
             </div>
@@ -1139,7 +1141,7 @@ export default function Home() {
 
           <nav
             aria-label="Navegação mobile"
-            className={`${hideMobileBottomNav ? "hidden" : "grid"} mobile-bottom-nav h-[calc(72px+env(safe-area-inset-bottom))] grid-cols-5 overflow-hidden border-t border-white/70 bg-white/[0.92] px-2 pb-[calc(0.45rem+env(safe-area-inset-bottom))] pt-2 shadow-[0_-14px_34px_rgba(15,23,42,0.14)] backdrop-blur-xl xl:hidden`}
+            className={`${hideMobileBottomNav ? "hidden" : "grid"} mobile-bottom-nav fixed bottom-[calc(1.25rem+env(safe-area-inset-bottom))] left-1/2 h-[72px] w-[92%] max-w-md -translate-x-1/2 grid-cols-5 overflow-hidden rounded-[24px] border border-white/40 bg-white/75 px-2 py-2 shadow-[0_8px_32px_0_rgba(0,0,0,0.06)] ring-1 ring-black/[0.04] backdrop-blur-xl xl:hidden`}
           >
             {mobileNavItems.map((item) => {
               const Icon = item.icon;
@@ -1150,14 +1152,16 @@ export default function Home() {
                   type="button"
                   onClick={item.action}
                   aria-current={active ? "page" : undefined}
-                  className={`flex h-full min-w-0 flex-1 flex-col items-center justify-center gap-1 overflow-hidden rounded-2xl px-0.5 py-2 transition ${
+                  className={`flex h-full min-w-0 flex-1 flex-col items-center justify-center gap-1 overflow-hidden rounded-2xl px-0.5 py-1.5 transition ${
                     active
-                      ? "bg-blue-50 text-[#1877F2] shadow-sm ring-1 ring-blue-100"
-                      : "text-slate-500 hover:bg-slate-100 hover:text-[#1877F2]"
+                      ? "text-[#1877F2]"
+                      : "text-slate-400 hover:text-[#1877F2]"
                   }`}
                 >
-                  <Icon className="h-6 w-6 shrink-0" aria-hidden="true" />
-                  <span className="w-full truncate whitespace-nowrap text-center text-[11px] font-medium leading-none tracking-normal">{item.label}</span>
+                  <span className={`flex h-9 w-9 items-center justify-center rounded-full transition ${active ? "bg-blue-50/70" : "bg-transparent"}`}>
+                    <Icon className="h-6 w-6 shrink-0" strokeWidth={1.8} aria-hidden="true" />
+                  </span>
+                  <span className={`w-full truncate whitespace-nowrap text-center text-[10px] leading-none tracking-normal ${active ? "font-semibold" : "font-medium"}`}>{item.label}</span>
                 </button>
               );
             })}
@@ -1167,14 +1171,16 @@ export default function Home() {
               onClick={() => setMobileMoreOpen((open) => !open)}
               aria-expanded={mobileMoreOpen}
               aria-label="Abrir mais opções"
-              className={`flex h-full min-w-0 flex-1 flex-col items-center justify-center gap-1 overflow-hidden rounded-2xl px-0.5 py-2 transition ${
+              className={`flex h-full min-w-0 flex-1 flex-col items-center justify-center gap-1 overflow-hidden rounded-2xl px-0.5 py-1.5 transition ${
                 mobileMoreOpen || activeSection === "simulados"
-                  ? "bg-blue-50 text-[#1877F2] shadow-sm ring-1 ring-blue-100"
-                  : "text-slate-500 hover:bg-slate-100 hover:text-[#1877F2]"
+                  ? "text-[#1877F2]"
+                  : "text-slate-400 hover:text-[#1877F2]"
               }`}
             >
-              <Menu className="h-6 w-6 shrink-0" aria-hidden="true" />
-              <span className="w-full truncate whitespace-nowrap text-center text-[11px] font-medium leading-none tracking-normal">Mais</span>
+              <span className={`flex h-9 w-9 items-center justify-center rounded-full transition ${mobileMoreOpen || activeSection === "simulados" ? "bg-blue-50/70" : "bg-transparent"}`}>
+                <Menu className="h-6 w-6 shrink-0" strokeWidth={1.8} aria-hidden="true" />
+              </span>
+              <span className={`w-full truncate whitespace-nowrap text-center text-[10px] leading-none tracking-normal ${mobileMoreOpen || activeSection === "simulados" ? "font-semibold" : "font-medium"}`}>Mais</span>
             </button>
           </nav>
         </>,
@@ -1388,7 +1394,7 @@ export default function Home() {
       </aside>
 
       {/* Main content */}
-      <section className="min-w-0 w-full max-w-full overflow-x-hidden pb-[calc(5.5rem+env(safe-area-inset-bottom))] xl:ml-64 xl:w-auto xl:pb-0">
+      <section className="min-w-0 w-full max-w-full overflow-x-hidden pb-[calc(7rem+env(safe-area-inset-bottom))] xl:ml-64 xl:w-auto xl:pb-0">
         {updateAvailable && (
           <div className="sticky top-0 z-30 border-b border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800 shadow-sm md:px-6 xl:px-8">
             <div className="mx-auto flex max-w-[1600px] flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
