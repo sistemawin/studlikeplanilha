@@ -1408,27 +1408,41 @@ export default function Home() {
           </div>
         )}
         <header className="sticky top-0 z-20 w-full border-b border-white/70 bg-white/[0.82] px-4 py-3 shadow-sm shadow-slate-900/5 backdrop-blur-xl md:px-6 md:py-4 xl:px-8">
-          <div className="mx-auto flex max-w-[1600px] flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-            <div className="min-w-0">
-              <div className="flex items-center gap-3">
-                <StudlikeLogo size={44} className="shrink-0 rounded-xl shadow-sm shadow-slate-900/10 ring-1 ring-slate-900/5 xl:hidden" />
-                <div className="min-w-0">
-                  <p className="bg-gradient-to-r from-[#1877F2] via-[#1B74E4] to-[#0F172A] bg-clip-text text-[11px] font-bold uppercase tracking-[0.16em] text-transparent">
-                    {adminView ? "Admin" : readOnlyUser ? "Modo leitura" : SECTION_TITLE[activeSection]}
-                  </p>
-                  <h1 className="mt-0.5 truncate text-2xl font-extrabold tracking-tight text-slate-950 sm:text-3xl">
-                    {adminView ? "Área admin" : readOnlyUser ? readOnlyUser.email : "StudLike Foco"}
-                  </h1>
+          <div className="mx-auto flex max-w-[1600px] flex-col gap-3">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-3">
+                  <StudlikeLogo size={44} className="shrink-0 rounded-xl shadow-sm shadow-slate-900/10 ring-1 ring-slate-900/5 xl:hidden" />
+                  <div className="min-w-0">
+                    <p className="bg-gradient-to-r from-[#1877F2] via-[#1B74E4] to-[#0F172A] bg-clip-text text-[11px] font-bold uppercase tracking-[0.16em] text-transparent">
+                      {adminView ? "Admin" : readOnlyUser ? "Modo leitura" : SECTION_TITLE[activeSection]}
+                    </p>
+                    <h1 className="mt-0.5 truncate text-2xl font-extrabold tracking-tight text-slate-950 sm:text-3xl">
+                      {adminView ? "Área admin" : readOnlyUser ? readOnlyUser.email : "StudLike Foco"}
+                    </h1>
+                  </div>
                 </div>
+                <p className="mt-2 hidden text-sm leading-6 text-slate-500 xl:block">
+                  Alertas, edital verticalizado e metas do dia em uma tela.
+                </p>
+                <p className="mt-1 truncate text-xs font-medium text-slate-400 sm:mt-2">
+                  {currentUserEmail}
+                </p>
               </div>
-              <p className="mt-2 hidden text-sm leading-6 text-slate-500 xl:block">
-                Alertas, edital verticalizado e metas do dia em uma tela.
-              </p>
-              <p className="mt-1 truncate text-xs font-medium text-slate-400 sm:mt-2">
-                {currentUserEmail}
-              </p>
+              <Link
+                href="/profile"
+                aria-label="Abrir perfil e conta"
+                className="mt-0.5 shrink-0 rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
+              >
+                <ProfileAvatar
+                  name={currentUserName}
+                  email={currentUserEmail}
+                  avatarUrl={currentUserAvatar}
+                  sizeClass="h-10 w-10 md:h-11 md:w-11 text-sm"
+                />
+              </Link>
             </div>
-            <div className="flex min-w-0 flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               {/* Sync status indicator */}
               {syncStatus !== "idle" && (
                 <span
@@ -1504,18 +1518,6 @@ export default function Home() {
                 <span className="truncate">Atualizar</span>
               </button>
 
-              <Link
-                href="/profile"
-                aria-label="Abrir perfil e conta"
-                className="flex h-11 w-11 items-center justify-center rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
-              >
-                <ProfileAvatar
-                  name={currentUserName}
-                  email={currentUserEmail}
-                  avatarUrl={currentUserAvatar}
-                  size="sm"
-                />
-              </Link>
             </div>
           </div>
         </header>

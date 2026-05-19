@@ -7,6 +7,7 @@ type Props = {
   email?: string | null;
   avatarUrl?: string | null;
   size?: "sm" | "lg";
+  sizeClass?: string;
 };
 
 function getInitials(name?: string | null, email?: string | null) {
@@ -21,8 +22,8 @@ function getInitials(name?: string | null, email?: string | null) {
     .join("") || "U";
 }
 
-export function ProfileAvatar({ name, email, avatarUrl, size = "lg" }: Props) {
-  const dimension = size === "lg" ? "h-24 w-24 text-2xl" : "h-11 w-11 text-sm";
+export function ProfileAvatar({ name, email, avatarUrl, size = "lg", sizeClass }: Props) {
+  const dimension = sizeClass ?? (size === "lg" ? "h-24 w-24 text-2xl" : "h-11 w-11 text-sm");
   const iconSize = size === "lg" ? "h-9 w-9" : "h-5 w-5";
   const initials = getInitials(name, email);
 
