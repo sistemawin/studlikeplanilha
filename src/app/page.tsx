@@ -9,15 +9,14 @@ import {
   ClipboardList,
   HomeIcon,
   Loader2,
-  LogOut,
   Menu,
   Maximize2,
   MessageSquarePlus,
   RefreshCw,
   RotateCcw,
-  Search,
   ShieldCheck,
 } from "lucide-react";
+import Link from "next/link";
 import { StudlikeLogo } from "@/components/ui/StudlikeLogo";
 import { AppBrand } from "@/components/ui/AppBrand";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -26,7 +25,7 @@ import { createPortal } from "react-dom";
 import { getSupabaseBrowserClient, getSupabasePasswordVerifierClient } from "@/services/supabase/client";
 import { loadRemoteState, serializeAppState } from "@/services/supabase/sync";
 import { syncAppState } from "@/services/sync/coordinator";
-import { persistLocally, loadPersisted, loadLastPersisted, clearPersisted } from "@/services/persistence/local";
+import { persistLocally, loadPersisted, loadLastPersisted } from "@/services/persistence/local";
 import { hasPendingSync } from "@/services/queue/syncQueue";
 import { addDays, feedbackToneFromMessage, formatTimer, isoDate, pct } from "@/lib/utils";
 import { useScrollLock } from "@/hooks/useScrollLock";
@@ -71,8 +70,8 @@ import { SuggestionModal } from "@/features/admin/components/SuggestionModal";
 import { ArchiveEditalModal } from "@/features/subjects/components/ArchiveEditalModal";
 import { AdminPanel } from "@/features/admin/components/AdminPanel";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
-import { GlobalSearch } from "@/components/shared/GlobalSearch";
 import { AppFeedbackToast, type AppFeedback } from "@/components/shared/AppFeedbackToast";
+import { ProfileAvatar } from "@/features/profile/components/ProfileAvatar";
 
 const SYNC_DEBOUNCE_MS = 700;
 const DAY_KEYS = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
@@ -131,7 +130,6 @@ export default function Home() {
     authMessage,
     changeAuthMode,
     submitAuth,
-    signOut: signOutAuth,
   } = useAuthState(setNotice);
 
   const {
@@ -140,14 +138,6 @@ export default function Home() {
     readyEditalsError,
     reloadReadyEditals,
   } = useReadyEditals(Boolean(session));
-
-  // Wrap signOut to clear persisted local data on explicit logout.
-  // clearPersisted() must NOT be called anywhere else (e.g. when session
-  // becomes null offline) because it would destroy the offline fallback data.
-  function signOut() {
-    clearPersisted();
-    void signOutAuth();
-  }
 
   // ── Archive modal state ──────────────────────────────────────────────────
   const [archiveModalOpen, setArchiveModalOpen] = useState(false);
@@ -201,9 +191,6 @@ export default function Home() {
   const [updateAvailable, setUpdateAvailable] = useState(false);
   const [refreshingApp, setRefreshingApp] = useState(false);
   const currentAppVersionRef = useRef("");
-
-  // ── Global search state ───────────────────────────────────────────────────
-  const [searchOpen, setSearchOpen] = useState(false);
 
   // ── Modal visibility for hideMobileBottomNav ──────────────────────────────
   const [sessionHistoryOpen, setSessionHistoryOpen] = useState(false);
@@ -453,7 +440,7 @@ export default function Home() {
       setReadOnlyUser(null);
       lastSyncedStateRef.current = "";
       // clearPersisted() is intentionally NOT called here.
-      // It is only called from signOut() so that offline data survives
+      // It is only called from the profile logout flow so that offline data survives
       // whenever session becomes null for non-logout reasons (token refresh
       // failure, getSession() timeout, etc.).
       return;
@@ -626,6 +613,19 @@ export default function Home() {
   const hourGoal = goals.find((g) => g.tipo === "horas") ?? { id: "", tipo: "horas" as const, valorObjetivo: 0, valorAtual: 0, dataReferencia: todayIso };
   const currentUserId = session?.user.id ?? offlineUserId ?? "";
   const currentUserEmail = session?.user.email ?? (offlineUserId ? "Modo offline" : "");
+  const currentUserMetadata = (session?.user.user_metadata ?? {}) as Record<string, unknown>;
+  const currentUserName =
+    typeof currentUserMetadata.name === "string" && currentUserMetadata.name.trim()
+      ? currentUserMetadata.name.trim()
+      : typeof currentUserMetadata.full_name === "string" && currentUserMetadata.full_name.trim()
+      ? currentUserMetadata.full_name.trim()
+      : "";
+  const currentUserAvatar =
+    typeof currentUserMetadata.avatar_url === "string" && currentUserMetadata.avatar_url.trim()
+      ? currentUserMetadata.avatar_url.trim()
+      : typeof currentUserMetadata.picture === "string" && currentUserMetadata.picture.trim()
+      ? currentUserMetadata.picture.trim()
+      : "";
   const avgExam = Math.round(
     exams.reduce((sum, e) => sum + (e.acertos / e.total) * 100, 0) / exams.length,
   );
@@ -1113,7 +1113,6 @@ export default function Home() {
     archiveModalOpen ||
     Boolean(pendingReadyEdital) ||
     Boolean(confirmDialog) ||
-    searchOpen ||
     sessionHistoryOpen ||
     reviewFocusModeOpen;
 
@@ -1339,15 +1338,6 @@ export default function Home() {
         onClose={closeArchiveModal}
       />
 
-      {searchOpen && (
-        <GlobalSearch
-          topics={topics}
-          subjects={subjects}
-          onStatusChange={updateTopicStatus}
-          onClose={() => setSearchOpen(false)}
-        />
-      )}
-
       <ConfirmDialog
         open={Boolean(confirmDialog)}
         title={confirmDialog?.title ?? ""}
@@ -1459,18 +1449,6 @@ export default function Home() {
                 </span>
               )}
 
-              {topics.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => setSearchOpen(true)}
-                  aria-label="Pesquisa global de tópicos"
-                  className="flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm shadow-slate-900/5 hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
-                >
-                  <Search className="h-4 w-4" aria-hidden="true" />
-                  <span className="hidden sm:inline">Buscar</span>
-                </button>
-              )}
-
               <button
                 type="button"
                 onClick={() => setSuggestionOpen(true)}
@@ -1526,14 +1504,18 @@ export default function Home() {
                 <span className="truncate">Atualizar</span>
               </button>
 
-              <button
-                type="button"
-                onClick={signOut}
-                className="flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-600 shadow-sm shadow-slate-900/5 hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
+              <Link
+                href="/profile"
+                aria-label="Abrir perfil e conta"
+                className="flex h-11 w-11 items-center justify-center rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
               >
-                <LogOut className="h-4 w-4" aria-hidden="true" />
-                Sair
-              </button>
+                <ProfileAvatar
+                  name={currentUserName}
+                  email={currentUserEmail}
+                  avatarUrl={currentUserAvatar}
+                  size="sm"
+                />
+              </Link>
             </div>
           </div>
         </header>
