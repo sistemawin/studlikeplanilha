@@ -172,6 +172,9 @@ export function useAdminActions({
       setAdminUsers(rows.map((row) => ({
         id: row.id,
         email: row.email,
+        name: row.name ?? undefined,
+        username: row.username ?? undefined,
+        avatarUrl: row.avatar_url ?? undefined,
         createdAt: row.created_at,
         lastSignInAt: row.last_sign_in_at,
         bannedUntil: row.banned_until,
@@ -281,7 +284,13 @@ export function useAdminActions({
       });
       if (error) throw error;
       const state = normalizeAdminAppState(data);
-      setReadOnlyUser({ id: user.id, email: user.email || user.id });
+      setReadOnlyUser({
+        id: user.id,
+        email: user.email || user.id,
+        name: user.name,
+        username: user.username,
+        avatarUrl: user.avatarUrl,
+      });
       applyAppState(state);
       setAdminView(false);
       setActiveSection("dashboard");

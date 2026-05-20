@@ -31,10 +31,25 @@ function metadataValue(metadata: Record<string, unknown>, keys: string[]) {
   return "";
 }
 
+type AdminProfile = {
+  id: string;
+  email: string;
+  name: string;
+  username: string;
+  avatarUrl: string;
+  createdAt: string;
+  lastSignInAt: string;
+  plan: string;
+  status: string;
+};
+
 export default function ProfilePage() {
   const router = useRouter();
   const avatarInputRef = useRef<HTMLInputElement | null>(null);
   const [session, setSession] = useState<Session | null>(null);
+  const [viewedUserId, setViewedUserId] = useState("");
+  const [adminProfile, setAdminProfile] = useState<AdminProfile | null>(null);
+  const [adminProfileLoading, setAdminProfileLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -45,6 +60,11 @@ export default function ProfilePage() {
   const [signingOut, setSigningOut] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
+  const isViewingAnotherProfile = Boolean(viewedUserId && viewedUserId !== session?.user.id);
+
+  useEffect(() => {
+    setViewedUserId(new URLSearchParams(window.location.search).get("userId")?.trim() ?? "");
+  }, []);
 
   useEffect(() => {
     let alive = true;
@@ -75,7 +95,77 @@ export default function ProfilePage() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!session || !isViewingAnotherProfile) {
+      setAdminProfile(null);
+      return;
+    }
+
+    let alive = true;
+    const supabase = getSupabaseBrowserClient();
+    setAdminProfileLoading(true);
+    setError("");
+
+    supabase
+      .rpc("admin_get_user_profile", { p_target_user_id: viewedUserId })
+      .then(({ data, error: profileError }) => {
+        if (!alive) return;
+        if (profileError) throw profileError;
+        const row = data as {
+          id?: string;
+          email?: string;
+          name?: string | null;
+          username?: string | null;
+          avatar_url?: string | null;
+          created_at?: string | null;
+          last_sign_in_at?: string | null;
+          plan?: string | null;
+          banned_until?: string | null;
+          is_admin?: boolean | null;
+          error?: string;
+        } | null;
+        if (!row || row.error) throw new Error(row?.error || "Perfil não encontrado.");
+        setAdminProfile({
+          id: row.id ?? viewedUserId,
+          email: row.email || "E-mail não informado",
+          name: row.name || "Nome não informado",
+          username: row.username || "Não informado",
+          avatarUrl: row.avatar_url || "",
+          createdAt: formatDate(row.created_at),
+          lastSignInAt: formatDate(row.last_sign_in_at),
+          plan: row.plan || "Conta gratuita",
+          status: row.banned_until && row.banned_until !== "infinity" && new Date(row.banned_until).getTime() <= Date.now()
+            ? row.is_admin ? "Admin" : "Ativo"
+            : row.banned_until ? "Bloqueado" : row.is_admin ? "Admin" : "Ativo",
+        });
+      })
+      .catch((err: unknown) => {
+        if (!alive) return;
+        setAdminProfile(null);
+        setError(err instanceof Error ? err.message : "Não foi possível carregar o perfil do usuário.");
+      })
+      .finally(() => {
+        if (alive) setAdminProfileLoading(false);
+      });
+
+    return () => { alive = false; };
+  }, [session, isViewingAnotherProfile, viewedUserId]);
+
   const profile = useMemo(() => {
+    if (adminProfile) {
+      return {
+        name: adminProfile.name,
+        email: adminProfile.email,
+        username: adminProfile.username,
+        avatarUrl: adminProfile.avatarUrl,
+        createdAt: adminProfile.createdAt,
+        plan: adminProfile.plan,
+        id: adminProfile.id,
+        lastSignInAt: adminProfile.lastSignInAt,
+        status: adminProfile.status,
+      };
+    }
+
     const user = session?.user;
     const metadata = (user?.user_metadata ?? {}) as Record<string, unknown>;
     const name = metadataValue(metadata, ["name", "full_name", "display_name"]);
@@ -89,26 +179,36 @@ export default function ProfilePage() {
       avatarUrl,
       createdAt: formatDate(user?.created_at),
       plan: metadataValue(metadata, ["plan", "account_type"]) || "Conta gratuita",
+      id: user?.id ?? "Não informado",
+      lastSignInAt: "Não informado",
+      status: "Ativo",
     };
-  }, [session]);
+  }, [adminProfile, session]);
 
   useEffect(() => {
+    if (adminProfile) {
+      setName(adminProfile.name === "Nome não informado" ? "" : adminProfile.name);
+      setUsername(adminProfile.username === "Não informado" ? "" : adminProfile.username);
+      return;
+    }
+
     const metadata = (session?.user.user_metadata ?? {}) as Record<string, unknown>;
     const nextName = metadataValue(metadata, ["name", "full_name", "display_name"]);
     const nextUsername = metadataValue(metadata, ["username", "user_name", "preferred_username"]);
 
     setName(nextName);
     setUsername(nextUsername);
-  }, [session]);
+  }, [adminProfile, session]);
 
   function showAvatarMessage() {
+    if (isViewingAnotherProfile) return;
     setError("");
     setMessage("");
     avatarInputRef.current?.click();
   }
 
   async function changeAvatar(file: File | undefined) {
-    if (!file || !session) return;
+    if (!file || !session || isViewingAnotherProfile) return;
 
     setAvatarUploading(true);
     setError("");
@@ -153,7 +253,7 @@ export default function ProfilePage() {
   }
 
   async function handleUpdateProfile() {
-    if (!session) return;
+    if (!session || isViewingAnotherProfile) return;
 
     const trimmedName = name.trim();
     const trimmedUsername = username.trim();
@@ -166,8 +266,7 @@ export default function ProfilePage() {
     try {
       const { error: profileError } = await supabase
         .from("profiles")
-        .update({ name: trimmedName, username: trimmedUsername })
-        .eq("id", session.user.id);
+        .upsert({ id: session.user.id, name: trimmedName, username: trimmedUsername }, { onConflict: "id" });
 
       if (profileError) throw profileError;
 
@@ -220,11 +319,11 @@ export default function ProfilePage() {
           <button
             type="button"
             onClick={showAvatarMessage}
-            disabled={avatarUploading || !session}
+            disabled={avatarUploading || !session || isViewingAnotherProfile}
             className="mt-3 inline-flex items-center justify-center gap-1.5 text-xs font-medium text-[#1877F2] hover:text-[#1B74E4] focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
           >
             <Camera size={14} strokeWidth={1.6} aria-hidden="true" />
-            {avatarUploading ? "Enviando..." : "Alterar foto"}
+            {isViewingAnotherProfile ? "Perfil em modo leitura" : avatarUploading ? "Enviando..." : "Alterar foto"}
           </button>
           <input
             ref={avatarInputRef}
@@ -253,7 +352,7 @@ export default function ProfilePage() {
           </div>
         )}
 
-        {loading ? (
+        {loading || adminProfileLoading ? (
           <div className="mt-4 rounded-2xl border border-white bg-white p-5 text-sm font-semibold text-slate-500 shadow-sm">
             Carregando perfil…
           </div>
@@ -269,6 +368,13 @@ export default function ProfilePage() {
               Voltar para login
             </button>
           </div>
+        ) : isViewingAnotherProfile && !adminProfile ? (
+          <div className="mt-4 rounded-2xl border border-white bg-white p-5 text-center shadow-sm">
+            <p className="text-sm font-bold text-slate-950">Perfil indisponível</p>
+            <p className="mt-1 text-sm font-medium text-slate-500">
+              Não foi possível carregar os dados deste usuário no modo admin.
+            </p>
+          </div>
         ) : (
           <>
             <div className="mt-6 rounded-3xl border border-slate-100/80 bg-white p-5 shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
@@ -281,8 +387,9 @@ export default function ProfilePage() {
                   type="text"
                   value={name}
                   onChange={(event) => setName(event.target.value)}
+                  disabled={isViewingAnotherProfile}
                   placeholder="Digite seu nome"
-                  className="w-full bg-transparent text-sm font-semibold text-slate-700 outline-none placeholder:font-normal placeholder:italic placeholder:text-slate-400 focus:outline-none"
+                  className="w-full bg-transparent text-sm font-semibold text-slate-700 outline-none placeholder:font-normal placeholder:italic placeholder:text-slate-400 disabled:text-slate-700 focus:outline-none"
                 />
               </div>
               <ProfileField label="E-mail" value={profile.email} />
@@ -295,12 +402,17 @@ export default function ProfilePage() {
                   type="text"
                   value={username}
                   onChange={(event) => setUsername(event.target.value)}
+                  disabled={isViewingAnotherProfile}
                   placeholder="Digite seu username"
-                  className="w-full bg-transparent text-sm font-semibold text-slate-700 outline-none placeholder:font-normal placeholder:italic placeholder:text-slate-400 focus:outline-none"
+                  className="w-full bg-transparent text-sm font-semibold text-slate-700 outline-none placeholder:font-normal placeholder:italic placeholder:text-slate-400 disabled:text-slate-700 focus:outline-none"
                 />
               </div>
+              {isViewingAnotherProfile && <ProfileField label="ID do usuário" value={profile.id} />}
               <ProfileField label="Criada em" value={profile.createdAt} />
+              {isViewingAnotherProfile && <ProfileField label="Último acesso" value={profile.lastSignInAt} />}
+              {isViewingAnotherProfile && <ProfileField label="Status" value={profile.status} />}
               <ProfileField label="Plano" value={profile.plan} />
+              {!isViewingAnotherProfile && (
               <div className="pt-4">
                 <button
                   type="button"
@@ -312,8 +424,10 @@ export default function ProfilePage() {
                   {isSaving ? "Salvando..." : "Salvar alterações"}
                 </button>
               </div>
+              )}
             </div>
 
+            {!isViewingAnotherProfile && (
             <div className="mt-6 rounded-3xl border border-slate-100/80 bg-white p-4 shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
               <AccountAction
                 icon={<LogOut size={20} strokeWidth={1.6} aria-hidden="true" />}
@@ -334,8 +448,9 @@ export default function ProfilePage() {
                 }}
               />
             </div>
+            )}
 
-            {deleteOpen && (
+            {!isViewingAnotherProfile && deleteOpen && (
               <div className="mt-3 rounded-2xl border border-rose-100 bg-white p-4 shadow-sm shadow-slate-900/[0.03] ring-1 ring-rose-950/[0.03]">
                 <div className="flex gap-3">
                   <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-rose-50 text-rose-500">

@@ -240,6 +240,12 @@ export function AdminPanel({
                     <tr key={user.id} className="align-top">
                       <td className="max-w-[260px] break-words px-4 py-3 font-semibold text-slate-900 sm:px-5">
                         {user.email || "Sem e-mail"}
+                        {user.name && (
+                          <span className="mt-1 block text-xs font-semibold text-slate-600">{user.name}</span>
+                        )}
+                        {user.username && (
+                          <span className="mt-0.5 block text-xs font-medium text-slate-400">@{user.username}</span>
+                        )}
                         <span className="mt-1 block font-mono text-xs font-medium text-slate-400">{user.id}</span>
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 text-slate-600 sm:px-5">{formatDate(user.createdAt)}</td>

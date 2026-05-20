@@ -615,16 +615,20 @@ export default function Home() {
   const questionGoal = goals.find((g) => g.tipo === "questões") ?? { id: "", tipo: "questões" as const, valorObjetivo: 0, valorAtual: 0, dataReferencia: todayIso };
   const hourGoal = goals.find((g) => g.tipo === "horas") ?? { id: "", tipo: "horas" as const, valorObjetivo: 0, valorAtual: 0, dataReferencia: todayIso };
   const currentUserId = session?.user.id ?? offlineUserId ?? "";
-  const currentUserEmail = session?.user.email ?? (offlineUserId ? "Modo offline" : "");
+  const currentUserEmail = readOnlyUser?.email ?? session?.user.email ?? (offlineUserId ? "Modo offline" : "");
   const currentUserMetadata = (session?.user.user_metadata ?? {}) as Record<string, unknown>;
   const currentUserName =
-    typeof currentUserMetadata.name === "string" && currentUserMetadata.name.trim()
+    readOnlyUser?.name?.trim()
+      ? readOnlyUser.name.trim()
+      : typeof currentUserMetadata.name === "string" && currentUserMetadata.name.trim()
       ? currentUserMetadata.name.trim()
       : typeof currentUserMetadata.full_name === "string" && currentUserMetadata.full_name.trim()
       ? currentUserMetadata.full_name.trim()
       : "";
   const currentUserAvatar =
-    typeof currentUserMetadata.avatar_url === "string" && currentUserMetadata.avatar_url.trim()
+    readOnlyUser?.avatarUrl?.trim()
+      ? readOnlyUser.avatarUrl.trim()
+      : typeof currentUserMetadata.avatar_url === "string" && currentUserMetadata.avatar_url.trim()
       ? currentUserMetadata.avatar_url.trim()
       : typeof currentUserMetadata.picture === "string" && currentUserMetadata.picture.trim()
       ? currentUserMetadata.picture.trim()
@@ -1448,7 +1452,7 @@ export default function Home() {
                 </p>
               </div>
               <Link
-                href="/profile"
+                href={readOnlyUser ? `/profile?userId=${readOnlyUser.id}` : "/profile"}
                 aria-label="Abrir perfil e conta"
                 className="mt-0.5 shrink-0 rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
               >

@@ -104,6 +104,9 @@ export type Suggestion = {
 export type AdminUser = {
   id: string;
   email: string;
+  name?: string;
+  username?: string;
+  avatarUrl?: string;
   createdAt: string;
   lastSignInAt: string | null;
   bannedUntil: string | null;
@@ -219,6 +222,9 @@ export type SuggestionRow = {
 export type AdminUserRow = {
   id: string;
   email: string;
+  name: string | null;
+  username: string | null;
+  avatar_url: string | null;
   created_at: string;
   last_sign_in_at: string | null;
   banned_until: string | null;
@@ -228,7 +234,13 @@ export type AdminUserRow = {
 
 export type AdminUserAction = "block" | "unblock" | "delete" | "promote";
 
-export type ReadOnlyUser = { id: string; email: string };
+export type ReadOnlyUser = {
+  id: string;
+  email: string;
+  name?: string;
+  username?: string;
+  avatarUrl?: string;
+};
 
 export type ConfirmDialogState = {
   title: string;
