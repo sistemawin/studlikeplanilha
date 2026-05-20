@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Camera, Loader2, LogOut, ShieldAlert, Trash2 } from "lucide-react";
 import type { Session } from "@supabase/supabase-js";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { AppBrand } from "@/components/ui/AppBrand";
 import { getSupabaseBrowserClient } from "@/services/supabase/client";
 import { clearPersisted } from "@/services/persistence/local";
@@ -45,8 +45,11 @@ type AdminProfile = {
 
 export default function ProfilePage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const viewedUserId = searchParams.get("userId")?.trim() ?? "";
+  const [viewedUserId] = useState<string>(() =>
+    typeof window !== "undefined"
+      ? (new URLSearchParams(window.location.search).get("userId")?.trim() ?? "")
+      : ""
+  );
   const avatarInputRef = useRef<HTMLInputElement | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [adminProfile, setAdminProfile] = useState<AdminProfile | null>(null);
