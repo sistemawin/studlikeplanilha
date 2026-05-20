@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Camera, Loader2, LogOut, ShieldAlert, Trash2 } from "lucide-react";
 import type { Session } from "@supabase/supabase-js";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { AppBrand } from "@/components/ui/AppBrand";
 import { getSupabaseBrowserClient } from "@/services/supabase/client";
 import { clearPersisted } from "@/services/persistence/local";
@@ -45,9 +45,10 @@ type AdminProfile = {
 
 export default function ProfilePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const viewedUserId = searchParams.get("userId")?.trim() ?? "";
   const avatarInputRef = useRef<HTMLInputElement | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-  const [viewedUserId, setViewedUserId] = useState("");
   const [adminProfile, setAdminProfile] = useState<AdminProfile | null>(null);
   const [adminProfileLoading, setAdminProfileLoading] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -61,10 +62,6 @@ export default function ProfilePage() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const isViewingAnotherProfile = Boolean(viewedUserId && viewedUserId !== session?.user.id);
-
-  useEffect(() => {
-    setViewedUserId(new URLSearchParams(window.location.search).get("userId")?.trim() ?? "");
-  }, []);
 
   useEffect(() => {
     let alive = true;
