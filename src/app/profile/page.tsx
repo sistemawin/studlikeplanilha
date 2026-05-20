@@ -67,20 +67,19 @@ export default function ProfilePage() {
     let alive = true;
     const supabase = getSupabaseBrowserClient();
 
-    supabase.auth
-      .getSession()
-      .then(({ data, error: sessionError }) => {
+    void (async () => {
+      try {
+        const { data, error: sessionError } = await supabase.auth.getSession();
         if (!alive) return;
         if (sessionError) throw sessionError;
         setSession(data.session);
-      })
-      .catch((err: unknown) => {
+      } catch (err: unknown) {
         if (!alive) return;
         setError(err instanceof Error ? err.message : "Não foi possível carregar seu perfil.");
-      })
-      .finally(() => {
+      } finally {
         if (alive) setLoading(false);
-      });
+      }
+    })();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       if (alive) setSession(nextSession);
