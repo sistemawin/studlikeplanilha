@@ -4,16 +4,17 @@ import {
   Archive,
   AppWindow,
   BarChart3,
-  Calendar,
   CalendarDays,
   Check,
+  BookOpenText,
+  CircleEllipsis,
   ClipboardList,
-  Home,
   HomeIcon,
+  House,
   Loader2,
-  Menu,
   Maximize2,
   MessageSquarePlus,
+  NotebookPen,
   RefreshCw,
   RotateCcw,
   ShieldCheck,
@@ -1102,10 +1103,10 @@ export default function Home() {
   }
 
   const mobileNavItems = [
-    { icon: Home, label: "Início", target: "dashboard" as NavTarget, action: () => openMobileSection("dashboard") },
-    { icon: ClipboardList, label: "Edital", target: "edital" as NavTarget, action: () => openMobileSection("edital") },
-    { icon: RotateCcw, label: "Revisar", target: "revisoes" as NavTarget, action: () => openMobileSection("revisoes") },
-    { icon: Calendar, label: "Plano", target: "cronograma" as NavTarget, action: () => openMobileSection("cronograma") },
+    { icon: House, label: "Início", target: "dashboard" as NavTarget, action: () => openMobileSection("dashboard") },
+    { icon: NotebookPen, label: "Edital", target: "edital" as NavTarget, action: () => openMobileSection("edital") },
+    { icon: BookOpenText, label: "Revisar", target: "revisoes" as NavTarget, action: () => openMobileSection("revisoes") },
+    { icon: CalendarDays, label: "Plano", target: "cronograma" as NavTarget, action: () => openMobileSection("cronograma") },
   ];
   const hideMobileBottomNav =
     adminView ||
@@ -1161,7 +1162,7 @@ export default function Home() {
                   }`}
                 >
                   <span className={`flex h-9 w-9 items-center justify-center rounded-full transition ${active ? "bg-blue-50/70" : "bg-transparent"}`}>
-                    <Icon size={22} strokeWidth={1.5} aria-hidden="true" />
+                    <Icon size={22} strokeWidth={1.6} aria-hidden="true" />
                   </span>
                   <span className={`w-full truncate whitespace-nowrap text-center text-[10px] leading-none tracking-normal ${active ? "font-semibold" : "font-medium"}`}>{item.label}</span>
                 </button>
@@ -1180,7 +1181,7 @@ export default function Home() {
               }`}
             >
               <span className={`flex h-9 w-9 items-center justify-center rounded-full transition ${mobileMoreOpen || activeSection === "simulados" ? "bg-blue-50/70" : "bg-transparent"}`}>
-                <Menu size={22} strokeWidth={1.5} aria-hidden="true" />
+                <CircleEllipsis size={22} strokeWidth={1.6} aria-hidden="true" />
               </span>
               <span className={`w-full truncate whitespace-nowrap text-center text-[10px] leading-none tracking-normal ${mobileMoreOpen || activeSection === "simulados" ? "font-semibold" : "font-medium"}`}>Mais</span>
             </button>
