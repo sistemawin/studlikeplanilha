@@ -103,9 +103,10 @@ export default function ProfilePage() {
     setAdminProfileLoading(true);
     setError("");
 
-    supabase
-      .rpc("admin_get_user_profile", { p_target_user_id: viewedUserId })
-      .then(({ data, error: profileError }) => {
+    void (async () => {
+      try {
+        const { data, error: profileError } = await supabase
+          .rpc("admin_get_user_profile", { p_target_user_id: viewedUserId });
         if (!alive) return;
         if (profileError) throw profileError;
         const row = data as {
@@ -135,15 +136,14 @@ export default function ProfilePage() {
             ? row.is_admin ? "Admin" : "Ativo"
             : row.banned_until ? "Bloqueado" : row.is_admin ? "Admin" : "Ativo",
         });
-      })
-      .catch((err: unknown) => {
+      } catch (err: unknown) {
         if (!alive) return;
         setAdminProfile(null);
         setError(err instanceof Error ? err.message : "Não foi possível carregar o perfil do usuário.");
-      })
-      .finally(() => {
+      } finally {
         if (alive) setAdminProfileLoading(false);
-      });
+      }
+    })();
 
     return () => { alive = false; };
   }, [session, isViewingAnotherProfile, viewedUserId]);
