@@ -123,8 +123,8 @@ export default function ProfilePage() {
         </div>
       </header>
 
-      <section className="mx-auto flex max-w-2xl flex-col px-4 py-6 pb-[calc(2rem+env(safe-area-inset-bottom))]">
-        <div className="rounded-[1.75rem] border border-white bg-white p-5 text-center shadow-[0_18px_44px_rgba(15,23,42,0.06)] ring-1 ring-slate-900/[0.04]">
+      <section className="mx-auto flex max-w-2xl flex-col px-4 py-7 pb-[calc(2rem+env(safe-area-inset-bottom))]">
+        <div className="text-center">
           <div className="flex justify-center">
             <ProfileAvatar
               name={profile.name}
@@ -132,20 +132,20 @@ export default function ProfilePage() {
               avatarUrl={profile.avatarUrl}
             />
           </div>
-          <h1 className="mt-4 text-xl font-extrabold leading-7 tracking-tight text-slate-950">
-            {profile.name}
-          </h1>
-          <p className="mt-1 text-sm font-medium leading-5 text-slate-500">
-            {profile.email}
-          </p>
           <button
             type="button"
             onClick={showAvatarMessage}
-            className="mt-4 inline-flex h-9 items-center justify-center gap-2 rounded-xl bg-blue-50 px-4 text-xs font-bold text-[#1877F2] ring-1 ring-blue-100 hover:bg-blue-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
+            className="mt-3 inline-flex items-center justify-center gap-1.5 text-xs font-medium text-[#1877F2] hover:text-[#1B74E4] focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
           >
-            <Camera className="h-3.5 w-3.5" aria-hidden="true" />
+            <Camera size={14} strokeWidth={1.6} aria-hidden="true" />
             Alterar foto
           </button>
+          <h1 className="mt-4 text-xl font-bold leading-7 text-slate-800">
+            {profile.name}
+          </h1>
+          <p className="mt-1 text-sm font-normal leading-5 text-slate-400">
+            {profile.email}
+          </p>
         </div>
 
         {(message || error) && (
@@ -178,30 +178,24 @@ export default function ProfilePage() {
           </div>
         ) : (
           <>
-            <div className="mt-5 grid gap-3">
+            <div className="mt-6 rounded-3xl border border-slate-100/80 bg-white p-5 shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
               <ProfileField label="Nome" value={profile.name} />
               <ProfileField label="E-mail" value={profile.email} />
-              <ProfileField label="Username" value={profile.username} />
+              <ProfileField label="Username" value={profile.username} muted={profile.username === "Não informado"} />
               <ProfileField label="Criada em" value={profile.createdAt} />
               <ProfileField label="Plano" value={profile.plan} />
             </div>
 
-            <div className="mt-6 space-y-3">
+            <div className="mt-6 rounded-3xl border border-slate-100/80 bg-white p-4 shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
               <AccountAction
-                icon={<Camera className="h-4 w-4" aria-hidden="true" />}
-                title="Alterar foto"
-                description="Preparado para upload seguro via Supabase Storage."
-                onClick={showAvatarMessage}
-              />
-              <AccountAction
-                icon={<LogOut className="h-4 w-4" aria-hidden="true" />}
+                icon={<LogOut size={20} strokeWidth={1.6} aria-hidden="true" />}
                 title={signingOut ? "Saindo…" : "Sair do app"}
                 description="Encerra sua sessão neste dispositivo."
                 disabled={signingOut}
                 onClick={() => { void signOut(); }}
               />
               <AccountAction
-                icon={<Trash2 className="h-4 w-4" aria-hidden="true" />}
+                icon={<Trash2 size={20} strokeWidth={1.6} aria-hidden="true" />}
                 title="Apagar conta"
                 description="Ação permanente. Exige confirmação forte e backend dedicado."
                 tone="danger"

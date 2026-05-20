@@ -26,24 +26,24 @@ export function AccountAction({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`flex w-full items-center gap-3 rounded-2xl border bg-white p-4 text-left shadow-sm shadow-slate-900/[0.03] ring-1 transition focus-visible:outline focus-visible:outline-2 ${
+      className={`flex w-full items-center gap-3 border-b border-slate-100 px-1 py-4 text-left transition last:border-0 focus-visible:outline focus-visible:outline-2 ${
         isDanger
-          ? "border-rose-100 ring-rose-950/[0.03] hover:bg-rose-50/70 focus-visible:outline-rose-500"
-          : "border-slate-100 ring-slate-900/[0.03] hover:bg-slate-50 focus-visible:outline-blue-500"
+          ? "hover:bg-red-50/30 focus-visible:outline-red-400"
+          : "hover:bg-slate-50/70 focus-visible:outline-blue-500"
       } disabled:cursor-not-allowed disabled:opacity-60`}
     >
       <span
-        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl ${
-          isDanger ? "bg-rose-50 text-rose-500" : "bg-blue-50 text-[#1877F2]"
+        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
+          isDanger ? "text-red-500" : "text-slate-600"
         }`}
       >
         {icon}
       </span>
       <span className="min-w-0">
-        <span className={`block text-sm font-bold leading-5 ${isDanger ? "text-rose-700" : "text-slate-950"}`}>
+        <span className={`block text-sm font-semibold leading-5 ${isDanger ? "text-red-500" : "text-slate-600"}`}>
           {title}
         </span>
-        <span className="mt-0.5 block text-xs font-medium leading-5 text-slate-500">
+        <span className="mt-0.5 block text-xs font-normal leading-5 text-slate-400">
           {description}
         </span>
       </span>

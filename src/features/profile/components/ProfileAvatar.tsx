@@ -29,7 +29,7 @@ export function ProfileAvatar({ name, email, avatarUrl, size = "lg", sizeClass }
 
   return (
     <div
-      className={`relative flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-blue-50 via-white to-slate-100 font-extrabold text-[#1877F2] shadow-sm shadow-slate-900/10 ring-1 ring-slate-900/10 ${dimension}`}
+      className={`relative flex shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-100 bg-gradient-to-br from-blue-50 via-white to-slate-100 font-extrabold text-[#1877F2] shadow-[0_8px_24px_rgba(15,23,42,0.06)] ring-1 ring-white/80 ${dimension}`}
       aria-label={name || email || "Perfil do usuário"}
     >
       {avatarUrl ? (
