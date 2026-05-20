@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Camera, LogOut, ShieldAlert, Trash2 } from "lucide-react";
 import type { Session } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
@@ -10,6 +10,7 @@ import { clearPersisted } from "@/services/persistence/local";
 import { ProfileAvatar } from "@/features/profile/components/ProfileAvatar";
 import { ProfileField } from "@/features/profile/components/ProfileField";
 import { AccountAction } from "@/features/profile/components/AccountAction";
+import { uploadUserAvatar } from "@/features/profile/services/avatarUpload";
 
 function formatDate(value?: string | null) {
   if (!value) return "Não informado";
@@ -32,10 +33,12 @@ function metadataValue(metadata: Record<string, unknown>, keys: string[]) {
 
 export default function ProfilePage() {
   const router = useRouter();
+  const avatarInputRef = useRef<HTMLInputElement | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [avatarUploading, setAvatarUploading] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
@@ -88,7 +91,38 @@ export default function ProfilePage() {
 
   function showAvatarMessage() {
     setError("");
-    setMessage("Upload de foto será ativado após configurar um bucket seguro de avatars com RLS.");
+    setMessage("");
+    avatarInputRef.current?.click();
+  }
+
+  async function changeAvatar(file: File | undefined) {
+    if (!file || !session) return;
+
+    setAvatarUploading(true);
+    setError("");
+    setMessage("");
+
+    try {
+      const supabase = getSupabaseBrowserClient();
+      const avatarUrl = await uploadUserAvatar(supabase, session.user.id, file);
+      const { data, error: updateError } = await supabase.auth.updateUser({
+        data: {
+          ...session.user.user_metadata,
+          avatar_url: avatarUrl,
+        },
+      });
+
+      if (updateError) throw updateError;
+      if (data.user) {
+        setSession((current) => current ? { ...current, user: data.user } : current);
+      }
+      setMessage("Foto atualizada com sucesso.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Não foi possível atualizar a foto.");
+    } finally {
+      setAvatarUploading(false);
+      if (avatarInputRef.current) avatarInputRef.current.value = "";
+    }
   }
 
   async function signOut() {
@@ -135,11 +169,19 @@ export default function ProfilePage() {
           <button
             type="button"
             onClick={showAvatarMessage}
+            disabled={avatarUploading || !session}
             className="mt-3 inline-flex items-center justify-center gap-1.5 text-xs font-medium text-[#1877F2] hover:text-[#1B74E4] focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
           >
             <Camera size={14} strokeWidth={1.6} aria-hidden="true" />
-            Alterar foto
+            {avatarUploading ? "Enviando..." : "Alterar foto"}
           </button>
+          <input
+            ref={avatarInputRef}
+            type="file"
+            accept="image/*"
+            className="sr-only"
+            onChange={(event) => { void changeAvatar(event.target.files?.[0]); }}
+          />
           <h1 className="mt-4 text-xl font-bold leading-7 text-slate-800">
             {profile.name}
           </h1>
