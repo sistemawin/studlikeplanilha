@@ -15,7 +15,7 @@ export function AppBrand({
 }: Props) {
   const isDark = theme === "dark";
   return (
-    <div className={`flex items-center gap-3 ${className}`}>
+    <div className={`flex items-center gap-2 ${className}`}>
       <StudlikeLogo
         size={logoSize}
         className={
@@ -25,12 +25,13 @@ export function AppBrand({
         }
       />
       <div>
-        <p
-          className={`text-[15px] font-extrabold leading-5 tracking-tight ${
-            isDark ? "text-white" : "text-slate-950"
-          }`}
-        >
-          StudLike Foco
+        <p className="text-base leading-5 tracking-tight">
+          <span className={`font-extrabold ${isDark ? "text-white" : "text-slate-900"}`}>
+            studlike
+          </span>
+          <span className={`ml-1 font-medium ${isDark ? "text-blue-100/70" : "text-slate-500"}`}>
+            foco
+          </span>
         </p>
         {showSubtitle && (
           <p

@@ -1420,14 +1420,23 @@ export default function Home() {
           <div className="mx-auto flex max-w-[1600px] flex-col gap-3">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                   <StudlikeLogo size={44} className="shrink-0 rounded-xl shadow-sm shadow-slate-900/10 ring-1 ring-slate-900/5 xl:hidden" />
                   <div className="min-w-0">
                     <p className="bg-gradient-to-r from-[#1877F2] via-[#1B74E4] to-[#0F172A] bg-clip-text text-[11px] font-bold uppercase tracking-[0.16em] text-transparent">
                       {adminView ? "Admin" : readOnlyUser ? "Modo leitura" : SECTION_TITLE[activeSection]}
                     </p>
-                    <h1 className="mt-0.5 truncate text-2xl font-extrabold tracking-tight text-slate-950 sm:text-3xl">
-                      {adminView ? "Área admin" : readOnlyUser ? readOnlyUser.email : "StudLike Foco"}
+                    <h1 className="mt-0.5 truncate text-base tracking-tight">
+                      {adminView ? (
+                        <span className="font-extrabold text-slate-900">Área admin</span>
+                      ) : readOnlyUser ? (
+                        <span className="font-extrabold text-slate-900">{readOnlyUser.email}</span>
+                      ) : (
+                        <>
+                          <span className="font-extrabold text-slate-900">studlike</span>
+                          <span className="ml-1 font-medium text-slate-500">foco</span>
+                        </>
+                      )}
                     </h1>
                   </div>
                 </div>
