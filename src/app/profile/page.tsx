@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, Camera, LogOut, ShieldAlert, Trash2 } from "lucide-react";
+import { ArrowLeft, Camera, Loader2, LogOut, ShieldAlert, Trash2 } from "lucide-react";
 import type { Session } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 import { AppBrand } from "@/components/ui/AppBrand";
@@ -38,6 +38,9 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [name, setName] = useState("");
+  const [username, setUsername] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -87,6 +90,15 @@ export default function ProfilePage() {
       createdAt: formatDate(user?.created_at),
       plan: metadataValue(metadata, ["plan", "account_type"]) || "Conta gratuita",
     };
+  }, [session]);
+
+  useEffect(() => {
+    const metadata = (session?.user.user_metadata ?? {}) as Record<string, unknown>;
+    const nextName = metadataValue(metadata, ["name", "full_name", "display_name"]);
+    const nextUsername = metadataValue(metadata, ["username", "user_name", "preferred_username"]);
+
+    setName(nextName);
+    setUsername(nextUsername);
   }, [session]);
 
   function showAvatarMessage() {
@@ -140,6 +152,45 @@ export default function ProfilePage() {
     }
   }
 
+  async function handleUpdateProfile() {
+    if (!session) return;
+
+    const trimmedName = name.trim();
+    const trimmedUsername = username.trim();
+    const supabase = getSupabaseBrowserClient();
+
+    setIsSaving(true);
+    setError("");
+    setMessage("");
+
+    try {
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({ name: trimmedName, username: trimmedUsername })
+        .eq("id", session.user.id);
+
+      if (profileError) throw profileError;
+
+      const { data, error: userError } = await supabase.auth.updateUser({
+        data: {
+          ...session.user.user_metadata,
+          name: trimmedName,
+          username: trimmedUsername,
+        },
+      });
+
+      if (userError) throw userError;
+      if (data.user) {
+        setSession((current) => current ? { ...current, user: data.user } : current);
+      }
+      setMessage("Perfil atualizado com sucesso.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Não foi possível atualizar seu perfil.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
   return (
     <main className="min-h-screen bg-[#F0F2F5] text-slate-950">
       <header className="sticky top-0 z-20 border-b border-white/70 bg-white/[0.86] px-4 py-3 shadow-sm shadow-slate-900/5 backdrop-blur-xl">
@@ -183,7 +234,7 @@ export default function ProfilePage() {
             onChange={(event) => { void changeAvatar(event.target.files?.[0]); }}
           />
           <h1 className="mt-4 text-xl font-bold leading-7 text-slate-800">
-            {profile.name}
+            {name.trim() || profile.name}
           </h1>
           <p className="mt-1 text-sm font-normal leading-5 text-slate-400">
             {profile.email}
@@ -221,11 +272,46 @@ export default function ProfilePage() {
         ) : (
           <>
             <div className="mt-6 rounded-3xl border border-slate-100/80 bg-white p-5 shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
-              <ProfileField label="Nome" value={profile.name} />
+              <div className="border-b border-slate-100 py-3.5">
+                <label className="mb-1 block text-[10px] font-bold uppercase leading-4 tracking-wider text-slate-400" htmlFor="profile-name">
+                  Nome
+                </label>
+                <input
+                  id="profile-name"
+                  type="text"
+                  value={name}
+                  onChange={(event) => setName(event.target.value)}
+                  placeholder="Digite seu nome"
+                  className="w-full bg-transparent text-sm font-semibold text-slate-700 outline-none placeholder:font-normal placeholder:italic placeholder:text-slate-400 focus:outline-none"
+                />
+              </div>
               <ProfileField label="E-mail" value={profile.email} />
-              <ProfileField label="Username" value={profile.username} muted={profile.username === "Não informado"} />
+              <div className="border-b border-slate-100 py-3.5">
+                <label className="mb-1 block text-[10px] font-bold uppercase leading-4 tracking-wider text-slate-400" htmlFor="profile-username">
+                  Username
+                </label>
+                <input
+                  id="profile-username"
+                  type="text"
+                  value={username}
+                  onChange={(event) => setUsername(event.target.value)}
+                  placeholder="Digite seu username"
+                  className="w-full bg-transparent text-sm font-semibold text-slate-700 outline-none placeholder:font-normal placeholder:italic placeholder:text-slate-400 focus:outline-none"
+                />
+              </div>
               <ProfileField label="Criada em" value={profile.createdAt} />
               <ProfileField label="Plano" value={profile.plan} />
+              <div className="pt-4">
+                <button
+                  type="button"
+                  onClick={() => { void handleUpdateProfile(); }}
+                  disabled={isSaving}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white transition-all hover:bg-slate-800 disabled:cursor-wait disabled:opacity-50"
+                >
+                  {isSaving && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+                  {isSaving ? "Salvando..." : "Salvar alterações"}
+                </button>
+              </div>
             </div>
 
             <div className="mt-6 rounded-3xl border border-slate-100/80 bg-white p-4 shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
