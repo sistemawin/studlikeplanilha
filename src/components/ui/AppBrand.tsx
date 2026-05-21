@@ -25,14 +25,16 @@ export function AppBrand({
         }
       />
       <div>
-        <p className="font-rubik-vinyl flex items-baseline leading-none tracking-normal">
-          <span className={`text-xl ${isDark ? "text-white" : "text-slate-950"}`}>
-            StudLike
-          </span>
-          <span className={`ml-2 text-sm ${isDark ? "text-blue-200/70" : "text-slate-500"}`}>
-            Foco
-          </span>
-        </p>
+        <div className="flex items-center justify-center rounded-lg bg-white px-3 py-2 shadow-sm shadow-slate-900/5 ring-1 ring-slate-900/5">
+          <p className="font-rubik-vinyl flex items-baseline leading-none tracking-normal">
+            <span className="text-xl text-slate-950">
+              StudLike
+            </span>
+            <span className="ml-2 text-sm uppercase text-slate-600">
+              Foco
+            </span>
+          </p>
+        </div>
         {showSubtitle && (
           <p
             className={`mt-0.5 text-[11px] font-medium leading-4 ${

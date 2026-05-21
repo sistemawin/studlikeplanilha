@@ -1457,9 +1457,9 @@ export default function Home() {
                       ) : readOnlyUser ? (
                         <span className="font-extrabold text-slate-900">{readOnlyUser.email}</span>
                       ) : (
-                        <span className="font-rubik-vinyl flex items-baseline leading-none tracking-normal">
+                        <span className="font-rubik-vinyl inline-flex items-baseline rounded-lg bg-white px-3 py-2 leading-none tracking-normal shadow-sm shadow-slate-900/5 ring-1 ring-slate-900/5">
                           <span className="text-xl text-slate-950">StudLike</span>
-                          <span className="ml-2 text-sm text-slate-500">Foco</span>
+                          <span className="ml-2 text-sm uppercase text-slate-600">Foco</span>
                         </span>
                       )}
                     </h1>
