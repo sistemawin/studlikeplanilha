@@ -1,6 +1,5 @@
-import { CheckCircle2, ExternalLink, Loader2, ShieldCheck } from "lucide-react";
-import Link from "next/link";
-import { TERMS_PATH } from "@/features/lgpd/constants";
+import { CheckCircle2, Loader2, ShieldCheck } from "lucide-react";
+import { TermsAcceptanceBox } from "@/features/lgpd/components/TermsAcceptanceBox";
 
 type Props = {
   checked: boolean;
@@ -51,27 +50,8 @@ export function LgpdConsentModal({
           </p>
         </div>
 
-        <div className="mt-4 rounded-xl border border-slate-200 bg-[#F7F8FA] p-4">
-          <label className="flex cursor-pointer items-start gap-3">
-            <input
-              type="checkbox"
-              checked={checked}
-              onChange={(event) => onCheckedChange(event.target.checked)}
-              className="mt-1 h-4 w-4 rounded border-slate-300 text-[#1877F2] accent-[#1877F2] focus:ring-[#1877F2]"
-            />
-            <span className="text-sm font-medium leading-6 text-slate-700">
-              Li e concordo com os{" "}
-              <Link
-                href={TERMS_PATH}
-                target="_blank"
-                className="inline-flex items-center gap-1 font-bold text-blue-700 hover:text-blue-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
-              >
-                Termos de Uso e Política de Privacidade
-                <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
-              </Link>
-              .
-            </span>
-          </label>
+        <div className="mt-4">
+          <TermsAcceptanceBox checked={checked} onCheckedChange={onCheckedChange} />
         </div>
 
         {error && (

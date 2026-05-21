@@ -1,7 +1,6 @@
 import { Loader2, LockKeyhole, Mail, ShieldCheck, UserPlus } from "lucide-react";
-import Link from "next/link";
 import { StudlikeLogo } from "@/components/ui/StudlikeLogo";
-import { TERMS_PATH } from "@/features/lgpd/constants";
+import { TermsAcceptanceBox } from "@/features/lgpd/components/TermsAcceptanceBox";
 import type { AuthMode } from "@/types";
 
 type Props = {
@@ -155,26 +154,10 @@ export function AuthScreen({
               )}
 
               {isSignup && (
-                <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-[#F7F8FA] p-3">
-                  <input
-                    type="checkbox"
-                    checked={acceptedTerms}
-                    onChange={(event) => onAcceptedTermsChange(event.target.checked)}
-                    className="mt-1 h-4 w-4 rounded border-slate-300 text-[#1877F2] accent-[#1877F2] focus:ring-[#1877F2]"
-                  />
-                  <span className="text-sm font-medium leading-6 text-slate-700">
-                    <span className="block font-bold text-slate-900">Consentimento obrigatório LGPD</span>
-                    Li e concordo com os{" "}
-                    <Link
-                      href={TERMS_PATH}
-                      target="_blank"
-                      className="font-bold text-blue-700 hover:text-blue-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
-                    >
-                      Termos de Uso e Política de Privacidade
-                    </Link>
-                    . Entendo que meus dados serão tratados para autenticação, sincronização, segurança e funcionamento do meu plano de estudos.
-                  </span>
-                </label>
+                <TermsAcceptanceBox
+                  checked={acceptedTerms}
+                  onCheckedChange={onAcceptedTermsChange}
+                />
               )}
 
               {error && (

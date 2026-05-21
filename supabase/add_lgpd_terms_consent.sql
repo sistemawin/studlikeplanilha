@@ -70,3 +70,40 @@ drop trigger if exists on_auth_user_created_profile on auth.users;
 create trigger on_auth_user_created_profile
   after insert on auth.users
   for each row execute function public.handle_new_user_profile();
+
+insert into public.profiles (
+  id,
+  name,
+  username,
+  avatar_url,
+  aceitou_termos,
+  termos_aceitos_em,
+  termos_versao
+)
+select
+  users.id,
+  nullif(users.raw_user_meta_data->>'name', ''),
+  nullif(
+    coalesce(
+      users.raw_user_meta_data->>'username',
+      users.raw_user_meta_data->>'user_name',
+      users.raw_user_meta_data->>'preferred_username'
+    ),
+    ''
+  ),
+  nullif(
+    coalesce(
+      users.raw_user_meta_data->>'avatar_url',
+      users.raw_user_meta_data->>'picture'
+    ),
+    ''
+  ),
+  false,
+  null,
+  null
+from auth.users
+where not exists (
+  select 1
+  from public.profiles
+  where profiles.id = users.id
+);
