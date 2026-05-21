@@ -1458,8 +1458,8 @@ export default function Home() {
                         <span className="font-extrabold text-slate-900">{readOnlyUser.email}</span>
                       ) : (
                         <>
-                          <span className="font-extrabold text-slate-900">studlike</span>
-                          <span className="ml-1 font-medium text-slate-500">foco</span>
+                          <span className="font-extrabold tracking-tight text-slate-950">StudLike</span>
+                          <span className="ml-1.5 font-light tracking-normal text-slate-500">Foco</span>
                         </>
                       )}
                     </h1>
