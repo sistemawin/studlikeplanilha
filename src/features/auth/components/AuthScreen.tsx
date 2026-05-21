@@ -163,6 +163,7 @@ export function AuthScreen({
                     className="mt-1 h-4 w-4 rounded border-slate-300 text-[#1877F2] accent-[#1877F2] focus:ring-[#1877F2]"
                   />
                   <span className="text-sm font-medium leading-6 text-slate-700">
+                    <span className="block font-bold text-slate-900">Consentimento obrigatório LGPD</span>
                     Li e concordo com os{" "}
                     <Link
                       href={TERMS_PATH}
@@ -171,7 +172,7 @@ export function AuthScreen({
                     >
                       Termos de Uso e Política de Privacidade
                     </Link>
-                    .
+                    . Entendo que meus dados serão tratados para autenticação, sincronização, segurança e funcionamento do meu plano de estudos.
                   </span>
                 </label>
               )}

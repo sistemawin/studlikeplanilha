@@ -31,7 +31,7 @@ export function LgpdConsentModal({
           </span>
           <div>
             <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-blue-600">
-              Privacidade e seguranca
+              Privacidade e segurança
             </p>
             <h1 id="lgpd-consent-title" className="mt-2 text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">
               Atualizamos nossos Termos de Uso e Política de Privacidade
@@ -42,7 +42,16 @@ export function LgpdConsentModal({
           </div>
         </div>
 
-        <div className="mt-6 rounded-xl border border-slate-200 bg-[#F7F8FA] p-4">
+        <div className="mt-6 grid gap-3 rounded-xl border border-blue-100 bg-blue-50/70 p-4 text-sm leading-6 text-slate-700">
+          <p>
+            Esta confirmação é obrigatória para manter seu acesso ao aplicativo.
+          </p>
+          <p>
+            Se você já tinha conta antes desta atualização, precisa aceitar os termos vigentes antes de continuar navegando.
+          </p>
+        </div>
+
+        <div className="mt-4 rounded-xl border border-slate-200 bg-[#F7F8FA] p-4">
           <label className="flex cursor-pointer items-start gap-3">
             <input
               type="checkbox"

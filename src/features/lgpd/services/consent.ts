@@ -3,17 +3,19 @@ import { TERMS_VERSION } from "@/features/lgpd/constants";
 
 type ConsentRow = {
   aceitou_termos: boolean | null;
+  termos_versao: string | null;
 };
 
 export async function loadTermsConsent(supabase: SupabaseClient, userId: string) {
   const { data, error } = await supabase
     .from("profiles")
-    .select("aceitou_termos")
+    .select("aceitou_termos,termos_versao")
     .eq("id", userId)
     .maybeSingle();
 
   if (error) throw error;
-  return Boolean((data as ConsentRow | null)?.aceitou_termos);
+  const row = data as ConsentRow | null;
+  return Boolean(row?.aceitou_termos && row.termos_versao === TERMS_VERSION);
 }
 
 export async function acceptTermsConsent(supabase: SupabaseClient, userId: string, name?: string) {

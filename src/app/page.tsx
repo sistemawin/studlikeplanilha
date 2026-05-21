@@ -534,7 +534,7 @@ export default function Home() {
       return;
     }
 
-    if (!termsAccepted) {
+    if (!termsChecked || !termsAccepted) {
       setRemoteReady(false);
       setRemoteLoading(false);
       return;
@@ -612,7 +612,7 @@ export default function Home() {
 
     void load();
     return () => { cancelled = true; };
-  }, [session, offlineUserId, termsAccepted]);
+  }, [session, offlineUserId, termsChecked, termsAccepted]);
 
   // ── Debounced sync ────────────────────────────────────────────────────────
   // isOnlineState is in deps so the effect re-fires on reconnect, triggering
