@@ -86,6 +86,21 @@ const SECTION_TITLE: Record<string, string> = {
   simulados: "Dados",
 };
 
+function formatProfileDate(value?: string | null) {
+  if (!value) return "Não informado";
+  if (value === "infinity") return "Bloqueado";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Não informado";
+  return date.toLocaleString("pt-BR");
+}
+
+function readOnlyUserStatus(user: ReadOnlyUser) {
+  if (user.bannedUntil === "infinity") return "Bloqueado";
+  if (user.bannedUntil && new Date(user.bannedUntil).getTime() > Date.now()) return "Bloqueado";
+  if (user.isAdmin) return "Admin";
+  return "Ativo";
+}
+
 export default function Home() {
   // Computed fresh every render — never stale if tab stays open overnight
   const todayIso = isoDate(new Date());
@@ -108,6 +123,7 @@ export default function Home() {
   const [examDraft, setExamDraft] = useState({ nome: "", acertos: 0, total: 0 });
   const [activeSection, setActiveSection] = useState<NavTarget>("dashboard");
   const [readOnlyUser, setReadOnlyUser] = useState<ReadOnlyUser | null>(null);
+  const [readOnlyProfileOpen, setReadOnlyProfileOpen] = useState(false);
   const [notice, setNoticeState] = useState("Pronto para estudar.");
   const [feedback, setFeedback] = useState<AppFeedback | null>(null);
   const [mobileNavPortalReady, setMobileNavPortalReady] = useState(false);
@@ -311,7 +327,12 @@ export default function Home() {
     return () => window.clearInterval(id);
   }, [timerRunning]);
 
-  useScrollLock(timerFocusOpen);
+  useScrollLock(timerFocusOpen || readOnlyProfileOpen);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- close the modal if read-only mode is exited elsewhere
+    if (!readOnlyUser) setReadOnlyProfileOpen(false);
+  }, [readOnlyUser]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- document.body unavailable on SSR; effect is the correct pattern
@@ -1451,18 +1472,34 @@ export default function Home() {
                   {currentUserEmail}
                 </p>
               </div>
-              <Link
-                href={readOnlyUser ? `/profile?userId=${readOnlyUser.id}` : "/profile"}
-                aria-label="Abrir perfil e conta"
-                className="mt-0.5 shrink-0 rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
-              >
-                <ProfileAvatar
-                  name={currentUserName}
-                  email={currentUserEmail}
-                  avatarUrl={currentUserAvatar}
-                  sizeClass="h-10 w-10 md:h-11 md:w-11 text-sm"
-                />
-              </Link>
+              {readOnlyUser ? (
+                <button
+                  type="button"
+                  onClick={() => setReadOnlyProfileOpen(true)}
+                  aria-label={`Abrir perfil de ${readOnlyUser.email}`}
+                  className="mt-0.5 shrink-0 rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
+                >
+                  <ProfileAvatar
+                    name={currentUserName}
+                    email={currentUserEmail}
+                    avatarUrl={currentUserAvatar}
+                    sizeClass="h-10 w-10 md:h-11 md:w-11 text-sm"
+                  />
+                </button>
+              ) : (
+                <Link
+                  href="/profile"
+                  aria-label="Abrir perfil e conta"
+                  className="mt-0.5 shrink-0 rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
+                >
+                  <ProfileAvatar
+                    name={currentUserName}
+                    email={currentUserEmail}
+                    avatarUrl={currentUserAvatar}
+                    sizeClass="h-10 w-10 md:h-11 md:w-11 text-sm"
+                  />
+                </Link>
+              )}
             </div>
             <div className="flex flex-wrap items-center gap-2">
               {/* Sync status indicator */}
@@ -1553,13 +1590,22 @@ export default function Home() {
                   Você está vendo o app de {readOnlyUser.email}. Alterações e salvamento estão bloqueados.
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={exitReadOnlyMode}
-                className="mt-3 flex h-10 items-center justify-center rounded-xl bg-blue-700 px-4 text-sm font-bold text-white hover:bg-blue-800 sm:mt-0"
-              >
-                Voltar para meus dados
-              </button>
+              <div className="mt-3 flex flex-wrap gap-2 sm:mt-0">
+                <button
+                  type="button"
+                  onClick={() => setReadOnlyProfileOpen(true)}
+                  className="flex h-10 items-center justify-center rounded-xl border border-blue-200 bg-white px-4 text-sm font-bold text-blue-700 hover:bg-blue-100"
+                >
+                  Ver perfil
+                </button>
+                <button
+                  type="button"
+                  onClick={exitReadOnlyMode}
+                  className="flex h-10 items-center justify-center rounded-xl bg-blue-700 px-4 text-sm font-bold text-white hover:bg-blue-800"
+                >
+                  Voltar para meus dados
+                </button>
+              </div>
             </div>
           )}
 
@@ -1629,6 +1675,77 @@ export default function Home() {
           )}
         </div>
       </section>
+
+      {readOnlyProfileOpen && readOnlyUser && (
+        <div
+          className="fixed inset-0 z-50 flex items-end bg-slate-950/40 p-0 backdrop-blur-sm sm:items-center sm:justify-center sm:p-4"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setReadOnlyProfileOpen(false);
+          }}
+        >
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="read-only-profile-title"
+            className="w-full rounded-t-3xl border border-white bg-white p-5 shadow-2xl shadow-slate-950/20 sm:max-w-lg sm:rounded-3xl"
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex min-w-0 items-center gap-3">
+                <ProfileAvatar
+                  name={readOnlyUser.name || readOnlyUser.email}
+                  email={readOnlyUser.email}
+                  avatarUrl={readOnlyUser.avatarUrl}
+                  sizeClass="h-14 w-14 text-base"
+                />
+                <div className="min-w-0">
+                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-blue-600">Perfil do usuário</p>
+                  <h2 id="read-only-profile-title" className="mt-1 truncate text-lg font-extrabold text-slate-950">
+                    {readOnlyUser.name || "Nome não informado"}
+                  </h2>
+                  <p className="truncate text-sm font-medium text-slate-500">{readOnlyUser.email}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setReadOnlyProfileOpen(false)}
+                className="flex h-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 px-3 text-sm font-bold text-slate-600 hover:bg-slate-50"
+              >
+                Fechar
+              </button>
+            </div>
+
+            <div className="mt-5 divide-y divide-slate-100 rounded-2xl border border-slate-100">
+              <div className="grid gap-1 px-4 py-3">
+                <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">Username</span>
+                <span className="break-words text-sm font-semibold text-slate-800">
+                  {readOnlyUser.username ? `@${readOnlyUser.username}` : "Não informado"}
+                </span>
+              </div>
+              <div className="grid gap-1 px-4 py-3">
+                <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">ID do usuário</span>
+                <span className="break-all font-mono text-xs font-semibold text-slate-700">{readOnlyUser.id}</span>
+              </div>
+              <div className="grid gap-1 px-4 py-3">
+                <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">Criado em</span>
+                <span className="text-sm font-semibold text-slate-800">{formatProfileDate(readOnlyUser.createdAt)}</span>
+              </div>
+              <div className="grid gap-1 px-4 py-3">
+                <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">Último acesso</span>
+                <span className="text-sm font-semibold text-slate-800">{formatProfileDate(readOnlyUser.lastSignInAt)}</span>
+              </div>
+              <div className="grid gap-1 px-4 py-3">
+                <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">Status</span>
+                <span className="text-sm font-semibold text-slate-800">{readOnlyUserStatus(readOnlyUser)}</span>
+              </div>
+              <div className="grid gap-1 px-4 py-3">
+                <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">Plano</span>
+                <span className="text-sm font-semibold text-slate-800">{readOnlyUser.plan || "Conta gratuita"}</span>
+              </div>
+            </div>
+          </section>
+        </div>
+      )}
 
       {mobileBottomNav}
     </main>

@@ -1,5 +1,4 @@
-import { ArrowLeft, Ban, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Eye, RefreshCw, Search, ShieldCheck, Trash2, User, UserCog, Users } from "lucide-react";
-import Link from "next/link";
+import { ArrowLeft, Ban, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Eye, RefreshCw, Search, ShieldCheck, Trash2, UserCog, Users } from "lucide-react";
 import { useState } from "react";
 import type { AdminUser, Suggestion, SuggestionStatus } from "@/types";
 
@@ -265,13 +264,6 @@ export function AdminPanel({
                       </td>
                       <td className="px-4 py-3 sm:px-5">
                         <div className="flex min-w-[310px] flex-wrap gap-2">
-                          <Link
-                            href={`/profile?userId=${encodeURIComponent(user.id)}`}
-                            className="flex h-9 items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-2.5 text-xs font-bold text-blue-700 hover:bg-blue-100"
-                          >
-                            <User className="h-3.5 w-3.5" aria-hidden="true" />
-                            Ver perfil
-                          </Link>
                           <button
                             type="button"
                             onClick={() => onViewUser(user)}

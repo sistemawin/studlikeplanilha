@@ -60,6 +60,39 @@ function normalizeAdminAppState(value: unknown): AppState {
   };
 }
 
+function normalizeAdminProfile(value: unknown, fallback: AdminUser): ReadOnlyUser {
+  if (!value || typeof value !== "object") {
+    throw new Error("Perfil do usuário indisponível.");
+  }
+  const candidate = value as {
+    id?: string;
+    email?: string;
+    name?: string | null;
+    username?: string | null;
+    avatar_url?: string | null;
+    created_at?: string | null;
+    last_sign_in_at?: string | null;
+    banned_until?: string | null;
+    is_admin?: boolean | null;
+    plan?: string | null;
+    error?: string;
+  };
+  if (candidate.error) throw new Error(candidate.error);
+
+  return {
+    id: candidate.id ?? fallback.id,
+    email: candidate.email || fallback.email || fallback.id,
+    name: candidate.name ?? fallback.name,
+    username: candidate.username ?? fallback.username,
+    avatarUrl: candidate.avatar_url ?? fallback.avatarUrl,
+    createdAt: candidate.created_at ?? fallback.createdAt,
+    lastSignInAt: candidate.last_sign_in_at ?? fallback.lastSignInAt,
+    bannedUntil: candidate.banned_until ?? fallback.bannedUntil,
+    isAdmin: Boolean(candidate.is_admin ?? fallback.isAdmin),
+    plan: candidate.plan ?? undefined,
+  };
+}
+
 type Deps = {
   session: Session | null;
   setNotice: (message: string) => void;
@@ -279,18 +312,14 @@ export function useAdminActions({
     setAdminError("");
     try {
       const supabase = getSupabaseBrowserClient();
-      const { data, error } = await supabase.rpc("admin_get_user_state", {
-        p_target_user_id: user.id,
-      });
-      if (error) throw error;
-      const state = normalizeAdminAppState(data);
-      setReadOnlyUser({
-        id: user.id,
-        email: user.email || user.id,
-        name: user.name,
-        username: user.username,
-        avatarUrl: user.avatarUrl,
-      });
+      const [stateResult, profileResult] = await Promise.all([
+        supabase.rpc("admin_get_user_state", { p_target_user_id: user.id }),
+        supabase.rpc("admin_get_user_profile", { p_target_user_id: user.id }),
+      ]);
+      if (stateResult.error) throw stateResult.error;
+      if (profileResult.error) throw profileResult.error;
+      const state = normalizeAdminAppState(stateResult.data);
+      setReadOnlyUser(normalizeAdminProfile(profileResult.data, user));
       applyAppState(state);
       setAdminView(false);
       setActiveSection("dashboard");

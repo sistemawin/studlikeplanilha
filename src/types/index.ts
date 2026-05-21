@@ -240,6 +240,11 @@ export type ReadOnlyUser = {
   name?: string;
   username?: string;
   avatarUrl?: string;
+  createdAt?: string | null;
+  lastSignInAt?: string | null;
+  bannedUntil?: string | null;
+  isAdmin?: boolean;
+  plan?: string;
 };
 
 export type ConfirmDialogState = {
