@@ -25,11 +25,11 @@ export function AppBrand({
         }
       />
       <div>
-        <p className="font-sans text-base leading-5 tracking-tight">
-          <span className={`font-extrabold ${isDark ? "text-white" : "text-slate-950"}`}>
+        <p className="font-rubik-vinyl flex items-baseline leading-none tracking-normal">
+          <span className={`text-xl ${isDark ? "text-white" : "text-slate-950"}`}>
             StudLike
           </span>
-          <span className={`ml-1.5 font-light ${isDark ? "text-blue-100/75" : "text-slate-500"}`}>
+          <span className={`ml-2 text-sm ${isDark ? "text-blue-200/70" : "text-slate-500"}`}>
             Foco
           </span>
         </p>

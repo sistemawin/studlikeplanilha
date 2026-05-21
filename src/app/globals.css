@@ -123,6 +123,13 @@ button:active {
   }
 }
 
+@layer utilities {
+  .font-rubik-vinyl {
+    font-family: var(--font-rubik-vinyl), "Rubik Vinyl", ui-sans-serif, system-ui, sans-serif;
+    font-weight: 400;
+  }
+}
+
 ::-webkit-scrollbar {
   height: 10px;
   width: 10px;

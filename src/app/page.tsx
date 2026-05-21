@@ -1457,10 +1457,10 @@ export default function Home() {
                       ) : readOnlyUser ? (
                         <span className="font-extrabold text-slate-900">{readOnlyUser.email}</span>
                       ) : (
-                        <>
-                          <span className="font-extrabold tracking-tight text-slate-950">StudLike</span>
-                          <span className="ml-1.5 font-light tracking-normal text-slate-500">Foco</span>
-                        </>
+                        <span className="font-rubik-vinyl flex items-baseline leading-none tracking-normal">
+                          <span className="text-xl text-slate-950">StudLike</span>
+                          <span className="ml-2 text-sm text-slate-500">Foco</span>
+                        </span>
                       )}
                     </h1>
                   </div>
