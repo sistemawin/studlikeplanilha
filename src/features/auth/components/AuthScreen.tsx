@@ -1,5 +1,7 @@
 import { Loader2, LockKeyhole, Mail, ShieldCheck, UserPlus } from "lucide-react";
+import Link from "next/link";
 import { StudlikeLogo } from "@/components/ui/StudlikeLogo";
+import { TERMS_PATH } from "@/features/lgpd/constants";
 import type { AuthMode } from "@/types";
 
 type Props = {
@@ -10,10 +12,12 @@ type Props = {
   loading: boolean;
   error: string;
   message: string;
+  acceptedTerms: boolean;
   onModeChange: (mode: AuthMode) => void;
   onEmailChange: (value: string) => void;
   onPasswordChange: (value: string) => void;
   onNameChange: (value: string) => void;
+  onAcceptedTermsChange: (value: boolean) => void;
   onSubmit: () => void;
 };
 
@@ -25,10 +29,12 @@ export function AuthScreen({
   loading,
   error,
   message,
+  acceptedTerms,
   onModeChange,
   onEmailChange,
   onPasswordChange,
   onNameChange,
+  onAcceptedTermsChange,
   onSubmit,
 }: Props) {
   const isSignup = mode === "signup";
@@ -148,6 +154,28 @@ export function AuthScreen({
                 </button>
               )}
 
+              {isSignup && (
+                <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-[#F7F8FA] p-3">
+                  <input
+                    type="checkbox"
+                    checked={acceptedTerms}
+                    onChange={(event) => onAcceptedTermsChange(event.target.checked)}
+                    className="mt-1 h-4 w-4 rounded border-slate-300 text-[#1877F2] accent-[#1877F2] focus:ring-[#1877F2]"
+                  />
+                  <span className="text-sm font-medium leading-6 text-slate-700">
+                    Li e concordo com os{" "}
+                    <Link
+                      href={TERMS_PATH}
+                      target="_blank"
+                      className="font-bold text-blue-700 hover:text-blue-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
+                    >
+                      Termos de Uso e Política de Privacidade
+                    </Link>
+                    .
+                  </span>
+                </label>
+              )}
+
               {error && (
                 <p role="alert" className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700">
                   {error}
@@ -161,7 +189,7 @@ export function AuthScreen({
 
               <button
                 onClick={onSubmit}
-                disabled={loading}
+                disabled={loading || (isSignup && !acceptedTerms)}
                 className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#1877F2] text-sm font-bold text-white shadow-lg shadow-blue-600/25 transition hover:bg-[#1B74E4] focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500 disabled:cursor-not-allowed disabled:opacity-70"
               >
                 {loading && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}

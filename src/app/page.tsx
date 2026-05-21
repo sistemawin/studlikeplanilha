@@ -60,6 +60,8 @@ import type {
 } from "@/types";
 import type { ReadyEdital } from "@/lib/readyEditals";
 import { AuthScreen } from "@/features/auth/components/AuthScreen";
+import { LgpdConsentModal } from "@/features/lgpd/components/LgpdConsentModal";
+import { acceptTermsConsent, loadTermsConsent } from "@/features/lgpd/services/consent";
 import { ErrorBoundary } from "@/components/shared/ErrorBoundary";
 import { NavButton } from "@/components/ui/NavButton";
 import { SubjectModal } from "@/features/subjects/components/SubjectModal";
@@ -144,6 +146,7 @@ export default function Home() {
     authEmail, setAuthEmail,
     authPassword, setAuthPassword,
     authName, setAuthName,
+    authAcceptedTerms, setAuthAcceptedTerms,
     authLoading,
     authError,
     authMessage,
@@ -211,6 +214,13 @@ export default function Home() {
   const [refreshingApp, setRefreshingApp] = useState(false);
   const currentAppVersionRef = useRef("");
 
+  // ── LGPD consent ─────────────────────────────────────────────────────────
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [termsChecked, setTermsChecked] = useState(false);
+  const [termsCheckboxChecked, setTermsCheckboxChecked] = useState(false);
+  const [termsLoading, setTermsLoading] = useState(false);
+  const [termsError, setTermsError] = useState("");
+
   // ── Modal visibility for hideMobileBottomNav ──────────────────────────────
   const [sessionHistoryOpen, setSessionHistoryOpen] = useState(false);
   const [reviewFocusModeOpen, setReviewFocusModeOpen] = useState(false);
@@ -267,6 +277,26 @@ export default function Home() {
       return;
     }
     window.location.reload();
+  }
+
+  async function acceptUpdatedTerms() {
+    if (!session || !termsCheckboxChecked) return;
+    const metadata = (session.user.user_metadata ?? {}) as Record<string, unknown>;
+    const metadataName = typeof metadata.name === "string" ? metadata.name : "";
+    setTermsLoading(true);
+    setTermsError("");
+    try {
+      const supabase = getSupabaseBrowserClient();
+      await acceptTermsConsent(supabase, session.user.id, metadataName);
+      setTermsAccepted(true);
+      setTermsChecked(true);
+      setTermsCheckboxChecked(false);
+      setNotice("Termos aceitos. Acesso liberado.");
+    } catch (err) {
+      setTermsError(err instanceof Error ? err.message : "Não foi possível salvar seu aceite.");
+    } finally {
+      setTermsLoading(false);
+    }
   }
 
   // ── Load reminder prefs from localStorage (SSR-safe: must be in effect) ──
@@ -454,6 +484,40 @@ export default function Home() {
     });
   }, []);
 
+  // ── LGPD consent check ───────────────────────────────────────────────────
+  useEffect(() => {
+    if (!session) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- reset consent gate when auth changes
+      setTermsAccepted(false);
+      setTermsChecked(false);
+      setTermsCheckboxChecked(false);
+      setTermsError("");
+      return;
+    }
+
+    let cancelled = false;
+    const supabase = getSupabaseBrowserClient();
+
+    async function checkConsent() {
+      setTermsChecked(false);
+      setTermsError("");
+      try {
+        const accepted = await loadTermsConsent(supabase, session.user.id);
+        if (cancelled) return;
+        setTermsAccepted(accepted);
+      } catch (err) {
+        if (cancelled) return;
+        setTermsAccepted(false);
+        setTermsError(err instanceof Error ? err.message : "Não foi possível verificar seu aceite dos termos.");
+      } finally {
+        if (!cancelled) setTermsChecked(true);
+      }
+    }
+
+    void checkConsent();
+    return () => { cancelled = true; };
+  }, [session]);
+
   // ── Load remote data on login ─────────────────────────────────────────────
   useEffect(() => {
     if (!session) {
@@ -467,6 +531,12 @@ export default function Home() {
       // It is only called from the profile logout flow so that offline data survives
       // whenever session becomes null for non-logout reasons (token refresh
       // failure, getSession() timeout, etc.).
+      return;
+    }
+
+    if (!termsAccepted) {
+      setRemoteReady(false);
+      setRemoteLoading(false);
       return;
     }
 
@@ -542,7 +612,7 @@ export default function Home() {
 
     void load();
     return () => { cancelled = true; };
-  }, [session, offlineUserId]);
+  }, [session, offlineUserId, termsAccepted]);
 
   // ── Debounced sync ────────────────────────────────────────────────────────
   // isOnlineState is in deps so the effect re-fires on reconnect, triggering
@@ -1055,10 +1125,12 @@ export default function Home() {
           loading={authLoading}
           error={authError}
           message={authMessage}
+          acceptedTerms={authAcceptedTerms}
           onModeChange={changeAuthMode}
           onEmailChange={setAuthEmail}
           onPasswordChange={setAuthPassword}
           onNameChange={setAuthName}
+          onAcceptedTermsChange={setAuthAcceptedTerms}
           onSubmit={submitAuth}
         />
         {feedbackToast}
@@ -1099,11 +1171,40 @@ export default function Home() {
           loading={authLoading}
           error={authError}
           message={authMessage}
+          acceptedTerms={authAcceptedTerms}
           onModeChange={changeAuthMode}
           onEmailChange={setAuthEmail}
           onPasswordChange={setAuthPassword}
           onNameChange={setAuthName}
+          onAcceptedTermsChange={setAuthAcceptedTerms}
           onSubmit={submitAuth}
+        />
+        {feedbackToast}
+      </>
+    );
+  }
+
+  if (!termsChecked) {
+    return (
+      <main className="flex min-h-dvh w-full items-center justify-center bg-[#F0F2F5] text-slate-950">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="h-7 w-7 animate-spin" aria-label="Verificando termos" />
+          <p className="text-sm font-semibold text-slate-500">Verificando termos</p>
+        </div>
+        {feedbackToast}
+      </main>
+    );
+  }
+
+  if (!termsAccepted) {
+    return (
+      <>
+        <LgpdConsentModal
+          checked={termsCheckboxChecked}
+          loading={termsLoading}
+          error={termsError}
+          onCheckedChange={setTermsCheckboxChecked}
+          onAccept={acceptUpdatedTerms}
         />
         {feedbackToast}
       </>

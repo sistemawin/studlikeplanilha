@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
+import { TERMS_VERSION } from "@/features/lgpd/constants";
+import { acceptTermsConsent } from "@/features/lgpd/services/consent";
 import { getSupabaseBrowserClient } from "@/services/supabase/client";
 import type { AuthMode } from "@/types";
 
@@ -14,6 +16,7 @@ export function useAuthState(setNotice: SetNotice) {
   const [authEmail, setAuthEmail] = useState("");
   const [authPassword, setAuthPassword] = useState("");
   const [authName, setAuthName] = useState("");
+  const [authAcceptedTerms, setAuthAcceptedTerms] = useState(false);
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState("");
   const [authMessage, setAuthMessage] = useState("");
@@ -116,6 +119,7 @@ export function useAuthState(setNotice: SetNotice) {
       setSession(null);
       setAuthPassword("");
     }
+    if (next !== "signup") setAuthAcceptedTerms(false);
   }
 
   async function submitAuth() {
@@ -176,12 +180,27 @@ export function useAuthState(setNotice: SetNotice) {
     try {
       const supabase = getSupabaseBrowserClient();
       if (authMode === "signup") {
+        if (!authAcceptedTerms) {
+          setAuthError("Você precisa aceitar os Termos de Uso e a Política de Privacidade para criar a conta.");
+          return;
+        }
+        const acceptedAt = new Date().toISOString();
         const { data, error } = await supabase.auth.signUp({
           email,
           password: authPassword,
-          options: { data: { name: authName.trim() } },
+          options: {
+            data: {
+              name: authName.trim(),
+              aceitou_termos: true,
+              termos_aceitos_em: acceptedAt,
+              termos_versao: TERMS_VERSION,
+            },
+          },
         });
         if (error) throw error;
+        if (data.session) {
+          await acceptTermsConsent(supabase, data.session.user.id, authName);
+        }
         if (!data.session) { setAuthMessage("Conta criada. Confirme seu e-mail para entrar."); return; }
         setSession(data.session);
         setNotice("Conta criada com sucesso.");
@@ -216,6 +235,7 @@ export function useAuthState(setNotice: SetNotice) {
     authEmail, setAuthEmail,
     authPassword, setAuthPassword,
     authName, setAuthName,
+    authAcceptedTerms, setAuthAcceptedTerms,
     authLoading,
     authError,
     authMessage,

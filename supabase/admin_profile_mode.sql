@@ -3,9 +3,17 @@ create table if not exists public.profiles (
   name text,
   username text,
   avatar_url text,
+  aceitou_termos boolean not null default false,
+  termos_aceitos_em timestamptz,
+  termos_versao text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.profiles
+  add column if not exists aceitou_termos boolean not null default false,
+  add column if not exists termos_aceitos_em timestamptz,
+  add column if not exists termos_versao text;
 
 alter table public.profiles enable row level security;
 grant select, insert, update on public.profiles to authenticated;
