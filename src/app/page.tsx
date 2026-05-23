@@ -497,12 +497,13 @@ export default function Home() {
 
     let cancelled = false;
     const supabase = getSupabaseBrowserClient();
+    const userId = session.user.id;
 
     async function checkConsent() {
       setTermsChecked(false);
       setTermsError("");
       try {
-        const accepted = await loadTermsConsent(supabase, session.user.id);
+        const accepted = await loadTermsConsent(supabase, userId);
         if (!cancelled) setTermsAccepted(accepted);
       } catch (err) {
         if (!cancelled) {
