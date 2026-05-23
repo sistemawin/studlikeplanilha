@@ -503,14 +503,14 @@ export default function Home() {
       setTermsError("");
       try {
         const accepted = await loadTermsConsent(supabase, session.user.id);
-        if (cancelled) return;
-        setTermsAccepted(accepted);
+        if (!cancelled) setTermsAccepted(accepted);
       } catch (err) {
-        if (cancelled) return;
-        setTermsAccepted(false);
-        setTermsError(err instanceof Error ? err.message : "Não foi possível verificar seu aceite dos termos.");
+        if (!cancelled) {
+          setTermsAccepted(false);
+          setTermsError(err instanceof Error ? err.message : "Não foi possível verificar seu aceite dos termos.");
+        }
       } finally {
-        if (!cancelled) setTermsChecked(true);
+        setTermsChecked(true);
       }
     }
 
